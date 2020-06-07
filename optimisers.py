@@ -27,9 +27,23 @@ class Optimiser(object):
         self.tol = 1e-6
 
 
-def log_likelihood(beta_vec, data:DataSet, data_obs):
-    N = data.n_dims
+# def log_likelihood(beta_vec, data:DataSet, obs, mu=1):
+#     N = data.n_dims
+#
+#     grad = np.zeros(N)
+#     for n in range(np.shape(obs)[0]):
+#         dest = obs[n,0]
+#         orig = obs[n,1]
+#         # print("Dest = ", dest, "Orig =", orig)
+#         instant_value_function = np.sum(beta_vec * data.attrs)
+#         print("prod")
+#         beta_vec * data.attrs
+#         print(sum)
+#         print(instant_value_function)
 
-    grad = np.zeros(N)
+
+
+        # Get M and U
+
 
 

@@ -47,3 +47,36 @@ obs_mat = load_csv_to_sparse(file_obs, dtype='int')
 
 data_struct = DataSet(travel_times=travel_times_mat, incidence_matrix=incidence_mat,
                       turn_angles=None)
+np.set_printoptions(precision=4, suppress=True)
+np.set_printoptions(edgeitems=3)
+np.core.arrayprint._line_width = 100
+
+# from optimisers import log_likelihood
+beta = np.array(-1.5)# default value, 1d for now
+# log_likelihood(beta, data_struct, obs_mat)
+
+beta_vec = beta
+data = data_struct
+obs = obs_mat
+mu = 1
+
+# temp func
+# def log_likelihood(beta_vec, data:DataSet, obs, mu=1):
+N = data.n_dims
+
+grad = np.zeros(N)
+
+v_mat = data_struct.get_short_term_utility()
+data_struct.get_exponential_utility_matrix()
+m_mat = data_struct.get_exponential_utility_matrix()
+value_funcs = data_struct.get_value_functions()
+
+# iterate through observation number
+for n in range(np.shape(obs)[0]):
+    dest = obs[n, 0]
+    orig = obs[n, 1]
+
+    orig_utility = value_funcs[orig]
+    
+
+
