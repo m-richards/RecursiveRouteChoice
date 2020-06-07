@@ -51,14 +51,15 @@ print(f"Graph has {G.number_of_nodes()} nodes and {G.number_of_edges()} edges", 
 
 import matplotlib.pyplot as plt
 
-nx.drawing.draw_networkx(G, pos=nx.spectral_layout(G,)) # unweighted - for structure
-plt.savefig(join("figures", f"{file} - network_structure.pdf"))
-plt.figure()
+# nx.drawing.draw_networkx(G, pos=nx.spectral_layout(G,)) # unweighted - for structure
+# plt.savefig(join("figures", f"{file} - network_structure.pdf"))
+# plt.figure()
 # note spectral weight is inverse weight?
-layout = nx.drawing.kamada_kawai_layout
-nx.drawing.draw_networkx(G, pos=layout(G, weight='travel_time')) # unweighted - for
+layout = nx.drawing.kamada_kawai_layout(G, weight='travel_time')
+nx.drawing.draw_networkx(G, pos=layout) # unweighted - for
 # structure
-nx.drawing.draw_networkx_edge_labels(G, pos=layout(G, weight='travel_time'),
+plt.savefig(join("figures", f"{file} - network_dists - no dists.pdf"))
+nx.drawing.draw_networkx_edge_labels(G, pos=layout,
                                      edge_labels={(i,j):round(k,1) for (i,j,k) in dist_data})
 # networkx.drawing.draw_spectral(G)
 # networkx.drawing.draw_spring(G)
