@@ -34,7 +34,7 @@ mu = 1
 # Need to construct utilities with parameter vec beta and then have that in such a way that we
 # can optimise-  perhaps do need to consult with matlab
 
-M = forward_incidence * np.exp(1/mu * utilities)
+M = forward_incidence * np.exp(1 / mu * utilities)
 print("M=")
 np.set_printoptions(precision=3, suppress=True)
 print(M)
@@ -42,10 +42,8 @@ print(M)
 b_vec = np.zeros((n_nodes))
 b_vec[-1] = 1
 
-z_vec = linalg.solve(np.eye(n_nodes) -M, b_vec)
-
-
+z_vec = linalg.solve(np.eye(n_nodes) - M, b_vec)
 
 value_func = mu * np.log(z_vec)
-print("Value func",)
+print("Value func", )
 print(value_func)
