@@ -103,6 +103,7 @@ class RecursiveLogitModel(object):
         # genuine zero arcs from the absent arcs
         # (since data format has zero arcs for silly reasons)
         nonzero_entries = np.nonzero(self.data.incidence_matrix)
+        # TODO this throws a sparsity efficiency warning
         m_mat[nonzero_entries] = np.exp(1 / self.mu * m_mat[nonzero_entries])
         self._exponential_utility_matrix = m_mat
 
