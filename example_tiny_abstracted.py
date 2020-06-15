@@ -10,6 +10,8 @@ from os.path import join
 
 # file ="ExampleTutorial"# "ExampleTutorial" from classical logicv2
 # file = "ExampleTiny"  # "ExampleNested" from classical logit v2, even smaller network
+from optimisers import line_search_asrch
+
 subfolder = "ExampleTiny"  # big data from classical v2
 folder = join("Datasets", subfolder)
 INCIDENCE = "incidence.txt"
@@ -93,6 +95,7 @@ print("got grad_cumulative = ", grad_out)
 
 
 #  Assume line search method for now
+# TODO make nice. This is a sketch of line_search_iterate()
 INITIAL_STEP_LENGTH = 1.0
 NEGATIVE_CURVATURE_PARAMETER = 0.0
 SUFFICIENT_DECREASE_PARAMETER = 0.0001
@@ -116,16 +119,33 @@ import functools
 arc = functools.partial(line_arc, ds=p)
 # arc = lambda step: line_arc(step, p)
 # sHOULD HAVE OPTIMISED CONSTANT NAMEDTUPLE
-
+OPTIMIZE_CONSTANT_MAX_FEV = 10
 stp = INITIAL_STEP_LENGTH
 x = model.get_beta_vec()
 optim_func = model.get_log_likelihood
 
 
+def update_hessian_approx():
+    pass
+
+x, val_new, grad_new, stp, info, n_func_evals = line_search_asrch(
+    optim_func, x, value, grad, arc, stp,
+    maxfev=OPTIMIZE_CONSTANT_MAX_FEV)
+
+if val_new <= value:
+    # TODO need to collect these things into a struct
+    #   think there already is an outline of one
+    step = p*stp
+    delta_grad = grad_new - grad
+    value = val_new
+    x = x
+    grad = grad_new
+    update_hessian_approx() #TODO write this
+    Rv1 = True
+else:
+    Rv1 = False
 
 
-x, val, grad, stp, info, n_func_evals = line_search_asrch(optim_func, x, value, grad, arc, stp,
-                                                          )
 
 
 
