@@ -33,38 +33,57 @@ Class to store data
 """
 import numpy as np
 
-class DataSet(object):
-    """Really just a struct
-    Added short term utility computation as well since this is handy in a bunch of places
-
-    """
-
-    def __init__(self, travel_times, incidence_matrix, turn_angles=None, initial_beta=-1.5, mu=1):
-
+class RecursiveLogitDataSet(object):
+    """Generic struct which stores all the arc attributes together in a convenient manner"""
+    def __init__(self, travel_times, incidence_matrix, turn_angles=None):
         self.travel_times = travel_times
         self.incidence_matrix = incidence_matrix
         self.turn_angles = turn_angles
         # TODO include uturn and left turn penalties when relevant
-        self.data_array = np.array([self.travel_times, ])
+        #   I think that these should be done by some other preprocessing step before this class,
+        # this should be a generic data class. Is not for now
+        self.data_array = np.array([self.travel_times, self.travel_times])
         self.n_dims = len(self.data_array)
-        self.beta_vec = np.array([initial_beta for i in range(self.n_dims)])
+
+
+class RecursiveLogitModel(object):
+    """Abstraction of the linear algebra type relations on the recursive logit model to solve
+    the matrix system and compute log likelihood.
+
+    Doesn't handle optimisation directly (but does compute log likelihood), should be
+    passed into optimisation algorithm in a clever way
+
+    """
+
+    def __init__(self, data_struct: RecursiveLogitDataSet, initial_beta=-1.5, mu=1):
+        self.data = data_struct
+        self.data_array = data_struct.data_array
+        self.n_dims = len(self.data_array)
+        # TODO maybe have to handle more complex initialisations
+        self.beta_vec = np.array([initial_beta for _ in range(self.n_dims)])
+        self.mu = mu
 
         self._short_term_utility = None
         self._exponential_utility_matrix = None
         self._value_functions = None
         self._exp_value_functions = None
-        self.mu = mu
 
-        self.update_beta(initial_beta) # to this to refresh default quantities
+        self.update_beta_vec(self.beta_vec) # to this to refresh default quantities
 
-    def update_beta(self, new_beta_vec):
+    def get_beta_vec(self):
+        """Getter is purely to imply that beta vec is not a fixed field"""
+        return self.beta_vec
+
+    def update_beta_vec(self, new_beta_vec):
+        """Change the current parameter vector beta and update intermediate results which depend
+        on this"""
         self.beta_vec = new_beta_vec
         # self._beta_changed = True
         # TODO delay this from happening until the update is needed - use flag
 
         self._compute_short_term_utility()
         self._compute_exponential_utility_matrix()
-        self._compute_value_matrix()
+        self._compute_value_function_matrix()
         # TODO make sure new stuff gets added here
 
     def _compute_short_term_utility(self):
@@ -82,31 +101,26 @@ class DataSet(object):
         m_mat = self.get_short_term_utility().copy()
         # note we currently use incidence matrix here, since this distinguishes the
         # genuine zero arcs from the absent arcs
-        nonzero_entries = np.nonzero(self.incidence_matrix)
+        # (since data format has zero arcs for silly reasons)
+        nonzero_entries = np.nonzero(self.data.incidence_matrix)
         m_mat[nonzero_entries] = np.exp(1 / self.mu * m_mat[nonzero_entries])
-        # This isn't a square matrix since in our data format,
-        # dest row has no successors so is missing from incidence matrix
-        # add a zero row at end to square matrix
-        # ncols = np.shape(self.incidence_matrix)[1]
-        # sparse_zeros = csr_matrix((1, ncols))
-        # TODO can we drop a column in both directions instead?
-        #   needs some more thinking
-        # self._exponential_utility_matrix = scipy.sparse.vstack((m_mat, sparse_zeros))
-        # updated input forma so that all matrices have the right dims
         self._exponential_utility_matrix = m_mat
 
 
 
     def get_exponential_utility_matrix(self):
-        """ # TODO can cached this if I deem it handy"""
+        """ # TODO can cached this if I deem it handy.
+        Returns M_{ka} matrix
+        """
 
         return self._exponential_utility_matrix
 
-    def _compute_value_matrix(self):
-        pass
+    def _compute_value_function_matrix(self):
+        """Solves the system Z = Mz+b and stores the output for future use.
+        Has rudimentary flagging of errors but doesn't attempt to solve any problems"""
         error_flag = 0
-        ncols = np.shape(self.incidence_matrix)[1]
-        rhs = scipy.sparse.lil_matrix((ncols, 1)) # supressing needless sparsity warning
+        ncols = np.shape(self.data.incidence_matrix)[1]
+        rhs = scipy.sparse.lil_matrix((ncols, 1))  # supressing needless sparsity warning
         rhs[-1, 0] = 1
         # (I-M)z =b
         M = self.get_exponential_utility_matrix()
@@ -117,6 +131,7 @@ class DataSet(object):
 
         if np.min(z_vec) <= 1e-10:  # TODO add an optional thresh on this?
             error_flag = 1
+            raise ValueError("value function has too small entries")
 
         if np.any(z_vec) < 0:
             raise ValueError("value function had negative solution, cannot take "
@@ -134,15 +149,91 @@ class DataSet(object):
             return self._value_functions, self._exp_value_functions
         return self._value_functions
 
+    def get_log_likelihood(self, obs_mat):
+        """Compute the log likelihood of the data with the current beta vec"""
+
+        num_obs, path_max_len = np.shape(obs_mat)
+        # local references with idomatic names
+        N = self.n_dims # number of attributes in data
+        mu = self.mu
+        v_mat = self.get_short_term_utility()  # capital u in tien mai's code
+        m_mat = self.get_exponential_utility_matrix()
+        value_funcs, exp_val_funcs = self.get_value_functions(return_exponentiated=True)
+
+        grad = get_value_func_grad(m_mat, self, exp_val_funcs)
+
+        log_like_cumulative = 0.0  # weighting of all observations
+        grad_cumulative = np.zeros(N) # gradient combined across all observations
+        gradient_each_obs = np.zeros((num_obs, N)) # store gradient according to each obs
+        # tODO this looks redundant to store these at
+        #  the moment but this is a global variable in TIEN's code
+
+        # iterate through observation number
+        for n in range(num_obs):
+            dest = obs_mat[n, 0]  # this was for adding extra cols, but we handle this without bad
+            # fixes
+            orig_index = obs_mat[n, 1] - 1   # subtract 1 for zero based python
+            # first_action = obs_mat[n, 2]
+
+            grad_orig = grad[:, orig_index] / exp_val_funcs[orig_index]
+            orig_utility = value_funcs[orig_index]
+            log_like_orig = -1 * (1 / mu) * orig_utility  # log probability from orign
+
+            sum_inst_util = 0.0  # keep sum of instantaneous utility
+            sum_current_attr = np.zeros(N)  # sum of observed attributes
 
 
+            # # TODO this is inefficient since we've just casted a whole bunch of dense zeros,
+            #    but not sure
+            # #  that there is a convenient better way that doesn't already ruin sparsity.
+            # #  easiest solution would be to make path length appear in input file
+            path = obs_mat[n, :].toarray().squeeze()  # kill off singleton 2d dim
+            # know all zeros are at end so can just count nonempty
+            path_len = np.count_nonzero(path)
+
+            # TODO vectorise all of this
+            # -1 again since loop is forward set, probably could reindex
+            for node_index in np.arange(1, path_len - 1):
+                # entry [k,a] is in matrix index [k-1, a-1] : -1  since zero based
+                current_node_index = path[node_index] - 1
+                next_node_index = path[node_index + 1] - 1
+
+                final_index_in_data = np.shape(self.data.incidence_matrix)[0]
+                if next_node_index > final_index_in_data:
+                    # I can't see when this would happen
+                    print("WARN, dodgy bounds indexing hack occur in path tracing,"
+                          " changed next node")
+                    next_node_index = final_index_in_data
 
 
-def get_value_func_grad(M, data:DataSet, expV):
+                sum_inst_util += v_mat[current_node_index, next_node_index]
+
+                # TODO this should directly unwrap, checking things line up first - not easy to do
+                # is the first dim is kind of a numpy list around sparse matrices
+                # current data attribute (travel time, turn angle, ...)
+                for attr in range(N):
+                    sum_current_attr[attr] += self.data.data_array[attr][
+                        current_node_index, next_node_index]
+            #
+            gradient_each_obs[n, :] = sum_current_attr - grad_orig  # GradEachObs in Code doc
+            log_like_obs = 1 / mu * sum_inst_util + log_like_orig  # LogLikeObs in Code Doc
+
+            # Some kind of successive over relaxation/ momentum
+            log_like_cumulative += (log_like_obs - log_like_cumulative) / (n + 1)
+
+            grad_cumulative += (gradient_each_obs[n, :] - grad_cumulative) / (n + 1)
+
+            # TODO negation of gradient_each_obs is used as global var elsewhere
+
+        return -log_like_cumulative, grad_cumulative
+
+
+# tODO should these be methods, or just algorithmic pieces
+def get_value_func_grad(M, data: RecursiveLogitModel, expV):
     """Tien mai method for returning the gradient of the value function,
     need to check consistency with maths.
 
-    Should actually multiply this by mu.
+    TODO Note tien my function returns 1/mu * this
 
     Returns a data.n_dims * shape(M)[0] matrix
     - gradient in each x component at every node"""
@@ -157,6 +248,7 @@ def get_value_func_grad(M, data:DataSet, expV):
         # print(M.toarray())
         # print("current attribute")
         # print(current_attribute.toarray())
+
         # note sparse matrices have * be matrix product for some reason
         u = M.multiply(current_attribute)
         # print("u")
@@ -166,24 +258,14 @@ def get_value_func_grad(M, data:DataSet, expV):
         # print(expV)
         # print("v")
         # print(v)
-        grad_v[i,:] = splinalg.spsolve(A ,v) # this had the strange property that grad = v
+        grad_v[i,:] = splinalg.spsolve(A, v)  # this had the strange property that grad = v
         # in early testing
         # print(grad_v)
-    return grad_v
+
+    return data.mu * grad_v
 
 
 
-# get 1/mu * Grad(V0)
-#%%
-
-
-
-# def getGradV0(M, Att, op, expV, origin):
-#     gradExpV = getGradExpV(M, Att, op, expV);
-#     gradV0 = zeros(1,op.n);
-#     for i = 1:op.n
-#         gradV0(i) =  gradExpV(i).Value(origin)/expV(origin);
-#     return gradV0
 
 
 
