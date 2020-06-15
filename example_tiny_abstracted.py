@@ -62,7 +62,6 @@ obs_mat = load_csv_to_sparse(file_obs, dtype='int',square_matrix=False)
 
 data_struct = RecursiveLogitDataSet(travel_times=travel_times_mat, incidence_matrix=incidence_mat,
                                   turn_angles=None)
-
 model = RecursiveLogitModel(data_struct)
 np.set_printoptions(precision=4, suppress=True)
 np.set_printoptions(edgeitems=3)
@@ -91,7 +90,44 @@ print("Target:\nLL =0.6931471805599454\ngrad=[0.]")
 print("Got:")
 print("Got LL = ", log_like_out)
 print("got grad_cumulative = ", grad_out)
-#
+
+
+#  Assume line search method for now
+INITIAL_STEP_LENGTH = 1.0
+NEGATIVE_CURVATURE_PARAMETER = 0.0
+SUFFICIENT_DECREASE_PARAMETER = 0.0001
+CURVATURE_CONDITION_PARAMETER = 0.9
+X_TOLERENT = 2.2e-16
+MINIMUM_STEP_LENGTH = 0
+MAXIMUM_STEP_LENGTH = 1000
+# perhaps beta should be an arg to log like - assume it is always changing
+value, grad = model.get_log_likelihood(obs_mat)
+
+hessian = np.identity(data.n_dims)
+p = np.linalg.solve(hessian, -grad)
+if np.dot(p, grad)>0:
+    p = -p
+
+def line_arc(step, ds):
+    return (step * ds, ds) #TODO note odd function form
+import functools
+# TODO this is very weird because we partial to fix a vlaue for ds
+#   but then ds is returned so we actually use it even though it's hidden
+arc = functools.partial(line_arc, ds=p)
+# arc = lambda step: line_arc(step, p)
+# sHOULD HAVE OPTIMISED CONSTANT NAMEDTUPLE
+
+stp = INITIAL_STEP_LENGTH
+x = model.get_beta_vec()
+optim_func = model.get_log_likelihood
+
+
+
+
+x, val, grad, stp, info, n_func_evals = line_search_asrch(optim_func, x, value, grad, arc, stp,
+                                                          )
+
+
 
 
 

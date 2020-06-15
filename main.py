@@ -150,6 +150,10 @@ class RecursiveLogitModel(object):
             return self._value_functions, self._exp_value_functions
         return self._value_functions
 
+    def get_new_beta_log_like(self, beta_vec, obs_mat):
+        self.update_beta_vec(beta_vec)
+        return  self.get_log_likelihood(obs_mat)
+
     def get_log_likelihood(self, obs_mat):
         """Compute the log likelihood of the data with the current beta vec"""
 
