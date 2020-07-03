@@ -2,6 +2,9 @@ import scipy
 from scipy import linalg
 from scipy.sparse import coo_matrix, csr_matrix, identity
 from scipy.sparse import linalg as splinalg
+
+from optimisers.optimisers_file import Optimiser
+
 """
 Sketch of what we need
 
@@ -55,8 +58,11 @@ class RecursiveLogitModel(object):
 
     """
 
-    def __init__(self, data_struct: RecursiveLogitDataSet, initial_beta=-1.5, mu=1):
-        self.data = data_struct
+    def __init__(self, data_struct: RecursiveLogitDataSet, optimiser: Optimiser, user_obs_mat,
+                 initial_beta=-1.5,  mu=1, ):
+        self.network_data = data_struct  # all network attributes
+        self.optimiser = optimiser  # optimisation alg wrapper class
+        self.user_obs_mat = user_obs_mat  # matrix of observed trips
         self.data_array = data_struct.data_array
         self.n_dims = len(self.data_array)
         # TODO maybe have to handle more complex initialisations
@@ -67,6 +73,8 @@ class RecursiveLogitModel(object):
         self._exponential_utility_matrix = None
         self._value_functions = None
         self._exp_value_functions = None
+
+        self.hessian=None # TODO should this be on optimser instead?
 
         self.update_beta_vec(self.beta_vec) # to this to refresh default quantities
 
@@ -102,7 +110,7 @@ class RecursiveLogitModel(object):
         # note we currently use incidence matrix here, since this distinguishes the
         # genuine zero arcs from the absent arcs
         # (since data format has zero arcs for silly reasons)
-        nonzero_entries = np.nonzero(self.data.incidence_matrix)
+        nonzero_entries = np.nonzero(self.network_data.incidence_matrix)
         # TODO this throws a sparsity efficiency warning
         m_mat[nonzero_entries] = np.exp(1 / self.mu * m_mat[nonzero_entries])
         self._exponential_utility_matrix = m_mat
@@ -120,7 +128,7 @@ class RecursiveLogitModel(object):
         """Solves the system Z = Mz+b and stores the output for future use.
         Has rudimentary flagging of errors but doesn't attempt to solve any problems"""
         error_flag = 0
-        ncols = np.shape(self.data.incidence_matrix)[1]
+        ncols = np.shape(self.network_data.incidence_matrix)[1]
         rhs = scipy.sparse.lil_matrix((ncols, 1))  # supressing needless sparsity warning
         rhs[-1, 0] = 1
         # (I-M)z =b
@@ -150,13 +158,15 @@ class RecursiveLogitModel(object):
             return self._value_functions, self._exp_value_functions
         return self._value_functions
 
-    def get_new_beta_log_like(self, beta_vec, obs_mat):
+    def get_log_like_new_beta(self, beta_vec):
+        """update beta vec and compute log likelihood in one step - used for lambdas
+        Effectively a bad functools.partial"""
         self.update_beta_vec(beta_vec)
-        return  self.get_log_likelihood(obs_mat)
+        return self.get_log_likelihood()
 
-    def get_log_likelihood(self, obs_mat):
+    def get_log_likelihood(self):
         """Compute the log likelihood of the data with the current beta vec"""
-
+        obs_mat = self.user_obs_mat
         num_obs, path_max_len = np.shape(obs_mat)
         # local references with idomatic names
         N = self.n_dims # number of attributes in data
@@ -203,7 +213,7 @@ class RecursiveLogitModel(object):
                 current_node_index = path[node_index] - 1
                 next_node_index = path[node_index + 1] - 1
 
-                final_index_in_data = np.shape(self.data.incidence_matrix)[0]
+                final_index_in_data = np.shape(self.network_data.incidence_matrix)[0]
                 if next_node_index > final_index_in_data:
                     # I can't see when this would happen
                     print("WARN, dodgy bounds indexing hack occur in path tracing,"
@@ -217,7 +227,7 @@ class RecursiveLogitModel(object):
                 # is the first dim is kind of a numpy list around sparse matrices
                 # current data attribute (travel time, turn angle, ...)
                 for attr in range(N):
-                    sum_current_attr[attr] += self.data.data_array[attr][
+                    sum_current_attr[attr] += self.network_data.data_array[attr][
                         current_node_index, next_node_index]
             #
             gradient_each_obs[n, :] = sum_current_attr - grad_orig  # GradEachObs in Code doc
