@@ -38,7 +38,8 @@ import numpy as np
 
 class RecursiveLogitDataSet(object):
     """Generic struct which stores all the arc attributes together in a convenient manner"""
-    def __init__(self, travel_times, incidence_matrix, turn_angles=None):
+    def __init__(self, travel_times: scipy.sparse.dok_matrix,
+                 incidence_matrix: scipy.sparse.dok_matrix, turn_angles=None):
         self.travel_times = travel_times
         self.incidence_matrix = incidence_matrix
         self.turn_angles = turn_angles
@@ -95,24 +96,24 @@ class RecursiveLogitModel(object):
         # TODO make sure new stuff gets added here
 
     def _compute_short_term_utility(self):
-        self.short_term_utility =np.sum(self.beta_vec * self.data_array)
+        self.short_term_utility = np.sum(self.beta_vec * self.data_array)
 
     def get_short_term_utility(self):
         """Returns v(a|k)  for all (a,k) as 2D array,
-        uses current value of beta"""
+        uses current value of beta
+        :rtype: np.array<scipy.sparse.csr_matrix>"""
 
         return self.short_term_utility
 
     def _compute_exponential_utility_matrix(self):
 
         # explicitly do need this copy since we modify m_mat
-        m_mat = self.get_short_term_utility().copy()
+        m_mat = self.get_short_term_utility()
         # note we currently use incidence matrix here, since this distinguishes the
         # genuine zero arcs from the absent arcs
         # (since data format has zero arcs for silly reasons)
-        nonzero_entries = np.nonzero(self.network_data.incidence_matrix)
-        # TODO this throws a sparsity efficiency warning
-        m_mat[nonzero_entries] = np.exp(1 / self.mu * m_mat[nonzero_entries])
+        nonzero_entries = self.network_data.incidence_matrix.nonzero()
+        m_mat[nonzero_entries] = np.exp(1 / self.mu * m_mat[nonzero_entries].todense())
         self._exponential_utility_matrix = m_mat
 
 
@@ -128,7 +129,7 @@ class RecursiveLogitModel(object):
         """Solves the system Z = Mz+b and stores the output for future use.
         Has rudimentary flagging of errors but doesn't attempt to solve any problems"""
         error_flag = 0
-        ncols = np.shape(self.network_data.incidence_matrix)[1]
+        ncols = self.network_data.incidence_matrix.shape[1]
         rhs = scipy.sparse.lil_matrix((ncols, 1))  # supressing needless sparsity warning
         rhs[-1, 0] = 1
         # (I-M)z =b
@@ -138,16 +139,16 @@ class RecursiveLogitModel(object):
         A = identity(ncols) - M
         z_vec = splinalg.spsolve(A, rhs)
 
-        if np.min(z_vec) <= 1e-10:  # TODO add an optional thresh on this?
+        if z_vec.min() <= 1e-10:  # TODO add an optional thresh on this?
             error_flag = 1
             raise ValueError("value function has too small entries")
 
-        if np.any(z_vec) < 0:
+        if np.any(z_vec < 0):
             raise ValueError("value function had negative solution, cannot take "
                              "logarithm")
         # Note the transpose here is not mathematical, it is scipy being
         # lax about row and column vectors
-        if linalg.norm(
+        if linalg.norm( # note this isn't sparse apparently
                 A @ z_vec - rhs.transpose()) > 1e-3:  # residual - i.e. ill conditioned solution
             raise ValueError("value function solution does not satisfy system well.")
         self._value_functions = np.log(z_vec)
