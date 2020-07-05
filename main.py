@@ -36,8 +36,10 @@ Class to store data
 """
 import numpy as np
 
+
 class RecursiveLogitDataSet(object):
     """Generic struct which stores all the arc attributes together in a convenient manner"""
+
     def __init__(self, travel_times: scipy.sparse.dok_matrix,
                  incidence_matrix: scipy.sparse.dok_matrix, turn_angles=None):
         self.travel_times = travel_times
@@ -108,7 +110,7 @@ class RecursiveLogitModel(object):
     def _compute_exponential_utility_matrix(self):
 
         # explicitly do need this copy since we modify m_mat
-        m_mat = self.get_short_term_utility()
+        m_mat = self.get_short_term_utility().copy()
         # note we currently use incidence matrix here, since this distinguishes the
         # genuine zero arcs from the absent arcs
         # (since data format has zero arcs for silly reasons)
