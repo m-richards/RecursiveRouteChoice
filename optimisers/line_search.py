@@ -411,7 +411,7 @@ def line_search_asrch(fcn, x, f, g, arc, stp, maxfev,
                 or (is_bracketed and stmax - stmin <= xtol * stmax)):
             stp = stx
         (s, ds) = arc(stp)
-        print("(s, ds) = ",s, ds)
+        print("(s, ds) = ", s, ds)
         # Likelihood at new beta
         f, g = fcn(x + s)
 

@@ -1,42 +1,39 @@
 # TODO check np.dot usage since numpy is not aware of sparse properly, should use A.dot(v)
 import time
 import numpy as np
-import scipy
-from data_loading import load_csv_to_sparse, get_incorrect_tien_turn_matrices, \
-    get_uturn_categorical_matrix, get_left_turn_categorical_matrix
-from main import RecursiveLogitModel, get_value_func_grad, RecursiveLogitDataStruct
+from main import RecursiveLogitModel, RecursiveLogitDataStruct
 
 import os
-from os.path import join
 import optimisers as op
 from optimisers import OptimType
 
 np.seterr(all='raise')  # all='print')
+np.set_printoptions(precision=4, suppress=True)
+np.set_printoptions(edgeitems=3)
+np.core.arrayprint._line_width = 100
 import warnings
 
 warnings.simplefilter("error")
 
+time_io_start = time.time()
 # file ="ExampleTutorial"# "ExampleTutorial" from classical logicv2
 # file = "ExampleTiny"  # "ExampleNested" from classical logit v2, even smaller network
-
-time_io_start = time.time()
 subfolder = "ExampleTiny"  # big data from classical v2
-folder = join("Datasets", subfolder)
+folder = os.path.join("Datasets", subfolder)
 
 # Get observations matrix - note: observation matrix is in sparse format, but is of the form
 #   each row == [dest node, orig node, node 2, node 3, ... dest node, 0 padding ....]
+network_data_struct, obs_mat = RecursiveLogitDataStruct.from_directory(folder, add_angles=True,
+                                                                       angle_type='comparison')
 
+# data matrices are fine
 time_io_end = time.time()
-network_data_struct, obs_mat = RecursiveLogitDataStruct.from_directory(folder, add_angles=False)
-network_data_struct.add_second_travel_time_for_no_turn_angles()
+
 optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS,
                                    vec_length=1,
                                    max_iter=4)  # TODO check these parameters & defaults
-
+print(type(obs_mat))
 model = RecursiveLogitModel(network_data_struct, optimiser, user_obs_mat=obs_mat)
-np.set_printoptions(precision=4, suppress=True)
-np.set_printoptions(edgeitems=3)
-np.core.arrayprint._line_width = 100
 
 log_like_out, grad_out = model.get_log_likelihood()
 

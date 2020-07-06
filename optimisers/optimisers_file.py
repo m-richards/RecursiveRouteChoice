@@ -8,8 +8,6 @@ from .hessian_approx import update_hessian_approx, OptimHessianType
 from .line_search import line_search_asrch
 
 
-
-
 class OptimType(Enum):
     LINE_SEARCH = auto()
     TRUST_REGION = auto()
@@ -21,9 +19,10 @@ class Optimiser(object):
     Ideally this is a generic optim alg that doesn't know anything about RecursiveLogitModel
     TODO currently is intrinsically dependent"""
     METHOD_FLAG = None
+
     def __init__(self, hessian_type=OptimHessianType.BFGS,
                  vec_length=1,
-                 max_iter = 4):
+                 max_iter=4):
         self.hessian_type = hessian_type
         self.n = vec_length
         self.max_iter = max_iter
@@ -33,10 +32,10 @@ class Optimiser(object):
         self.tol = 1e-6
 
         #
-        self.function_value = None # Set and updated before each line search
+        self.function_value = None  # Set and updated before each line search
         self.beta_vec = None
 
-        self.step = 0 # defined in subclasses
+        self.step = 0  # defined in subclasses
         self.current_value = None
         self.beta_vec = None
         self.grad = np.array([0])
@@ -46,10 +45,10 @@ class Optimiser(object):
         if self.iter_count > self.max_iter:
             stop_type = "max iteration cap"
             is_successful = False
-        elif linalg.norm(self.step) <self.tol:
+        elif linalg.norm(self.step) < self.tol:
             stop_type = "gradient"
             is_successful = True
-        elif self.compute_relative_gradient()< self.tol:
+        elif self.compute_relative_gradient() < self.tol:
             stop_type = "relative gradient"
             is_successful = True
         else:
@@ -59,16 +58,15 @@ class Optimiser(object):
 
         return is_stopping, stop_type, is_successful
 
-
     def compute_relative_gradient(self, typf=1.0):
         """% Compute norm of relative gradient"""
         val = self.current_value
         grad = self.grad
-        #typf = 1.0 # some parameter? (input in tien code
-        typxi = 1.0 # fixed in tien code
+        # typf = 1.0 # some parameter? (input in tien code
+        typxi = 1.0  # fixed in tien code
         gmax = 0.0
 
-        for i in range(len(grad)): # tODO check what this concept is
+        for i in range(len(grad)):  # tODO check what this concept is
             gmax = max(gmax, abs(grad[i] * max(self.beta_vec[i], typxi)) / max(abs(val), typf))
         print("Loop gmax = ", gmax)
         tmp_beta_max = np.maximum(self.beta_vec, typxi)
@@ -84,8 +82,6 @@ class Optimiser(object):
         self.current_value = value
 
 
-
-
 class LineSearchOptimiser(Optimiser):
     INITIAL_STEP_LENGTH = 1.0
     NEGATIVE_CURVATURE_PARAMETER = 0.0
@@ -97,11 +93,10 @@ class LineSearchOptimiser(Optimiser):
 
     METHOD_FLAG = OptimType.LINE_SEARCH
 
-    def __init__(self,hessian_type=OptimHessianType.BFGS,
+    def __init__(self, hessian_type=OptimHessianType.BFGS,
                  vec_length=1, max_iter=4, ):
         super().__init__(hessian_type, vec_length, max_iter)
-        #TODO adjust fields?
-
+        # TODO adjust fields?
 
     def line_search_iteration(self, model, verbose=True):
         """ TODO note there is som first time initialisation that need to be removed"""
@@ -122,7 +117,7 @@ class LineSearchOptimiser(Optimiser):
         x = model.get_beta_vec()
         optim_func = model.get_log_like_new_beta
 
-        OPTIMIZE_CONSTANT_MAX_FEV = 10 #TODO sort out how function evals are tracked
+        OPTIMIZE_CONSTANT_MAX_FEV = 10  # TODO sort out how function evals are tracked
         x, val_new, grad_new, stp, info, n_func_evals = line_search_asrch(
             optim_func, x, value_in, grad, arc, stp,
             maxfev=OPTIMIZE_CONSTANT_MAX_FEV)

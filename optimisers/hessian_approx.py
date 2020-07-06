@@ -3,8 +3,8 @@ from enum import Enum, auto
 import numpy as np
 from scipy import linalg
 
-
 from .constants import EPSILON_DOUBLE_PRECISION
+
 
 class OptimHessianType(Enum):
     BFGS = auto()
