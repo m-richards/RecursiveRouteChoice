@@ -11,9 +11,8 @@ import numpy as np
 from scipy import linalg
 from scipy.sparse import csr_matrix
 
-from data_loading import load_csv_to_sparse, get_incorrect_tien_turn_matrices, \
-    get_uturn_categorical_matrix, get_left_turn_categorical_matrix
-from main import RecursiveLogitModel, get_value_func_grad, RecursiveLogitDataSet
+from data_loading import load_csv_to_sparse, get_uturn_categorical_matrix, get_left_turn_categorical_matrix
+from main import RecursiveLogitModel, RecursiveLogitDataSet
 
 import os
 from os.path import join
@@ -33,42 +32,31 @@ class TestSimpleCases:
         file_travel_time = os.path.join(folder, TRAVEL_TIME)
         file_turn_angle = os.path.join(folder, TURN_ANGLE)
         file_obs = os.path.join(folder, OBSERVATIONS)
-        row, col, data = np.loadtxt(file_travel_time, unpack=True)
-        incidence_data = np.ones(len(data))  # TODO where do i need this?
 
         travel_times_mat = load_csv_to_sparse(file_travel_time).todok()
         incidence_mat = load_csv_to_sparse(file_incidence, dtype='int').todok()
         turn_angle_mat = load_csv_to_sparse(file_turn_angle).todok()
 
-        # turn turn angle data into uturn and left turn dummies
-        print(turn_angle_mat.toarray())
-
-        left_turn_dummy = get_left_turn_categorical_matrix(turn_angle_mat)
-        u_turn_dummy = get_uturn_categorical_matrix(turn_angle_mat)
-
-        # Get observations matrix - note: observation matrix is in sparse format, but is of the form
-        #   each row == [dest node, orig node, node 2, node 3, ... dest node, 0 padding ....]
         obs_mat = load_csv_to_sparse(file_obs, dtype='int', square_matrix=False).todok()
 
         network_data_struct = RecursiveLogitDataSet(travel_times=travel_times_mat,
                                                     incidence_matrix=incidence_mat,
                                                     turn_angles=None)
-        optimiser = op.LineSearchOptimiser(op.OptimType.LINE_SEARCH, op.OptimHessianType.BFGS,
+        optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS,
                                            vec_length=1,
                                            max_iter=4)  # TODO check these parameters & defaults
 
         model = RecursiveLogitModel(network_data_struct, optimiser, user_obs_mat=obs_mat)
 
-        beta = np.array(-1.5)  # default value, 1d for now
-        data = network_data_struct
-
         log_like_out, grad_out = model.get_log_likelihood()
+        optimiser.set_beta_vec(model.beta_vec) # TODO this is still kind of hacky
+        optimiser.set_current_value(log_like_out)
         eps = 1e-6
         assert np.abs(log_like_out - 0.6931471805599454) < eps
         assert np.abs(linalg.norm(grad_out) - 0) < eps
 
-        model.hessian = np.identity(data.n_dims)
-        out_flag, hessian, log = optimiser.line_search_iteration(model,verbose=False)
+        model.hessian = np.identity(network_data_struct.n_dims)
+        out_flag, hessian, log = optimiser.line_search_iteration(model, verbose=False)
         assert out_flag == True
         assert (hessian == np.identity(2)).all()
         assert optimiser.n_func_evals == 1

@@ -19,10 +19,8 @@ warnings.simplefilter("error")
 
 # file ="ExampleTutorial"# "ExampleTutorial" from classical logicv2
 # file = "ExampleTiny"  # "ExampleNested" from classical logit v2, even smaller network
-# from optimisers import line_search_asrch
-# from optimisers.optimisers import Optimiser
-time_io_start = time.time()
 
+time_io_start = time.time()
 subfolder = "ExampleTiny"  # big data from classical v2
 folder = join("Datasets", subfolder)
 INCIDENCE = "incidence.txt"
@@ -33,17 +31,10 @@ file_incidence = os.path.join(folder, INCIDENCE)
 file_travel_time = os.path.join(folder, TRAVEL_TIME)
 file_turn_angle = os.path.join(folder, TURN_ANGLE)
 file_obs = os.path.join(folder, OBSERVATIONS)
-row, col, data = np.loadtxt(file_travel_time, unpack=True)
-incidence_data = np.ones(len(data)) #TODO where do i need this?
-
 
 travel_times_mat = load_csv_to_sparse(file_travel_time).todok()
 incidence_mat = load_csv_to_sparse(file_incidence, dtype='int').todok()
 turn_angle_mat = load_csv_to_sparse(file_turn_angle).todok()
-
-# turn turn angle data into uturn and left turn dummies
-# print(turn_angle_mat.toarray())
-
 
 tien_left_turn = incidence_mat
 tien_actual_left_dummy, tien_uturn_dummy = get_incorrect_tien_turn_matrices(
@@ -68,29 +59,16 @@ np.set_printoptions(precision=4, suppress=True)
 np.set_printoptions(edgeitems=3)
 np.core.arrayprint._line_width = 100
 
-
-beta = np.array(-1.5)  # default value, 1d for now
-
-beta_vec = beta
-data = network_data_struct
-obs = obs_mat
-
-
 log_like_out, grad_out = model.get_log_likelihood()
 
-# print("Target:\nLL =0.6931471805599454\ngrad=[0.]")
-# print("Got:")
-# print("Got LL = ", log_like_out)
-# print("got grad_cumulative = ", grad_out)
-
-model.hessian = np.identity(data.n_dims)
+model.hessian = np.identity(network_data_struct.n_dims)
 n = 0
 print("Initial Values:")
 optimiser.set_beta_vec(model.beta_vec)
 optimiser.set_current_value(log_like_out)
 print(optimiser._line_search_iteration_log(model))
 while n <= 1000:
-    optimiser.iter_count +=1
+    optimiser.iter_count += 1
     if model.optimiser.METHOD_FLAG == OptimType.LINE_SEARCH:
         ok_flag, hessian, log_msg = optimiser.line_search_iteration(model, verbose=False)
         if ok_flag:
@@ -108,9 +86,9 @@ while n <= 1000:
         break
 
 if n == 1000:
-    print("loop ended in failure")
+    print("Infinite loop happened somehow, shouldn't have happened")
 
 time_finish = time.time()
 # tODO covariance
-print(f"IO time - {round(time_io_end- time_io_start,3)}s")
-print(f"Algorithm time - {round(time_finish - time_io_end,3)}")
+print(f"IO time - {round(time_io_end - time_io_start, 3)}s")
+print(f"Algorithm time - {round(time_finish - time_io_end, 3)}")
