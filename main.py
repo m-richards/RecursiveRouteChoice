@@ -82,11 +82,9 @@ class RecursiveLogitDataStruct(object):
         self.has_categorical_turns = True
         if self.turn_angle_mat is None:
             raise ValueError("Raw turn angles matrix must be supplied in constructor")
-        print("turn angle mat", type(self.turn_angle_mat))
         left_turn_dummy = get_left_turn_categorical_matrix(self.turn_angle_mat, left_turn_thresh,
                                                            u_turn_thresh)
         u_turn_dummy = get_uturn_categorical_matrix(self.turn_angle_mat, u_turn_thresh)
-        print("pre concat", type(self.data_array), type(left_turn_dummy), type(u_turn_dummy))
         self.data_array = np.concatenate(
             (self.data_array, np.array((left_turn_dummy, u_turn_dummy)))
         )
@@ -99,7 +97,7 @@ class RecursiveLogitDataStruct(object):
             not of length zero is met. This encoded in the "LeftTurn" matrix in Tien's code"""
         nz_arc_incidence = self.travel_times * self.incidence_matrix
         self.data_array = np.concatenate(
-            (self.data_array, np.array((nz_arc_incidence)))
+            (self.data_array, np.array((nz_arc_incidence,)))
         )
         self.n_dims = len(self.data_array)
         self.has_nz_incidence_mat = True
