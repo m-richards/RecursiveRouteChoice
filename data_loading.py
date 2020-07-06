@@ -37,14 +37,19 @@ def load_csv_to_sparse(fname, dtype=None, delim=" ", square_matrix=True)->coo_ma
 
 # TODO run some tests on this to sanity check
 
-def get_uturn_categorical_matrix(turn_angle_mat, u_turn_thresh=U_TURN_THRESH):
+def get_uturn_categorical_matrix(turn_angle_mat, u_turn_thresh=None):
     """Assumes that angles are between -pi and pi"""
-    return (np.abs(turn_angle_mat) > u_turn_thresh).astype(int)
+    u_turn_thresh = u_turn_thresh if u_turn_thresh is not None else U_TURN_THRESH
+    return (np.abs(turn_angle_mat) > u_turn_thresh).astype(int).todok()
 
 
-def get_left_turn_categorical_matrix(turn_angle_mat, left_turn_thresh=LEFT_TURN_THRESH,
-                                     u_turn_thresh=U_TURN_THRESH):
+def get_left_turn_categorical_matrix(turn_angle_mat, left_turn_thresh=None,
+                                     u_turn_thresh=None):
     """Assumes that angles are between -pi and pi"""
+    if left_turn_thresh is None:
+        left_turn_thresh = LEFT_TURN_THRESH
+    if u_turn_thresh is None:
+        u_turn_thresh = U_TURN_THRESH
     # Note this is done strangely since scipy doesn't support & conditions on
     # sparse matrices. Also is more efficient to only do comparison on nonzero (since this is dense)
     nz_rows, nz_cols = turn_angle_mat.nonzero()
@@ -59,7 +64,7 @@ def get_left_turn_categorical_matrix(turn_angle_mat, left_turn_thresh=LEFT_TURN_
     left_turn_mat = scipy.sparse.coo_matrix(
         (vals, (masked_rows, masked_cols)), shape=turn_angle_mat.shape, dtype='int')
 
-    return left_turn_mat.tocsr()
+    return left_turn_mat.todok()
 
 
 def get_incorrect_tien_turn_matrices(turn_angle_mat, left_turn_thresh=LEFT_TURN_THRESH,
@@ -70,11 +75,10 @@ def get_incorrect_tien_turn_matrices(turn_angle_mat, left_turn_thresh=LEFT_TURN_
     Computes turn angles correctly in a convoluted way.
     Skips computing leftTurn since this is overridden to be an incidence matrix"""
     # Angles between -pi and pi
-    u_turn_mat = turn_angle_mat[np.abs(turn_angle_mat) > u_turn_thresh].astype(int)
+    u_turn_mat = (np.abs(turn_angle_mat) > u_turn_thresh).astype(int)
 
     new_turn_angles = turn_angle_mat.copy()
     nonzero_turn_angles = np.nonzero(turn_angle_mat)
-    print(nonzero_turn_angles)
     for x, y in zip(*nonzero_turn_angles):
         i = (x, y)
         current_turn_angle = turn_angle_mat[i]
