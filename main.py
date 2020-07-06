@@ -1,8 +1,12 @@
+import os
+
 import scipy
 from scipy import linalg
 from scipy.sparse import coo_matrix, csr_matrix, identity
 from scipy.sparse import linalg as splinalg
 
+from data_loading import load_csv_to_sparse, get_left_turn_categorical_matrix, \
+    get_uturn_categorical_matrix
 from optimisers.optimisers_file import Optimiser
 
 """
@@ -37,19 +41,92 @@ Class to store data
 import numpy as np
 
 
-class RecursiveLogitDataSet(object):
-    """Generic struct which stores all the arc attributes together in a convenient manner"""
+class RecursiveLogitDataStruct(object):
+    """Generic struct which stores all the arc attributes together in a convenient manner.
+    Also provides convenience constructors.
+    """
 
     def __init__(self, travel_times: scipy.sparse.dok_matrix,
-                 incidence_matrix: scipy.sparse.dok_matrix, turn_angles=None):
+                 incidence_matrix: scipy.sparse.dok_matrix, turn_angle_mat=None):
         self.travel_times = travel_times
         self.incidence_matrix = incidence_matrix
-        self.turn_angles = turn_angles
+        self.turn_angle_mat = turn_angle_mat
         # TODO include uturn and left turn penalties when relevant
         #   I think that these should be done by some other preprocessing step before this class,
         # this should be a generic data class. Is not for now
+        # On review, easiest to have this non generic for now, but could easily
+        # move init to classmethods. Wait for real data to see.
         self.data_array = np.array([self.travel_times, self.travel_times])
         self.n_dims = len(self.data_array)
+
+        self.has_categorical_turns = False
+        self.has_false_turn_angles_mat = False
+        self.has_turn_angles = False
+
+    def add_turn_categorical_variables(self, left_turn_thresh=None, u_turn_thresh=None):
+        """Uses the turn matrix in the constructor and splits out into categorical matrices
+        for uturns and left uturns.
+
+        Note left turn_thresh is negative in radians, with angles lesser to the left,
+        and u_turn thresh is positive in radians, less than pi.
+        """
+        if self.has_categorical_turns:
+            return
+        self.has_categorical_turns = True
+        if self.turn_angle_mat is None:
+            raise ValueError("Raw turn angles matrix must be supplied in constructor")
+        print("turn angle mat", type(self.turn_angle_mat))
+        left_turn_dummy = get_left_turn_categorical_matrix(self.turn_angle_mat, left_turn_thresh,
+                                                           u_turn_thresh)
+        u_turn_dummy = get_uturn_categorical_matrix(self.turn_angle_mat, u_turn_thresh)
+        print("pre concat", type(self.data_array), type(left_turn_dummy), type(u_turn_dummy))
+        self.data_array = np.concatenate(
+            (self.data_array, np.array((left_turn_dummy, u_turn_dummy)))
+        )
+
+    def add_nonzero_arc_incidence(self):
+        """Adds an incidence matrix which is only 1 if the additional condition that the arc is
+            not of length zero is met. This encoded in the "LeftTurn" matrix in Tien's code"""
+        nz_arc_incidence = self.travel_times * self.incidence_matrix
+        self.data_array = np.concatenate(
+            (self.data_array, np.array((nz_arc_incidence)))
+        )
+
+
+    @classmethod
+    def from_directory(cls, path, add_angles=True, angle_type='correct'):
+        """Creates data set from specified folder, assuming standard file path names.
+        Also returns obs mat to keep IO tidy and together"""
+        if add_angles and angle_type not in ['correct', 'comparison']:
+            raise KeyError("Angle type should be 'correct' or 'comparison'")
+        INCIDENCE = "incidence.txt"
+        TRAVEL_TIME = 'travelTime.txt'
+        OBSERVATIONS = "observations.txt"
+        TURN_ANGLE = "turnAngle.txt"
+        file_incidence = os.path.join(path, INCIDENCE)
+        file_travel_time = os.path.join(path, TRAVEL_TIME)
+        file_turn_angle = os.path.join(path, TURN_ANGLE)
+        file_obs = os.path.join(path, OBSERVATIONS)
+
+        travel_times_mat = load_csv_to_sparse(file_travel_time).todok()
+        incidence_mat = load_csv_to_sparse(file_incidence, dtype='int').todok()
+        obs_mat = load_csv_to_sparse(file_obs, dtype='int', square_matrix=False).todok()
+        if add_angles:
+            turn_angle_mat = load_csv_to_sparse(file_turn_angle).todok()
+            out = RecursiveLogitDataStruct(travel_times_mat, incidence_mat, turn_angle_mat)
+            if angle_type=='correct':
+                out.add_turn_categorical_variables()
+            else:
+                out.add_turn_categorical_variables()
+                out.add_nonzero_arc_incidence()
+        else:
+            out = RecursiveLogitDataStruct(travel_times_mat, incidence_mat, turn_angle_mat=None)
+        return out, obs_mat
+
+
+
+
+
 
 
 class RecursiveLogitModel(object):
@@ -61,8 +138,8 @@ class RecursiveLogitModel(object):
 
     """
 
-    def __init__(self, data_struct: RecursiveLogitDataSet, optimiser: Optimiser, user_obs_mat,
-                 initial_beta=-1.5,  mu=1, ):
+    def __init__(self, data_struct: RecursiveLogitDataStruct, optimiser: Optimiser, user_obs_mat,
+                 initial_beta=-1.5, mu=1, ):
         self.network_data = data_struct  # all network attributes
         self.optimiser = optimiser  # optimisation alg wrapper class
         self.user_obs_mat = user_obs_mat  # matrix of observed trips
@@ -77,9 +154,9 @@ class RecursiveLogitModel(object):
         self._value_functions = None
         self._exp_value_functions = None
 
-        self.hessian=None # TODO should this be on optimser instead?
+        self.hessian = None  # TODO should this be on optimser instead?
 
-        self.update_beta_vec(self.beta_vec) # to this to refresh default quantities
+        self.update_beta_vec(self.beta_vec)  # to this to refresh default quantities
 
     def get_beta_vec(self):
         """Getter is purely to imply that beta vec is not a fixed field"""
@@ -98,7 +175,11 @@ class RecursiveLogitModel(object):
         # TODO make sure new stuff gets added here
 
     def _compute_short_term_utility(self):
+        print("datat array", type(self.data_array))
+        for i in self.data_array:
+            print("\t", type(i))
         self.short_term_utility = np.sum(self.beta_vec * self.data_array)
+        print(type(self.short_term_utility))
 
     def get_short_term_utility(self):
         """Returns v(a|k)  for all (a,k) as 2D array,
@@ -111,6 +192,7 @@ class RecursiveLogitModel(object):
 
         # explicitly do need this copy since we modify m_mat
         m_mat = self.get_short_term_utility().copy()
+        print(type(m_mat))
         # note we currently use incidence matrix here, since this distinguishes the
         # genuine zero arcs from the absent arcs
         # (since data format has zero arcs for silly reasons)
