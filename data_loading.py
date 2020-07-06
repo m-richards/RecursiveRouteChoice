@@ -9,7 +9,7 @@ LEFT_TURN_THRESH = -0.5236  # 30 degrees
 U_TURN_THRESH = 3.1  # radians
 
 
-def load_csv_to_sparse(fname, dtype=None, delim=" ", square_matrix=True)->coo_matrix:
+def load_csv_to_sparse(fname, dtype=None, delim=" ", square_matrix=True) -> coo_matrix:
     """IO function to load row, col, val CSV and return a sparse scipy matrix.
     :square_matix <bool> means that the input should be square and we will try to square it by
         adding a row (this is commonly required in data)

@@ -3,7 +3,6 @@ import time
 import numpy as np
 from main import RecursiveLogitModel, RecursiveLogitDataStruct
 
-
 import os
 import optimisers as op
 from optimisers import OptimType
@@ -13,6 +12,7 @@ np.set_printoptions(precision=4, suppress=True)
 np.set_printoptions(edgeitems=3)
 np.core.arrayprint._line_width = 100
 import warnings
+
 warnings.simplefilter("error")
 
 time_io_start = time.time()
@@ -34,7 +34,6 @@ optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS,
                                    max_iter=4)  # TODO check these parameters & defaults
 print(type(obs_mat))
 model = RecursiveLogitModel(network_data_struct, optimiser, user_obs_mat=obs_mat)
-
 
 log_like_out, grad_out = model.get_log_likelihood()
 
@@ -69,4 +68,3 @@ time_finish = time.time()
 # tODO covariance
 print(f"IO time - {round(time_io_end - time_io_start, 3)}s")
 print(f"Algorithm time - {round(time_finish - time_io_end, 3)}")
-

@@ -57,7 +57,7 @@ class RecursiveLogitDataStruct(object):
         # On review, easiest to have this non generic for now, but could easily
         # move init to classmethods. Wait for real data to see.
         self.data_array = np.array([self.travel_times])
-        self.data_fields = ['travel_time'] # convenience for debugging
+        self.data_fields = ['travel_time']  # convenience for debugging
         self.n_dims = len(self.data_array)
 
         self.has_categorical_turns = False
@@ -95,14 +95,13 @@ class RecursiveLogitDataStruct(object):
     def add_nonzero_arc_incidence(self):
         """Adds an incidence matrix which is only 1 if the additional condition that the arc is
             not of length zero is met. This encoded in the "LeftTurn" matrix in Tien's code"""
-        nz_arc_incidence = (self.travel_times >0).astype('int').todok()
+        nz_arc_incidence = (self.travel_times > 0).astype('int').todok()
         self.data_array = np.concatenate(
             (self.data_array, np.array((nz_arc_incidence,)))
         )
         self.n_dims = len(self.data_array)
         self.has_nz_incidence_mat = True
         self.data_fields.append("nonzero_arc_incidence")
-
 
     @classmethod
     def from_directory(cls, path, add_angles=True, angle_type='correct'):
@@ -125,7 +124,7 @@ class RecursiveLogitDataStruct(object):
         if add_angles:
             turn_angle_mat = load_csv_to_sparse(file_turn_angle).todok()
             out = RecursiveLogitDataStruct(travel_times_mat, incidence_mat, turn_angle_mat)
-            if angle_type=='correct':
+            if angle_type == 'correct':
                 out.add_turn_categorical_variables()
             else:
                 out.add_turn_categorical_variables()
@@ -133,11 +132,6 @@ class RecursiveLogitDataStruct(object):
         else:
             out = RecursiveLogitDataStruct(travel_times_mat, incidence_mat, turn_angle_mat=None)
         return out, obs_mat
-
-
-
-
-
 
 
 class RecursiveLogitModel(object):
@@ -206,8 +200,6 @@ class RecursiveLogitModel(object):
         m_mat[nonzero_entries] = np.exp(1 / self.mu * m_mat[nonzero_entries].todense())
         self._exponential_utility_matrix = m_mat
 
-
-
     def get_exponential_utility_matrix(self):
         """ # TODO can cached this if I deem it handy.
         Returns M_{ka} matrix
@@ -238,7 +230,7 @@ class RecursiveLogitModel(object):
                              "logarithm")
         # Note the transpose here is not mathematical, it is scipy being
         # lax about row and column vectors
-        if linalg.norm( # note this isn't sparse apparently
+        if linalg.norm(  # note this isn't sparse apparently
                 A @ z_vec - rhs.transpose()) > 1e-3:  # residual - i.e. ill conditioned solution
             raise ValueError("value function solution does not satisfy system well.")
         self._value_functions = np.log(z_vec)
@@ -260,7 +252,7 @@ class RecursiveLogitModel(object):
         obs_mat = self.user_obs_mat
         num_obs, path_max_len = np.shape(obs_mat)
         # local references with idomatic names
-        N = self.n_dims # number of attributes in data
+        N = self.n_dims  # number of attributes in data
         mu = self.mu
         v_mat = self.get_short_term_utility()  # capital u in tien mai's code
         m_mat = self.get_exponential_utility_matrix()
@@ -269,8 +261,8 @@ class RecursiveLogitModel(object):
         grad = get_value_func_grad(m_mat, self, exp_val_funcs)
 
         log_like_cumulative = 0.0  # weighting of all observations
-        grad_cumulative = np.zeros(N) # gradient combined across all observations
-        gradient_each_obs = np.zeros((num_obs, N)) # store gradient according to each obs
+        grad_cumulative = np.zeros(N)  # gradient combined across all observations
+        gradient_each_obs = np.zeros((num_obs, N))  # store gradient according to each obs
         # tODO this looks redundant to store these at
         #  the moment but this is a global variable in TIEN's code
 
@@ -278,7 +270,7 @@ class RecursiveLogitModel(object):
         for n in range(num_obs):
             dest = obs_mat[n, 0]  # this was for adding extra cols, but we handle this without bad
             # fixes
-            orig_index = obs_mat[n, 1] - 1   # subtract 1 for zero based python
+            orig_index = obs_mat[n, 1] - 1  # subtract 1 for zero based python
             # first_action = obs_mat[n, 2]
 
             grad_orig = grad[:, orig_index] / exp_val_funcs[orig_index]
@@ -287,7 +279,6 @@ class RecursiveLogitModel(object):
 
             sum_inst_util = 0.0  # keep sum of instantaneous utility
             sum_current_attr = np.zeros(N)  # sum of observed attributes
-
 
             # # TODO this is inefficient since we've just casted a whole bunch of dense zeros,
             #    but not sure
@@ -310,7 +301,6 @@ class RecursiveLogitModel(object):
                     print("WARN, dodgy bounds indexing hack occur in path tracing,"
                           " changed next node")
                     next_node_index = final_index_in_data
-
 
                 sum_inst_util += v_mat[current_node_index, next_node_index]
 
@@ -364,17 +354,8 @@ def get_value_func_grad(M, data: RecursiveLogitModel, expV):
         # print(expV)
         # print("v")
         # print(v)
-        grad_v[i,:] = splinalg.spsolve(A, v)  # this had the strange property that grad = v
+        grad_v[i, :] = splinalg.spsolve(A, v)  # this had the strange property that grad = v
         # in early testing
         # print(grad_v)
 
     return data.mu * grad_v
-
-
-
-
-
-
-
-
-

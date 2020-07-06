@@ -1,9 +1,7 @@
-
 """Very minimal correctness checks to make sure i don't accidentally break stuff. very black box,
 more intended to detect errors rather than be specific about where they are
 
 """
-
 
 import pytest
 
@@ -11,7 +9,8 @@ import numpy as np
 from scipy import linalg
 from scipy.sparse import csr_matrix
 
-from data_loading import load_csv_to_sparse, get_uturn_categorical_matrix, get_left_turn_categorical_matrix
+from data_loading import load_csv_to_sparse, get_uturn_categorical_matrix, \
+    get_left_turn_categorical_matrix
 from main import RecursiveLogitModel, RecursiveLogitDataStruct
 
 import os
@@ -50,7 +49,7 @@ class TestSimpleCases:
         model = RecursiveLogitModel(network_data_struct, optimiser, user_obs_mat=obs_mat)
 
         log_like_out, grad_out = model.get_log_likelihood()
-        optimiser.set_beta_vec(model.beta_vec) # TODO this is still kind of hacky
+        optimiser.set_beta_vec(model.beta_vec)  # TODO this is still kind of hacky
         optimiser.set_current_value(log_like_out)
         eps = 1e-6
         assert np.abs(log_like_out - 0.6931471805599454) < eps
@@ -86,7 +85,6 @@ class TestSimpleCases:
         assert out_flag == True
         assert (hessian == np.identity(2)).all()
         assert optimiser.n_func_evals == 1
-
 
     def test_turn_angle_matrices(self):
         """ Note the problem of generating these kind of matrices is ignored"""
