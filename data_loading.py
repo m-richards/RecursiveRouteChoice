@@ -50,8 +50,8 @@ def get_left_turn_categorical_matrix(turn_angle_mat, left_turn_thresh=LEFT_TURN_
     nz_rows, nz_cols = turn_angle_mat.nonzero()
 
     nz_left_turns_mask = np.array(
-        (turn_angle_mat[nz_rows, nz_cols].todense() < left_turn_thresh) &  # turn is to the left
-        (turn_angle_mat[nz_rows, nz_cols].todense() > -u_turn_thresh))[0]  # turn is not a uturn
+        (turn_angle_mat[nz_rows, nz_cols].toarray() < left_turn_thresh) &  # turn is to the left
+        (turn_angle_mat[nz_rows, nz_cols].toarray() > -u_turn_thresh))[0]  # turn is not a uturn
     # note testing todense suggests faster or at least not worse, supresses error
     masked_rows = nz_rows[nz_left_turns_mask]
     masked_cols = nz_cols[nz_left_turns_mask]
