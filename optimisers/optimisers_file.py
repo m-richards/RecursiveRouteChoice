@@ -91,12 +91,13 @@ class LineSearchOptimiser(Optimiser):
         else:
             out_flag = False
             hessian = hessian_old
+        log = self._line_search_iteration_log(model)  # TODO return this
         if verbose:
-            self._line_search_iteration_printout(model) #TODO return this
-        self.n_func_evals +=1
-        return out_flag, hessian
+            print(log)
+        self.n_func_evals += 1
+        return out_flag, hessian, log
 
-    def _line_search_iteration_printout(self,model): # TODO fix hacky argument
+    def _line_search_iteration_log(self, model):  # TODO fix hacky argument
         out = f"[Iteration]: {self.n_func_evals}\n"
         out += f"\tLL = {model.get_log_likelihood()}\n"
         beta = u"\u03B2"
@@ -107,7 +108,6 @@ class LineSearchOptimiser(Optimiser):
         out += f"Norm of relative grad: (uninplemented) \n"
         out += f"Number of function evals: {self.n_func_evals}"
 
-        print(out)
         return out
 
 

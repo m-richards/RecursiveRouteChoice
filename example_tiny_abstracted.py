@@ -82,4 +82,4 @@ print("Got LL = ", log_like_out)
 print("got grad_cumulative = ", grad_out)
 
 model.hessian = hessian = np.identity(data.n_dims)
-print(optimiser.line_search_iteration(model))
+print(optimiser.line_search_iteration(model)[0:2])
