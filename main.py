@@ -186,11 +186,7 @@ class RecursiveLogitModel(object):
         # TODO make sure new stuff gets added here
 
     def _compute_short_term_utility(self):
-        print("datat array", type(self.data_array))
-        for i in self.data_array:
-            print("\t", type(i))
         self.short_term_utility = np.sum(self.beta_vec * self.data_array)
-        print(type(self.short_term_utility))
 
     def get_short_term_utility(self):
         """Returns v(a|k)  for all (a,k) as 2D array,
@@ -203,7 +199,6 @@ class RecursiveLogitModel(object):
 
         # explicitly do need this copy since we modify m_mat
         m_mat = self.get_short_term_utility().copy()
-        print(type(m_mat))
         # note we currently use incidence matrix here, since this distinguishes the
         # genuine zero arcs from the absent arcs
         # (since data format has zero arcs for silly reasons)
