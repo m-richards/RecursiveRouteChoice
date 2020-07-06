@@ -95,7 +95,7 @@ class RecursiveLogitDataStruct(object):
     def add_nonzero_arc_incidence(self):
         """Adds an incidence matrix which is only 1 if the additional condition that the arc is
             not of length zero is met. This encoded in the "LeftTurn" matrix in Tien's code"""
-        nz_arc_incidence = (self.travel_times >0).astype('int')
+        nz_arc_incidence = (self.travel_times >0).astype('int').todok()
         self.data_array = np.concatenate(
             (self.data_array, np.array((nz_arc_incidence,)))
         )
