@@ -38,7 +38,7 @@ class Optimiser(object):
         self.step = 0  # defined in subclasses
         self.current_value = None
         self.beta_vec = None
-        self.grad = np.array([0])
+        self.grad = None
 
     def check_stopping_criteria(self):
         is_stopping = True
@@ -146,7 +146,10 @@ class LineSearchOptimiser(Optimiser):
 
     def _line_search_iteration_log(self, model):  # TODO fix hacky argument
         out = f"[Iteration]: {self.n_func_evals}\n"
-        out += f"\tLL = {model.get_log_likelihood()}\n"
+        val, grad = model.get_log_likelihood()
+        if self.grad is None:
+            self.grad = grad
+        out += f"\tLL = {val}, grad = {grad}\n"
         beta = u"\u03B2"
         out += f"\t {beta} = " + str(model.get_beta_vec()) + "\n"
         out += f"Norm of step: {linalg.norm(self.step)}\n"
