@@ -9,6 +9,7 @@ from .hessian_approx import update_hessian_approx, OptimHessianType
 from .line_search import line_search_asrch
 
 
+
 class OptimType(Enum):
     LINE_SEARCH = auto()
     TRUST_REGION = auto()
@@ -23,6 +24,7 @@ class Optimiser(abc.ABC):
     NUMERICAL_ERROR_THRESH = -1e-3
     RESIDUAL = 1e-3
     LL_ERROR_VALUE = 99999
+    OPTIMIZE_CONSTANT_MAX_FEV = 10
 
     def __init__(self, hessian_type=OptimHessianType.BFGS, max_iter=4):
         self.hessian_type = hessian_type
@@ -65,19 +67,12 @@ class Optimiser(abc.ABC):
 
     def compute_relative_gradient(self, typf=1.0):
         """% Compute norm of relative gradient"""
-        # tODO check what this concept is
+        # TODO review mathematics behind this
         val = self.current_value
         grad = self.grad
-        # typf = 1.0 # some parameter? (input in tien code
         typxi = 1.0  # fixed in tien code
-        # gmax = 0.0
-
-        # for i in range(len(grad)):
-        #     gmax = max(gmax, abs(grad[i] * max(self.beta_vec[i], typxi)) / max(abs(val), typf))
-        # # print("Loop gmax = ", gmax)
         tmp_beta_max = np.maximum(self.beta_vec, typxi)
         gmax = np.abs(grad * tmp_beta_max / max(abs(val), typf)).max()
-        # print("vectorised gmax = ", gmax_nice)
 
         return gmax
 
@@ -107,28 +102,25 @@ class LineSearchOptimiser(Optimiser):
 
     def __init__(self, hessian_type=OptimHessianType.BFGS, max_iter=4):
         super().__init__(hessian_type, max_iter)
-        # TODO adjust fields?
 
     def iterate_step(self, model, verbose=True, output_file=None):
-        """ TODO note there is som first time initialisation that need to be removed"""
+        """ Performs a single step of the line search iteration,
+            evaluating the value function and taking a step based upon the gradient"""
         self.iter_count += 1
         hessian_old = model.hessian
-        # print("checking hessians - top of line search iter")
-        # print(hessian_old)
-        value_in, grad = model.get_log_likelihood()
-        # print('grad is', grad)
+        value_current, grad = model.get_log_likelihood()
         p = np.linalg.solve(hessian_old, -grad)
 
         if np.dot(p, grad) > 0:
             p = -p
 
         def line_arc(step, ds):
-            return (step * ds, ds)  # TODO note odd function form
+            return step * ds, ds  # TODO note odd function form
 
         arc = functools.partial(line_arc, ds=p)
-        stp = self.INITIAL_STEP_LENGTH
+        stp = self.INITIAL_STEP_LENGTH # for each iteration we start from a fixed step length
         x = model.get_beta_vec()
-
+        # Nested function, still same method
         def compute_new_log_like(new_beta_vec):
             """Note function not method: 'lambda' passed to optim alg, lets us update the
             n_func_evals with each call"""
@@ -137,29 +129,25 @@ class LineSearchOptimiser(Optimiser):
             return model.get_log_likelihood()
 
         optim_func = compute_new_log_like
-
-        OPTIMIZE_CONSTANT_MAX_FEV = 10  # TODO sort out how function evals are tracked
         x, val_new, grad_new, stp, info, n_func_evals = line_search_asrch(
-            optim_func, x, value_in, grad, arc, stp,
-            maxfev=OPTIMIZE_CONSTANT_MAX_FEV)
+            optim_func, x, value_current, grad, arc, stp,
+            maxfev=self.OPTIMIZE_CONSTANT_MAX_FEV)
 
-        if val_new <= value_in:
+        if val_new <= value_current:
             # TODO need to collect these things into a struct
             #   think there already is an outline of one
             self.step = p * stp
             self.delta_grad = grad_new - grad
-            self.delta_value = val_new - value_in
+            self.delta_value = val_new - value_current
             self.value = val_new
             self.beta_vec = x
             self.grad = grad_new
             hessian, ok = update_hessian_approx(model, self.step, self.delta_grad, hessian_old)  #
-            # TODO write
-            # this
             out_flag = True
         else:
             out_flag = False
             hessian = hessian_old
-        log = self.get_iteration_log(model)  # TODO return this
+        log = self.get_iteration_log(model)  
         if verbose:
             print(log, file=output_file)
         # TODO this is super sneaky and non obvious, copying an anti pattern
