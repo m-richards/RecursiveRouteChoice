@@ -19,6 +19,9 @@ class Optimiser(object):
     Ideally this is a generic optim alg that doesn't know anything about RecursiveLogitModel
     TODO currently is intrinsically dependent"""
     METHOD_FLAG = None
+    NUMERICAL_ERROR_THRESH = -1e-3
+    RESIDUAL = 1e-3
+    LL_ERROR_VALUE = 99999
 
     def __init__(self, hessian_type=OptimHessianType.BFGS,
                  vec_length=1,
@@ -45,9 +48,12 @@ class Optimiser(object):
         if self.iter_count > self.max_iter:
             stop_type = "max iteration cap"
             is_successful = False
-        elif linalg.norm(self.step) < self.tol:
+        elif linalg.norm(self.grad) < self.tol:
             stop_type = "gradient"
             is_successful = True
+        elif linalg.norm(self.step) < self.tol * self.tol:
+            stop_type = "step too small"
+            is_successful = False
         elif self.compute_relative_gradient() < self.tol:
             stop_type = "relative gradient"
             is_successful = True
@@ -60,18 +66,19 @@ class Optimiser(object):
 
     def compute_relative_gradient(self, typf=1.0):
         """% Compute norm of relative gradient"""
+        # tODO check what this concept is
         val = self.current_value
         grad = self.grad
         # typf = 1.0 # some parameter? (input in tien code
         typxi = 1.0  # fixed in tien code
-        gmax = 0.0
+        # gmax = 0.0
 
-        for i in range(len(grad)):  # tODO check what this concept is
-            gmax = max(gmax, abs(grad[i] * max(self.beta_vec[i], typxi)) / max(abs(val), typf))
-        print("Loop gmax = ", gmax)
+        # for i in range(len(grad)):
+        #     gmax = max(gmax, abs(grad[i] * max(self.beta_vec[i], typxi)) / max(abs(val), typf))
+        # # print("Loop gmax = ", gmax)
         tmp_beta_max = np.maximum(self.beta_vec, typxi)
-        gmax_nice = np.abs(grad * tmp_beta_max / max(abs(val), typf)).max()
-        print("vectorised gmax = ", gmax_nice)
+        gmax = np.abs(grad * tmp_beta_max / max(abs(val), typf)).max()
+        # print("vectorised gmax = ", gmax_nice)
 
         return gmax
 
@@ -100,10 +107,12 @@ class LineSearchOptimiser(Optimiser):
 
     def line_search_iteration(self, model, verbose=True):
         """ TODO note there is som first time initialisation that need to be removed"""
-        self.n_func_evals += 1
+        self.iter_count += 1
         hessian_old = model.hessian
+        # print("checking hessians - top of line search iter")
+        # print(hessian_old)
         value_in, grad = model.get_log_likelihood()
-
+        # print('grad is', grad)
         p = np.linalg.solve(hessian_old, -grad)
 
         if np.dot(p, grad) > 0:
@@ -115,7 +124,15 @@ class LineSearchOptimiser(Optimiser):
         arc = functools.partial(line_arc, ds=p)
         stp = self.INITIAL_STEP_LENGTH
         x = model.get_beta_vec()
-        optim_func = model.get_log_like_new_beta
+
+        def compute_new_log_like(new_beta_vec):
+            """Note function not method: 'lambda' passed to optim alg, lets us update the
+            n_func_evals with each call"""
+            self.n_func_evals += 1
+            model.update_beta_vec(new_beta_vec)
+            return model.get_log_likelihood()
+
+        optim_func = compute_new_log_like
 
         OPTIMIZE_CONSTANT_MAX_FEV = 10  # TODO sort out how function evals are tracked
         x, val_new, grad_new, stp, info, n_func_evals = line_search_asrch(
@@ -134,7 +151,6 @@ class LineSearchOptimiser(Optimiser):
             hessian, ok = update_hessian_approx(model, self.step, self.delta_grad, hessian_old)  #
             # TODO write
             # this
-            print(hessian)
             out_flag = True
         else:
             out_flag = False
@@ -142,21 +158,24 @@ class LineSearchOptimiser(Optimiser):
         log = self._line_search_iteration_log(model)  # TODO return this
         if verbose:
             print(log)
+        # TODO this is super sneaky and non obvious, copying an anti pattern
+        model.hessian = hessian
         return out_flag, hessian, log
 
     def _line_search_iteration_log(self, model):  # TODO fix hacky argument
-        out = f"[Iteration]: {self.n_func_evals}\n"
+        out = f"[Iteration]: {self.iter_count}\n"
         val, grad = model.get_log_likelihood()
         if self.grad is None:
             self.grad = grad
         out += f"\tLL = {val}, grad = {grad}\n"
         beta = u"\u03B2"
-        out += f"\t {beta} = " + str(model.get_beta_vec()) + "\n"
-        out += f"Norm of step: {linalg.norm(self.step)}\n"
+        out += f"\t{beta} = " + str(model.get_beta_vec()) + "\n"
+        out += f"\tNorm of step: {linalg.norm(self.step)}\n"
         # out += f"radius: \n" # a trust region thing
-        out += f"Norm of grad: {linalg.norm(self.grad)}\n"
-        out += f"Norm of relative grad: {self.compute_relative_gradient()} \n"
-        out += f"Number of function evals: {self.n_func_evals}"
+        out += f"\tNorm of grad: {linalg.norm(self.grad)}\n"
+        out += f"\tNorm of relative grad: {self.compute_relative_gradient()} \n"
+        out += f"\tNumber of function evals: {self.n_func_evals} (" \
+               f"{model.n_log_like_calls_non_redundant} with computation)"
 
         return out
 

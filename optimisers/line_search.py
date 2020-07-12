@@ -105,6 +105,7 @@ def line_search_astep(stx, fx, dx, sty, fy, dy, stp, fp, dp, brackt, stpmin, stp
     :return: 
     :rtype: 
     """
+    # print("\tInput astep:", stx, fx, dx, sty, fy, dy, stp, fp, dp, brackt, stpmin, stpmax)
     # parameter
     p66 = 0.66  # TODO why a magic constant
 
@@ -403,6 +404,7 @@ def line_search_asrch(fcn, x, f, g, arc, stp, maxfev,
         # safeguard the trial step size (make sure step passed in is in legal bounds
         stp = max(stp, stpmin)
         stp = min(stp, stpmax)
+        # print("stp = ", stp)
 
         # If an unusual termination is to occur then let
         # stp be the lowest point obtained so far.
@@ -411,9 +413,10 @@ def line_search_asrch(fcn, x, f, g, arc, stp, maxfev,
                 or (is_bracketed and stmax - stmin <= xtol * stmax)):
             stp = stx
         (s, ds) = arc(stp)
-        print("(s, ds) = ", s, ds)
+        # print("(s, ds) = ", s, ds)
         # Likelihood at new beta
         f, g = fcn(x + s)
+        # print("g= ", g)
 
         fp = f
         dp = np.dot(g, ds)
@@ -477,6 +480,7 @@ def line_search_asrch(fcn, x, f, g, arc, stp, maxfev,
         if mfp > mfx:
             # case U1
             # stx = stx fx = fx dx = dx
+            # tODO these values look static per iter sometimes
             sty = stp
             fy = fp
             dy = dp
@@ -512,6 +516,7 @@ def line_search_asrch(fcn, x, f, g, arc, stp, maxfev,
             stp = line_search_astep(
                 mstx, mfx, mdx, msty, mfy, mdy, stp, mfp,
                 mdp, is_bracketed, stmin, stmax)
+            # print("interp step", stp)
             # safeguard the step and update the interval width tracker
         if is_bracketed:
             if (abs(sty - stx) >= p66 * width1):

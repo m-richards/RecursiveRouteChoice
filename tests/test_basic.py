@@ -65,7 +65,8 @@ class TestSimpleCases:
         subfolder = "ExampleTiny"  # big data from classical v2
         folder = join("../Datasets", subfolder)
         network_data_struct, obs_mat = RecursiveLogitDataStruct.from_directory(folder,
-                                                                               add_angles=False)
+                                                                               add_angles=False,
+                                                                               delim=" ")
         network_data_struct.add_second_travel_time_for_testing()
         optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS,
                                            vec_length=1,

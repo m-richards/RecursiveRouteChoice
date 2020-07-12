@@ -309,12 +309,10 @@ class RecursiveLogitModel(object):
     def get_log_likelihood(self, n_obs_override=None):
         """Compute the log likelihood of the data with the current beta vec
                 n_obs override is for debug purposes to artificially lower the number of observations"""
-        self.n_log_like_calls +=1
+        self.n_log_like_calls += 1
         if self.flag_log_like_stored:
-            print("*************************called ll (in theory retrieval only)")
             return self.log_like_stored, self.grad_stored
-        print("*************************called ll")
-        self.n_log_like_calls_non_redundant +=1
+        self.n_log_like_calls_non_redundant += 1
         # print_sparse(v_mat)
 
         # TODO majorly wrong, doesn't use the obs matrix!
@@ -383,7 +381,7 @@ class RecursiveLogitModel(object):
 
             value_funcs, exp_val_funcs = self._value_functions, self._exp_value_functions
             grad_orig = self.get_value_func_grad_orig(orig_index, m_tilde, exp_val_funcs)
-            print("grad orig", grad_orig, orig_index, "\n\t", exp_val_funcs)
+            # print("grad orig", grad_orig, orig_index, "\n\t", exp_val_funcs)
             # print("grad orig", grad_orig)
             orig_utility = value_funcs[orig_index]
             # note we are adding to this, this is a progress value
@@ -423,7 +421,7 @@ class RecursiveLogitModel(object):
                     sum_current_attr[attr] += self.network_data.data_array[attr][
                         current_node_index, next_node_index]
             #
-            # print("sum current_attr", sum_current_attr)
+            print("sum current_attr", sum_current_attr, grad_orig)
 
             gradient_each_obs[n, :] = sum_current_attr - grad_orig  # LogLikeGrad in Code doc
             # print("grad each obs", gradient_each_obs[n, :])
@@ -458,7 +456,9 @@ class RecursiveLogitModel(object):
         partial_grad = self._get_value_func_incomplete_grad(m_tilde, exp_val_funcs)
         b = m_tilde.toarray()
         # print("partial grad\n", partial_grad)
+        # with np.errstate(divide='ignore', invalid='ignore'):
         return partial_grad[:, orig_index] / exp_val_funcs[orig_index]
+
 
     def _get_value_func_incomplete_grad(self, m_tilde, exp_val_funcs):
         """
