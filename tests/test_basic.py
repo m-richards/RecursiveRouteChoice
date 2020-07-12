@@ -44,9 +44,7 @@ class TestSimpleCases:
                                                        incidence_matrix=incidence_mat,
                                                        turn_angle_mat=None)
         network_data_struct.add_second_travel_time_for_testing()
-        optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS,
-                                           vec_length=1,
-                                           max_iter=4)  # TODO check these parameters & defaults
+        optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)  # TODO check these parameters & defaults
 
         model = RecursiveLogitModel(network_data_struct, optimiser, user_obs_mat=obs_mat)
 
@@ -70,9 +68,7 @@ class TestSimpleCases:
                                                                                add_angles=False,
                                                                                delim=" ")
         network_data_struct.add_second_travel_time_for_testing()
-        optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS,
-                                           vec_length=1,
-                                           max_iter=4)  # TODO check these parameters & defaults
+        optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
 
         model = RecursiveLogitModel(network_data_struct, optimiser, user_obs_mat=obs_mat)
 
@@ -96,14 +92,12 @@ class TestSimpleCases:
                                         add_angles=True, angle_type='comparison',
                                         delim=" ")
         # network_data_struct.add_second_travel_time_for_testing()
-        optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS,
-                                           vec_length=1,
-                                           max_iter=4)  # TODO check these parameters & defaults
+        optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
 
         model = RecursiveLogitModel(network_data_struct, optimiser, user_obs_mat=obs_mat)
 
         log_like_out, grad_out = model.get_log_likelihood()
-        optimiser.set_beta_vec(model.beta_vec)  # TODO this is still kind of hacky
+        optimiser.set_beta_vec(model.beta_vec)
         optimiser.set_current_value(log_like_out)
         eps = 1e-6
 

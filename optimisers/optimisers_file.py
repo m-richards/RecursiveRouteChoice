@@ -1,4 +1,5 @@
 import functools
+import abc
 from enum import Enum, auto
 
 import numpy as np
@@ -13,7 +14,7 @@ class OptimType(Enum):
     TRUST_REGION = auto()
 
 
-class Optimiser(object):
+class Optimiser(abc.ABC):
     """Global wrapper object around all optim algs, delegate to sub classes for individual.
     Need to be clear about which properties are effectively read only and which store state.
     Ideally this is a generic optim alg that doesn't know anything about RecursiveLogitModel
@@ -23,11 +24,9 @@ class Optimiser(object):
     RESIDUAL = 1e-3
     LL_ERROR_VALUE = 99999
 
-    def __init__(self, hessian_type=OptimHessianType.BFGS,
-                 vec_length=1,
-                 max_iter=4):
+    def __init__(self, hessian_type=OptimHessianType.BFGS, max_iter=4):
         self.hessian_type = hessian_type
-        self.n = vec_length
+        # self.n = vec_length
         self.max_iter = max_iter
 
         self.iter_count = 0
@@ -106,9 +105,8 @@ class LineSearchOptimiser(Optimiser):
 
     METHOD_FLAG = OptimType.LINE_SEARCH
 
-    def __init__(self, hessian_type=OptimHessianType.BFGS,
-                 vec_length=1, max_iter=4, ):
-        super().__init__(hessian_type, vec_length, max_iter)
+    def __init__(self, hessian_type=OptimHessianType.BFGS, max_iter=4):
+        super().__init__(hessian_type, max_iter)
         # TODO adjust fields?
 
     def iterate_step(self, model, verbose=True, output_file=None):
@@ -190,5 +188,5 @@ class TrustRegionOptimiser(Optimiser):
 
     def __init__(self, hessian_type=OptimHessianType.BFGS,
                  vec_length=1, max_iter=4, ):
-        super().__init__(hessian_type, vec_length, max_iter)
+        super().__init__(hessian_type, max_iter)
         raise NotImplementedError()

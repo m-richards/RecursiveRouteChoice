@@ -1,4 +1,3 @@
-# TODO check np.dot usage since numpy is not aware of sparse properly, should use A.dot(v)
 import time
 import numpy as np
 from main import RecursiveLogitModel, RecursiveLogitDataStruct
@@ -29,7 +28,7 @@ time_io_end = time.time()
 
 optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS,
                                    vec_length=1,
-                                   max_iter=4)  # TODO check these parameters & defaults
+                                   max_iter=4)
 model = RecursiveLogitModel(network_data_struct, optimiser, user_obs_mat=obs_mat)
 
 log_like_out, grad_out = model.get_log_likelihood(n_obs_override=1)
@@ -62,6 +61,6 @@ if n == 1000:
     print("Infinite loop happened somehow, shouldn't have happened")
 
 time_finish = time.time()
-# tODO covariance
+
 print(f"IO time - {round(time_io_end - time_io_start, 3)}s")
 print(f"Algorithm time - {round(time_finish - time_io_end, 3)}")

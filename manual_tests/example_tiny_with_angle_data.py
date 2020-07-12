@@ -25,8 +25,7 @@ network_data_struct, obs_mat = RecursiveLogitDataStruct.from_directory(
 
 time_io_end = time.time()
 
-optimiser = LineSearchOptimiser(OptimHessianType.BFGS, vec_length=1,
-                                max_iter=4)  # TODO check these parameters & defaults
+optimiser = LineSearchOptimiser(OptimHessianType.BFGS, max_iter=4)
 
 model = RecursiveLogitModel(network_data_struct, optimiser, user_obs_mat=obs_mat)
 model.solve_for_optimal_beta()

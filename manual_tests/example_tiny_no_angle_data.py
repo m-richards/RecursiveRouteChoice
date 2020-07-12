@@ -1,4 +1,3 @@
-# TODO check np.dot usage since numpy is not aware of sparse properly, should use A.dot(v)
 import time
 import numpy as np
 
@@ -26,15 +25,12 @@ time_io_end = time.time()
 network_data_struct, obs_mat = RecursiveLogitDataStruct.from_directory(folder, add_angles=False,
                                                                        delim=" ")
 network_data_struct.add_second_travel_time_for_testing()
-optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS,
-                                   vec_length=1,
-                                   max_iter=4)  # TODO check these parameters & defaults
+optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
 
 model = RecursiveLogitModel(network_data_struct, optimiser, user_obs_mat=obs_mat)
 
 model.solve_for_optimal_beta()
 
 time_finish = time.time()
-# tODO covariance
 print(f"IO time - {round(time_io_end - time_io_start, 3)}s")
 print(f"Algorithm time - {round(time_finish - time_io_end, 3)}")
