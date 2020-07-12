@@ -4,7 +4,7 @@ import numpy as np
 import scipy
 from data_loading import load_csv_to_sparse, get_incorrect_tien_turn_matrices, \
     get_uturn_categorical_matrix, get_left_turn_categorical_matrix
-from main import RecursiveLogitModel, get_value_func_grad, RecursiveLogitDataStruct
+from main import RecursiveLogitModel, get_value_func_incomplete_grad, RecursiveLogitDataStruct
 
 import os
 from os.path import join
@@ -27,7 +27,8 @@ folder = join("Datasets", subfolder)
 #   each row == [dest node, orig node, node 2, node 3, ... dest node, 0 padding ....]
 
 time_io_end = time.time()
-network_data_struct, obs_mat = RecursiveLogitDataStruct.from_directory(folder, add_angles=False)
+network_data_struct, obs_mat = RecursiveLogitDataStruct.from_directory(folder, add_angles=False,
+                                                                       delim=" ")
 network_data_struct.add_second_travel_time_for_no_turn_angles()
 optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS,
                                    vec_length=1,
@@ -47,7 +48,6 @@ optimiser.set_beta_vec(model.beta_vec)
 optimiser.set_current_value(log_like_out)
 print(optimiser._line_search_iteration_log(model))
 while n <= 1000:
-    optimiser.iter_count += 1
     if model.optimiser.METHOD_FLAG == OptimType.LINE_SEARCH:
         ok_flag, hessian, log_msg = optimiser.line_search_iteration(model, verbose=False)
         if ok_flag:
