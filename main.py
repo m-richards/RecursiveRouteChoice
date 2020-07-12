@@ -9,7 +9,7 @@ from data_loading import load_csv_to_sparse, get_left_turn_categorical_matrix, \
     get_uturn_categorical_matrix, resize_to_dims
 from debug_helpers import print_sparse
 from optimisers.optimisers_file import Optimiser
-
+import numpy as np
 """
 Sketch of what we need
 
@@ -39,7 +39,6 @@ Class to store data
 
 
 """
-import numpy as np
 
 
 class RecursiveLogitDataStruct(object):
@@ -125,9 +124,11 @@ class RecursiveLogitDataStruct(object):
         fixed_dims = travel_times_mat.shape
         incidence_mat = load_csv_to_sparse(
             file_incidence, dtype='int', delim=delim).todok()
+        # Get observations matrix - note: observation matrix is in sparse format, but is of the form
+        #   each row == [dest node, orig node, node 2, node 3, ... dest node, 0 padding ....]
         obs_mat = load_csv_to_sparse(
             file_obs, dtype='int', square_matrix=False, delim=delim).todok()
-        # obs_mat = resize_to_dims(obs_mat, fixed_dims, "Observations")
+
         if add_angles:
             turn_angle_mat = load_csv_to_sparse(file_turn_angle, delim=delim).todok()
             resize_to_dims(turn_angle_mat, fixed_dims, "Turn Angles")
@@ -188,8 +189,6 @@ class RecursiveLogitModel(object):
         # If beta has changed we need to refresh values
         if (new_beta_vec != self.beta_vec).any():
             self.flag_log_like_stored = False
-        else:
-            print("redundant beta update occurred")
         self.beta_vec = new_beta_vec
 
         # self._beta_changed = True
@@ -274,10 +273,9 @@ class RecursiveLogitModel(object):
         # note that z_vec is dense so this should be dense without explicit cae
         if linalg.norm(
                 np.array(A @ z_vec - rhs)) > Optimiser.RESIDUAL:  # residual - i.e. ill
-            # conditioned
-            # solution
+            # conditioned solution
             self.flag_exp_val_funcs_error = True
-            print("value function solution has residual")
+            print("W: Value function solution is not exact, has residual.")
             return
             # raise ValueError("value function solution does not satisfy system well.")
         z_vec =np.squeeze(z_vec.T) # not required but convenient at this point !TODO
@@ -421,7 +419,7 @@ class RecursiveLogitModel(object):
                     sum_current_attr[attr] += self.network_data.data_array[attr][
                         current_node_index, next_node_index]
             #
-            print("sum current_attr", sum_current_attr, grad_orig)
+            # print("sum current_attr", sum_current_attr, grad_orig)
 
             gradient_each_obs[n, :] = sum_current_attr - grad_orig  # LogLikeGrad in Code doc
             # print("grad each obs", gradient_each_obs[n, :])

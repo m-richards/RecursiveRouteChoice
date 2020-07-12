@@ -174,8 +174,7 @@ class LineSearchOptimiser(Optimiser):
         # out += f"radius: \n" # a trust region thing
         out += f"\tNorm of grad: {linalg.norm(self.grad)}\n"
         out += f"\tNorm of relative grad: {self.compute_relative_gradient()} \n"
-        out += f"\tNumber of function evals: {self.n_func_evals} (" \
-               f"{model.n_log_like_calls_non_redundant} with computation)"
+        out += f"\tNumber of function evals: {model.n_log_like_calls_non_redundant}"
 
         return out
 
