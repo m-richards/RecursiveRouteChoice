@@ -48,12 +48,8 @@ def _hessian_bfgs(step, delta_grad, hessian):
         return hessian, False
 
 
-def update_hessian_approx(model, step, delta_grad, hessian):
-    # TODO this shouldn't have model as an arg, it should be anchored somewhere where
-    op_settings = model.optimiser
-    method = op_settings.hessian_type
-    # relevant pieces can be gotten with self.
-    if method == OptimHessianType.BFGS:
+def update_hessian_approx(approx_method, step, delta_grad, hessian):
+    if approx_method == OptimHessianType.BFGS:
         hessian, ok_flag = _hessian_bfgs(step, delta_grad, hessian)
         return hessian, ok_flag
     else:

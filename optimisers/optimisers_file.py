@@ -5,9 +5,11 @@ from enum import Enum, auto
 import numpy as np
 from numpy import linalg
 
+from .extra_optim import OptimFunctionState
 from .hessian_approx import update_hessian_approx, OptimHessianType
 from .line_search import line_search_asrch
 
+OPTIMIZE_CONSTANT_MAX_FEV = 10
 
 
 class OptimType(Enum):
@@ -24,7 +26,6 @@ class Optimiser(abc.ABC):
     NUMERICAL_ERROR_THRESH = -1e-3
     RESIDUAL = 1e-3
     LL_ERROR_VALUE = 99999
-    OPTIMIZE_CONSTANT_MAX_FEV = 10
 
     def __init__(self, hessian_type=OptimHessianType.BFGS, max_iter=4):
         self.hessian_type = hessian_type
@@ -103,12 +104,13 @@ class LineSearchOptimiser(Optimiser):
     def __init__(self, hessian_type=OptimHessianType.BFGS, max_iter=4):
         super().__init__(hessian_type, max_iter)
 
-    def iterate_step(self, model, verbose=True, output_file=None):
+    # TODO what if optimvals is part of state on both, rather than an argument
+    def iterate_step(self, optim_vals:OptimFunctionState, verbose=True, output_file=None):
         """ Performs a single step of the line search iteration,
             evaluating the value function and taking a step based upon the gradient"""
         self.iter_count += 1
-        hessian_old = model.hessian
-        value_current, grad = model.get_log_likelihood()
+        hessian_old = optim_vals.hessian
+        value_in, grad = optim_vals.value, optim_vals.grad
         p = np.linalg.solve(hessian_old, -grad)
 
         if np.dot(p, grad) > 0:
@@ -119,54 +121,53 @@ class LineSearchOptimiser(Optimiser):
 
         arc = functools.partial(line_arc, ds=p)
         stp = self.INITIAL_STEP_LENGTH # for each iteration we start from a fixed step length
-        x = model.get_beta_vec()
-        # Nested function, still same method
+        x = optim_vals.beta_vec
+
         def compute_new_log_like(new_beta_vec):
             """Note function not method: 'lambda' passed to optim alg, lets us update the
             n_func_evals with each call"""
             self.n_func_evals += 1
-            model.update_beta_vec(new_beta_vec)
-            return model.get_log_likelihood()
+            return optim_vals.function(new_beta_vec)
 
         optim_func = compute_new_log_like
         x, val_new, grad_new, stp, info, n_func_evals = line_search_asrch(
-            optim_func, x, value_current, grad, arc, stp,
-            maxfev=self.OPTIMIZE_CONSTANT_MAX_FEV)
+            optim_func, x, value_in, grad, arc, stp,
+            maxfev=OPTIMIZE_CONSTANT_MAX_FEV)
 
-        if val_new <= value_current:
+        if val_new <= value_in:
             # TODO need to collect these things into a struct
             #   think there already is an outline of one
             self.step = p * stp
             self.delta_grad = grad_new - grad
-            self.delta_value = val_new - value_current
+            self.delta_value = val_new - value_in
             self.value = val_new
             self.beta_vec = x
             self.grad = grad_new
-            hessian, ok = update_hessian_approx(model, self.step, self.delta_grad, hessian_old)  #
+            hessian, ok = update_hessian_approx(optim_vals.hessian_approx_type, self.step, self.delta_grad,
+                                                hessian_old)  #
             out_flag = True
         else:
             out_flag = False
             hessian = hessian_old
-        log = self.get_iteration_log(model)  
+        log = self.get_iteration_log(optim_vals)
         if verbose:
             print(log, file=output_file)
-        # TODO this is super sneaky and non obvious, copying an anti pattern
-        model.hessian = hessian
         return out_flag, hessian, log
 
-    def get_iteration_log(self, model):  # TODO fix hacky argument
+    def get_iteration_log(self, optim_vals:OptimFunctionState):  # TODO fix hacky argument
         out = f"[Iteration]: {self.iter_count}\n"
-        val, grad = model.get_log_likelihood()
+        val, grad = optim_vals.function()
         if self.grad is None:
             self.grad = grad
         out += f"\tLL = {val}, grad = {grad}\n"
         beta = u"\u03B2"
-        out += f"\t{beta} = " + str(model.get_beta_vec()) + "\n"
+        out += f"\t{beta} = " + str(optim_vals.beta_vec) + "\n"
         out += f"\tNorm of step: {linalg.norm(self.step)}\n"
         # out += f"radius: \n" # a trust region thing
         out += f"\tNorm of grad: {linalg.norm(self.grad)}\n"
         out += f"\tNorm of relative grad: {self.compute_relative_gradient()} \n"
-        out += f"\tNumber of function evals: {model.n_log_like_calls_non_redundant}"
+        out += f"\tNumber of function evals: {optim_vals.function_evals_count()}"
+        # out += f"\tNumber of function evals: {model.n_log_like_calls_non_redundant}"
 
         return out
 

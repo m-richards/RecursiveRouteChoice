@@ -8,6 +8,7 @@ from scipy.sparse import linalg as splinalg
 from data_loading import load_csv_to_sparse, get_left_turn_categorical_matrix, \
     get_uturn_categorical_matrix, resize_to_dims
 from debug_helpers import print_sparse
+from optimisers.extra_optim import OptimFunctionState
 from optimisers.optimisers_file import Optimiser, OptimType
 import numpy as np
 """
@@ -183,16 +184,34 @@ class RecursiveLogitModel(object):
         optimiser.set_beta_vec(self.beta_vec)
         optimiser.set_current_value(self.log_like_stored)
 
+    def _get_n_func_evals(self):
+        return  self.n_log_like_calls_non_redundant
+
     def solve_for_optimal_beta(self, output_file=None):
         """Runs the line search optimisation algorithm until a termination condition is reached.
         Print output"""
         # print out iteration 0 information
-        print(self.optimiser.get_iteration_log(self), file=None)
+        val, grad = self.get_log_likelihood()
+        optim_vals = OptimFunctionState(val, grad, self.hessian,
+                                        self.optimiser.hessian_type,
+                                        self.eval_log_like_at_new_beta,
+                                        self.get_beta_vec(), )
+
+        print(self.optimiser.get_iteration_log(optim_vals), file=None)
         n = 0
         while n <= 1000:
             if self.optimiser.METHOD_FLAG == OptimType.LINE_SEARCH:
-                ok_flag, hessian, log_msg = self.optimiser.iterate_step(self, verbose=False,
+                val, grad = self.get_log_likelihood()
+                optim_vals = OptimFunctionState(val, grad, self.hessian,
+                                                self.optimiser.hessian_type,
+                                                self.eval_log_like_at_new_beta,
+                                                self.get_beta_vec(),
+                                                self._get_n_func_evals)
+                ok_flag, hessian, log_msg = self.optimiser.iterate_step(optim_vals,
+
+                                                                        verbose=False,
                                                                         output_file=None)
+                self.hessian = hessian # TODO review if necessary
                 if ok_flag:
                     print(log_msg)
                 else:
@@ -326,7 +345,7 @@ class RecursiveLogitModel(object):
     #         return self._value_functions, self._exp_value_functions
     #     return self._value_functions
 
-    def get_log_like_new_beta(self, beta_vec):
+    def eval_log_like_at_new_beta(self, beta_vec):
         """update beta vec and compute log likelihood in one step - used for lambdas
         Effectively a bad functools.partial"""
         self.update_beta_vec(beta_vec)

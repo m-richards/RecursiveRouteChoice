@@ -27,7 +27,7 @@ network_data_struct, obs_mat = RecursiveLogitDataStruct.from_directory(folder, a
 time_io_end = time.time()
 
 optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS,
-                                   vec_length=1,
+
                                    max_iter=4)
 model = RecursiveLogitModel(network_data_struct, optimiser, user_obs_mat=obs_mat)
 
