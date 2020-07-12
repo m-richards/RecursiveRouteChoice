@@ -58,7 +58,7 @@ class TestSimpleCases:
         assert np.abs(linalg.norm(grad_out) - 0) < eps
 
         model.hessian = np.identity(network_data_struct.n_dims)
-        out_flag, hessian, log = optimiser.line_search_iteration(model, verbose=False)
+        out_flag, hessian, log = optimiser.iterate_step(model, verbose=False)
         assert out_flag == True
         assert (hessian == np.identity(2)).all()
         assert optimiser.n_func_evals == 1
@@ -84,7 +84,7 @@ class TestSimpleCases:
         assert np.abs(linalg.norm(grad_out) - 0) < eps
 
         model.hessian = np.identity(network_data_struct.n_dims)
-        out_flag, hessian, log = optimiser.line_search_iteration(model, verbose=False)
+        out_flag, hessian, log = optimiser.iterate_step(model, verbose=False)
         assert out_flag == True
         assert (hessian == np.identity(2)).all()
         assert optimiser.n_func_evals == 1
@@ -107,7 +107,7 @@ class TestSimpleCases:
         optimiser.set_current_value(log_like_out)
         eps = 1e-6
 
-        print(optimiser._line_search_iteration_log(model)) # Note this is currently required to
+        print(optimiser.get_iteration_log(model)) # Note this is currently required to
         # set the gradient so that compute relative gradient works, really bad
         model.hessian = np.identity(network_data_struct.n_dims)
         ll, line_search_step, grad_norm, rel_grad_norm = (0.519860, 0.0, 0.467707, 0.375000)
@@ -123,7 +123,7 @@ class TestSimpleCases:
         ]
         for t in targets:
             ll, line_search_step, grad_norm, rel_grad_norm = t
-            out_flag, hessian, log = optimiser.line_search_iteration(model, verbose=False)
+            out_flag, hessian, log = optimiser.iterate_step(model, verbose=False)
             log_like_out, grad_out = model.get_log_likelihood()
             assert np.abs(log_like_out - ll) < eps
             assert np.abs(linalg.norm(model.optimiser.step) - line_search_step) < eps

@@ -8,7 +8,7 @@ from scipy.sparse import linalg as splinalg
 from data_loading import load_csv_to_sparse, get_left_turn_categorical_matrix, \
     get_uturn_categorical_matrix, resize_to_dims
 from debug_helpers import print_sparse
-from optimisers.optimisers_file import Optimiser
+from optimisers.optimisers_file import Optimiser, OptimType
 import numpy as np
 """
 Sketch of what we need
@@ -171,13 +171,41 @@ class RecursiveLogitModel(object):
 
         self.flag_log_like_stored = False
 
-        self.hessian = None  # TODO should this be on optimser instead?
+        self.hessian = np.identity(data_struct.n_dims)  # TODO should this be on optimser instead?
         self.flag_exp_val_funcs_error = True
 
-        self.update_beta_vec(self.beta_vec)  # to this to refresh default quantities
-
+        self.update_beta_vec(self.beta_vec)  # to this to refresh dependent matrix quantitites
         self.n_log_like_calls = 0
         self.n_log_like_calls_non_redundant = 0
+
+        # setup optimiser initialisation
+        self.get_log_likelihood()  # need to compute starting LL for optimiser
+        optimiser.set_beta_vec(self.beta_vec)
+        optimiser.set_current_value(self.log_like_stored)
+
+    def solve_for_optimal_beta(self, output_file=None):
+        """Runs the line search optimisation algorithm until a termination condition is reached.
+        Print output"""
+        # print out iteration 0 information
+        print(self.optimiser.get_iteration_log(self), file=None)
+        n = 0
+        while n <= 1000:
+            if self.optimiser.METHOD_FLAG == OptimType.LINE_SEARCH:
+                ok_flag, hessian, log_msg = self.optimiser.iterate_step(self, verbose=False,
+                                                                        output_file=None)
+                if ok_flag:
+                    print(log_msg)
+                else:
+                    raise ValueError("Line search error flag was raised. Process failed.")
+            else:
+                raise NotImplementedError("Only have line search implemented")
+            # check stopping condition
+            is_stopping, stop_type, is_successful = self.optimiser.check_stopping_criteria()
+
+            if is_stopping:
+                print(f"The algorithm stopped due to condition: {stop_type}")
+                return
+        print("Infinite loop happened somehow, shouldn't have happened")
 
     def get_beta_vec(self):
         """Getter is purely to imply that beta vec is not a fixed field"""
@@ -214,7 +242,7 @@ class RecursiveLogitModel(object):
 
     def _compute_exponential_utility_matrix(self):
         """ # TODO can cached this if I deem it handy.
-            Returns M_{ka} matrix
+            Returns M_{ka} matrix which is not orig dependent
         """
 
         # explicitly do need this copy since we modify m_mat

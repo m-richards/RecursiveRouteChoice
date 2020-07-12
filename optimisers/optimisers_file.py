@@ -88,6 +88,12 @@ class Optimiser(object):
     def set_current_value(self, value):
         self.current_value = value
 
+    def get_iteration_log(self, model):
+        raise NotImplementedError()
+
+    def iterate_step(self, model, verbose=False, output_file=None):
+        raise NotImplementedError()
+
 
 class LineSearchOptimiser(Optimiser):
     INITIAL_STEP_LENGTH = 1.0
@@ -105,7 +111,7 @@ class LineSearchOptimiser(Optimiser):
         super().__init__(hessian_type, vec_length, max_iter)
         # TODO adjust fields?
 
-    def line_search_iteration(self, model, verbose=True):
+    def iterate_step(self, model, verbose=True, output_file=None):
         """ TODO note there is som first time initialisation that need to be removed"""
         self.iter_count += 1
         hessian_old = model.hessian
@@ -155,14 +161,14 @@ class LineSearchOptimiser(Optimiser):
         else:
             out_flag = False
             hessian = hessian_old
-        log = self._line_search_iteration_log(model)  # TODO return this
+        log = self.get_iteration_log(model)  # TODO return this
         if verbose:
-            print(log)
+            print(log, file=output_file)
         # TODO this is super sneaky and non obvious, copying an anti pattern
         model.hessian = hessian
         return out_flag, hessian, log
 
-    def _line_search_iteration_log(self, model):  # TODO fix hacky argument
+    def get_iteration_log(self, model):  # TODO fix hacky argument
         out = f"[Iteration]: {self.iter_count}\n"
         val, grad = model.get_log_likelihood()
         if self.grad is None:
