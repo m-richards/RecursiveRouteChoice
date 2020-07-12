@@ -20,7 +20,8 @@ import warnings
 time_io_start = time.time()
 # subfolder ="ExampleTutorial"# "ExampleTutorial" from classical logicv2
 # file = "ExampleTiny"  # "ExampleNested" from classical logit v2, even smaller network
-subfolder = "ExampleTiny"  # big data from classical v2
+# subfolder = "ExampleTiny"
+subfolder = "ExampleTinyModifiedObs"
 folder = os.path.join("Datasets", subfolder)
 
 # Get observations matrix - note: observation matrix is in sparse format, but is of the form
@@ -77,4 +78,4 @@ print(f"IO time - {round(time_io_end - time_io_start, 3)}s")
 print(f"Algorithm time - {round(time_finish - time_io_end, 3)}")
 
 
-print("total ll calls, non redundant = ", model.n_log_like_calls, model.n_log_like_calls_non_redundant)
+print("total LL calls ", model.n_log_like_calls_non_redundant)
