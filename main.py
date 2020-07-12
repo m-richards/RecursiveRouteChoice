@@ -6,7 +6,8 @@ from scipy.sparse import coo_matrix, csr_matrix, identity
 from scipy.sparse import linalg as splinalg
 
 from data_loading import load_csv_to_sparse, get_left_turn_categorical_matrix, \
-    get_uturn_categorical_matrix
+    get_uturn_categorical_matrix, resize_to_dims
+from debug_helpers import print_sparse
 from optimisers.optimisers_file import Optimiser
 
 """
@@ -81,7 +82,8 @@ class RecursiveLogitDataStruct(object):
             return
         self.has_categorical_turns = True
         if self.turn_angle_mat is None:
-            raise ValueError("Raw turn angles matrix must be supplied in constructor")
+            raise ValueError("Creating categorical turn matrices failed. Raw turn angles matrix "
+                             "must be supplied in the constructor")
         left_turn_dummy = get_left_turn_categorical_matrix(self.turn_angle_mat, left_turn_thresh,
                                                            u_turn_thresh)
         u_turn_dummy = get_uturn_categorical_matrix(self.turn_angle_mat, u_turn_thresh)
@@ -104,7 +106,7 @@ class RecursiveLogitDataStruct(object):
         self.data_fields.append("nonzero_arc_incidence")
 
     @classmethod
-    def from_directory(cls, path, add_angles=True, angle_type='correct'):
+    def from_directory(cls, path, add_angles=True, angle_type='correct', delim=None):
         """Creates data set from specified folder, assuming standard file path names.
         Also returns obs mat to keep IO tidy and together"""
         if add_angles and angle_type not in ['correct', 'comparison']:
@@ -118,11 +120,18 @@ class RecursiveLogitDataStruct(object):
         file_turn_angle = os.path.join(path, TURN_ANGLE)
         file_obs = os.path.join(path, OBSERVATIONS)
 
-        travel_times_mat = load_csv_to_sparse(file_travel_time).todok()
-        incidence_mat = load_csv_to_sparse(file_incidence, dtype='int').todok()
-        obs_mat = load_csv_to_sparse(file_obs, dtype='int', square_matrix=False).todok()
+        travel_times_mat = load_csv_to_sparse(file_travel_time, delim=delim,
+                                              ).todok()
+        fixed_dims = travel_times_mat.shape
+        incidence_mat = load_csv_to_sparse(
+            file_incidence, dtype='int', delim=delim).todok()
+        obs_mat = load_csv_to_sparse(
+            file_obs, dtype='int', square_matrix=False, delim=delim).todok()
+        # obs_mat = resize_to_dims(obs_mat, fixed_dims, "Observations")
         if add_angles:
-            turn_angle_mat = load_csv_to_sparse(file_turn_angle).todok()
+            turn_angle_mat = load_csv_to_sparse(file_turn_angle, delim=delim).todok()
+            resize_to_dims(turn_angle_mat, fixed_dims, "Turn Angles")
+            # print("qq", turn_angle_mat.shape, fixed_dims)
             out = RecursiveLogitDataStruct(travel_times_mat, incidence_mat, turn_angle_mat)
             if angle_type == 'correct':
                 out.add_turn_categorical_variables()
@@ -159,9 +168,15 @@ class RecursiveLogitModel(object):
         self._value_functions = None
         self._exp_value_functions = None
 
+        self.flag_log_like_stored = False
+
         self.hessian = None  # TODO should this be on optimser instead?
+        self.flag_exp_val_funcs_error = True
 
         self.update_beta_vec(self.beta_vec)  # to this to refresh default quantities
+
+        self.n_log_like_calls = 0
+        self.n_log_like_calls_non_redundant = 0
 
     def get_beta_vec(self):
         """Getter is purely to imply that beta vec is not a fixed field"""
@@ -170,17 +185,26 @@ class RecursiveLogitModel(object):
     def update_beta_vec(self, new_beta_vec):
         """Change the current parameter vector beta and update intermediate results which depend
         on this"""
+        # If beta has changed we need to refresh values
+        if (new_beta_vec != self.beta_vec).any():
+            self.flag_log_like_stored = False
+        else:
+            print("redundant beta update occurred")
         self.beta_vec = new_beta_vec
+
         # self._beta_changed = True
         # TODO delay this from happening until the update is needed - use flag
 
         self._compute_short_term_utility()
         self._compute_exponential_utility_matrix()
-        self._compute_value_function_matrix()
+        # self._compute_value_function_matrix()
         # TODO make sure new stuff gets added here
 
     def _compute_short_term_utility(self):
+        # print("beta", self.beta_vec.shape)
+        # print("data dim", self.data_array)
         self.short_term_utility = np.sum(self.beta_vec * self.data_array)
+        # print(type(self.short_term_utility))
 
     def get_short_term_utility(self):
         """Returns v(a|k)  for all (a,k) as 2D array,
@@ -190,6 +214,9 @@ class RecursiveLogitModel(object):
         return self.short_term_utility
 
     def _compute_exponential_utility_matrix(self):
+        """ # TODO can cached this if I deem it handy.
+            Returns M_{ka} matrix
+        """
 
         # explicitly do need this copy since we modify m_mat
         m_mat = self.get_short_term_utility().copy()
@@ -207,7 +234,7 @@ class RecursiveLogitModel(object):
 
         return self._exponential_utility_matrix
 
-    def _compute_value_function_matrix(self):
+    def _compute_value_function(self, m_tilde):
         """Solves the system Z = Mz+b and stores the output for future use.
         Has rudimentary flagging of errors but doesn't attempt to solve any problems"""
         error_flag = 0
@@ -215,31 +242,63 @@ class RecursiveLogitModel(object):
         rhs = scipy.sparse.lil_matrix((ncols, 1))  # supressing needless sparsity warning
         rhs[-1, 0] = 1
         # (I-M)z =b
-        M = self.get_exponential_utility_matrix()
+
 
         # TODO tien takes the absolute value for numerical safety here
-        A = identity(ncols) - M
+        A = identity(ncols) - m_tilde
+        # print("printing A")
+        # print(A.toarray())
+        # print("rhs", rhs.toarray())
         z_vec = splinalg.spsolve(A, rhs)
-
-        if z_vec.min() <= 1e-10:  # TODO add an optional thresh on this?
-            error_flag = 1
-            raise ValueError("value function has too small entries")
+        z_vec = np.atleast_2d(z_vec).T  # want a (x,1) column vector so that linear alg
+        # checks work
+        # print("z_vec", z_vec)
+        # check we aren't getting negative solutions for value functions
+        if z_vec.min() <= min(-1e-10, Optimiser.NUMERICAL_ERROR_THRESH):
+            # thresh on this?
+            self.flag_exp_val_funcs_error = True
+            return
+            # handling via flag rather than exceptions for efficiency
+            # raise ValueError("value function has too small entries")
 
         if np.any(z_vec < 0):
             raise ValueError("value function had negative solution, cannot take "
-                             "logarithm")
+                             "logarithm") # TODO note tien mai code just takes abs value
         # Note the transpose here is not mathematical, it is scipy being
         # lax about row and column vectors
-        if linalg.norm(  # note this isn't sparse apparently
-                A @ z_vec - rhs.transpose()) > 1e-3:  # residual - i.e. ill conditioned solution
-            raise ValueError("value function solution does not satisfy system well.")
-        self._value_functions = np.log(z_vec)
+
+        # Norm of residual
+            # Note: Scipy sparse norm doesn't have a 2 norm so we use this
+            # note this is expensive, in practice we may want to switch to sparse frobenius norm
+            # element wise norm so doable sparsely
+        # note that z_vec is dense so this should be dense without explicit cae
+        if linalg.norm(
+                np.array(A @ z_vec - rhs)) > Optimiser.RESIDUAL:  # residual - i.e. ill
+            # conditioned
+            # solution
+            self.flag_exp_val_funcs_error = True
+            print("value function solution has residual")
+            return
+            # raise ValueError("value function solution does not satisfy system well.")
+        z_vec =np.squeeze(z_vec.T) # not required but convenient at this point !TODO
+        zeroes = z_vec[z_vec == 0]
+        if len(zeroes) > 0:
+            # print("'Soft Warning', Z contains zeros in it, so value functions are undefined")
+            val_funcs_tmp = z_vec.copy()
+            val_funcs_tmp[val_funcs_tmp == 0] = np.nan  # TODO propagate nan handling
+            # in the cases where nans occur we might not actually need to deal with the numbers
+            # that are nans
+
+        else:
+            val_funcs_tmp = z_vec
+        self.flag_exp_val_funcs_error = False # execution finished as normal
+        self._value_functions = np.log(val_funcs_tmp)
         self._exp_value_functions = z_vec
 
-    def get_value_functions(self, return_exponentiated=False):
-        if return_exponentiated:
-            return self._value_functions, self._exp_value_functions
-        return self._value_functions
+    # def get_value_functions(self, return_exponentiated=False):
+    #     if return_exponentiated:
+    #         return self._value_functions, self._exp_value_functions
+    #     return self._value_functions
 
     def get_log_like_new_beta(self, beta_vec):
         """update beta vec and compute log likelihood in one step - used for lambdas
@@ -247,18 +306,38 @@ class RecursiveLogitModel(object):
         self.update_beta_vec(beta_vec)
         return self.get_log_likelihood()
 
-    def get_log_likelihood(self):
-        """Compute the log likelihood of the data with the current beta vec"""
+    def get_log_likelihood(self, n_obs_override=None):
+        """Compute the log likelihood of the data with the current beta vec
+                n_obs override is for debug purposes to artificially lower the number of observations"""
+        self.n_log_like_calls +=1
+        if self.flag_log_like_stored:
+            print("*************************called ll (in theory retrieval only)")
+            return self.log_like_stored, self.grad_stored
+        print("*************************called ll")
+        self.n_log_like_calls_non_redundant +=1
+        # print_sparse(v_mat)
+
+        # TODO majorly wrong, doesn't use the obs matrix!
+        #   m and v are supposed to depend on current obs
         obs_mat = self.user_obs_mat
         num_obs, path_max_len = np.shape(obs_mat)
+        if n_obs_override is not None:
+            num_obs = n_obs_override
         # local references with idomatic names
         N = self.n_dims  # number of attributes in data
         mu = self.mu
         v_mat = self.get_short_term_utility()  # capital u in tien mai's code
         m_mat = self.get_exponential_utility_matrix()
-        value_funcs, exp_val_funcs = self.get_value_functions(return_exponentiated=True)
 
-        grad = get_value_func_grad(m_mat, self, exp_val_funcs)
+        # value_funcs, exp_val_funcs = self.get_value_functions(return_exponentiated=True)
+        # print("printing v_mat")
+        # print_sparse(v_mat)
+        #
+        # print("printing m_mat")
+        # print_sparse(m_mat)
+
+
+        # grad = get_value_func_grad(m_mat, self, exp_val_funcs)
 
         log_like_cumulative = 0.0  # weighting of all observations
         grad_cumulative = np.zeros(N)  # gradient combined across all observations
@@ -268,13 +347,46 @@ class RecursiveLogitModel(object):
 
         # iterate through observation number
         for n in range(num_obs):
-            dest = obs_mat[n, 0]  # this was for adding extra cols, but we handle this without bad
-            # fixes
+            # print("obs num: ", n, "--------------------------------------")
+            dest = obs_mat[n, 0]
             orig_index = obs_mat[n, 1] - 1  # subtract 1 for zero based python
             # first_action = obs_mat[n, 2]
 
-            grad_orig = grad[:, orig_index] / exp_val_funcs[orig_index]
+            # Compute modified matrices for current dest
+            old_row_shape = m_mat.shape[0]
+            last_index_in_rows = old_row_shape-1
+
+
+            m_tilde = m_mat[0:last_index_in_rows+1, 0:last_index_in_rows+1] # plus 1 for inclusive
+            # print("m_mat shape", m_mat.shape, m_tilde.shape)
+            m_tilde[:, last_index_in_rows,] = m_mat[:, dest-1]
+            # force an extra final row
+
+            # m_tilde.resize(old_row_shape+1, old_row_shape+1)
+
+            # print("m mat")
+            # print(m_mat.toarray())
+            #
+            # print(("m_tilde"))
+            # print(m_tilde.toarray())
+
+            # Now get exponentiated value funcs
+            # TODO this is bad api
+            self._compute_value_function(m_tilde)
+            # IF we had numerical issues in computing value functions
+            # TODO should this flag just be part of the the return?
+            if self.flag_exp_val_funcs_error:
+                self.log_like_stored = Optimiser.LL_ERROR_VALUE
+                self.grad_stored = np.ones(num_obs)
+                self.flag_log_like_stored = True
+                return self.log_like_stored, self.grad_stored
+
+            value_funcs, exp_val_funcs = self._value_functions, self._exp_value_functions
+            grad_orig = self.get_value_func_grad_orig(orig_index, m_tilde, exp_val_funcs)
+            print("grad orig", grad_orig, orig_index, "\n\t", exp_val_funcs)
+            # print("grad orig", grad_orig)
             orig_utility = value_funcs[orig_index]
+            # note we are adding to this, this is a progress value
             log_like_orig = -1 * (1 / mu) * orig_utility  # log probability from orign
 
             sum_inst_util = 0.0  # keep sum of instantaneous utility
@@ -311,51 +423,79 @@ class RecursiveLogitModel(object):
                     sum_current_attr[attr] += self.network_data.data_array[attr][
                         current_node_index, next_node_index]
             #
-            gradient_each_obs[n, :] = sum_current_attr - grad_orig  # GradEachObs in Code doc
-            log_like_obs = 1 / mu * sum_inst_util + log_like_orig  # LogLikeObs in Code Doc
+            # print("sum current_attr", sum_current_attr)
+
+            gradient_each_obs[n, :] = sum_current_attr - grad_orig  # LogLikeGrad in Code doc
+            # print("grad each obs", gradient_each_obs[n, :])
+            log_like_obs = 1 / mu * sum_inst_util + log_like_orig  # LogLikeFn in Code Doc
 
             # Some kind of successive over relaxation/ momentum
             log_like_cumulative += (log_like_obs - log_like_cumulative) / (n + 1)
+            pre = grad_cumulative.copy()
+            new_grad = (gradient_each_obs[n, :] - grad_cumulative) / (n + 1)
+            # print("current grad weighted", new_grad)
+            a = gradient_each_obs[n, :]
+            b = -grad_cumulative
+            c = n + 1
 
             grad_cumulative += (gradient_each_obs[n, :] - grad_cumulative) / (n + 1)
+            # print("current grad weighted", grad_cumulative)
+
 
             # TODO negation of gradient_each_obs is used as global var elsewhere
+        self.log_like_stored = -log_like_cumulative
+        self.grad_stored = -grad_cumulative
+        self.flag_log_like_stored = True
+        return self.log_like_stored, self.grad_stored
 
-        return -log_like_cumulative, grad_cumulative
+    def get_value_func_grad_orig(self, orig_index, m_tilde, exp_val_funcs):
+        """Note relies on 'self' for the attribute data.
+        Computes the gradient of the value function evaluated at the origin
+        Named GradValFnOrig in companion notes, see also GradValFn2 for component part
+        - this function applies the 1/z_{orig} * [rest]_{evaluated at orig}
+        """
 
+        partial_grad = self._get_value_func_incomplete_grad(m_tilde, exp_val_funcs)
+        b = m_tilde.toarray()
+        # print("partial grad\n", partial_grad)
+        return partial_grad[:, orig_index] / exp_val_funcs[orig_index]
 
-# tODO should these be methods, or just algorithmic pieces
-def get_value_func_grad(M, data: RecursiveLogitModel, expV):
-    """Tien mai method for returning the gradient of the value function,
-    need to check consistency with maths.
+    def _get_value_func_incomplete_grad(self, m_tilde, exp_val_funcs):
+        """
+        Function to compute GradValFn2 from algorithm chapter
+        \pderiv{\bm{V}}{\beta_q}
+                & =\frac{1}{\bm{z}}\circ
+                (I - \bm{M})^{-1}\paren{\bm{M}\circ \chi^q}  \bm{z}
 
-    TODO Note tien my function returns 1/mu * this
+                without the leading 1/z term as a matrix for all q.
+                We compute this quantity
+                since in order to evaluate the gradient at the orig,
+                we need to compute the mvp term, but not the elementwise product
+                (we only need the row at the orig) so this is slightly more efficient.
 
-    Returns a data.n_dims * shape(M)[0] matrix
-    - gradient in each x component at every node"""
-    # TODO check if dimensions should be transposed
-    grad_v = np.zeros((data.n_dims, np.shape(M)[0]))
-    I = identity(np.shape(M)[0])
-    A = I - M
+        Computes gradient of value function with respect to beta, returns a matrix,
+        for each row of V and for each beta
+        \equiv \frac{\partial V}{\partial \beta}, which is a matrix.
 
-    for i in range(data.n_dims):
-        current_attribute = data.data_array[i]
-        # print("M")
-        # print(M.toarray())
-        # print("current attribute")
-        # print(current_attribute.toarray())
+        We are mainly concerned with the value of \frac{\partial V(k_0^n)}{\partial_\beta}
+        as this appears in the gradient of the log likelihood
+        Returns a data.n_dims * shape(M)[0] matrix
+        - gradient in each x component at every node"""
+        # TODO check if dimensions should be transposed
+        # print("incomplete grad func recieved for expV\n", exp_val_funcs)
+        grad_v = np.zeros((self.n_dims, np.shape(m_tilde)[0]))
+        I = identity(np.shape(m_tilde)[0])
 
-        # note sparse matrices have * be matrix product for some reason
-        u = M.multiply(current_attribute)
-        # print("u")
-        # print(u.toarray())
-        v = u * expV
-        # print("expV")
-        # print(expV)
-        # print("v")
-        # print(v)
-        grad_v[i, :] = splinalg.spsolve(A, v)  # this had the strange property that grad = v
-        # in early testing
-        # print(grad_v)
+        z = exp_val_funcs  # consistency with maths doc
 
-    return data.mu * grad_v
+        # low number of dims -> not vectorised for convenience
+        # (actually easy to fix now)
+        for q in range(self.n_dims):
+            chi = self.data_array[q]  # current attribute of data
+            # Have experienced numerical instability with spsolve, but believe this is
+            # due to matrices with terrible condition numbers in the examples
+            # spsolve(A,b) == inv(A)*b
+            grad_v[q, :] = splinalg.spsolve(I - m_tilde, m_tilde.multiply(chi) * z)
+            # print(np.linalg.norm((I- m_tilde)*grad_v[q, :] - m_tilde.multiply(chi) * z))
+
+        return grad_v
