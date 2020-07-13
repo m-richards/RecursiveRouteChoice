@@ -52,11 +52,12 @@ class RecursiveLogitDataStruct(object):
         self.travel_times = travel_times
         self.incidence_matrix = incidence_matrix
         self.turn_angle_mat = turn_angle_mat
-        # TODO include uturn and left turn penalties when relevant
-        #   I think that these should be done by some other preprocessing step before this class,
-        # this should be a generic data class. Is not for now
-        # On review, easiest to have this non generic for now, but could easily
-        # move init to classmethods. Wait for real data to see.
+        # TODO think perhaps no specific labels should be here, that these should be done by some
+        #  other preprocessing step before this class and
+        #  this should be a generic data class.
+        #  On review, easiest to have this non generic for now, but could easily
+        #  move init to classmethods. Wait for real data to see.
+        #  Should at least have methods to allow generic initialisation
         self.data_array = np.array([self.travel_times])
         self.data_fields = ['travel_time']  # convenience for debugging
         self.n_dims = len(self.data_array)
@@ -274,66 +275,55 @@ class RecursiveLogitModel(object):
     def _compute_value_function(self, m_tilde):
         """Solves the system Z = Mz+b and stores the output for future use.
         Has rudimentary flagging of errors but doesn't attempt to solve any problems"""
-        error_flag = 0
+        error_flag = False # start with no errors
         ncols = self.network_data.incidence_matrix.shape[1]
-        rhs = scipy.sparse.lil_matrix((ncols, 1))  # supressing needless sparsity warning
+        rhs = scipy.sparse.lil_matrix((ncols, 1))  # suppressing needless sparsity warning
         rhs[-1, 0] = 1
         # (I-M)z =b
 
-        # TODO tien takes the absolute value for numerical safety here
-        A = identity(ncols) - m_tilde
-        # print("printing A")
-        # print(A.toarray())
-        # print("rhs", rhs.toarray())
-        z_vec = splinalg.spsolve(A, rhs)
-        z_vec = np.atleast_2d(z_vec).T  # want a (x,1) column vector so that linear alg
-        # checks work
-        # print("z_vec", z_vec)
-        # check we aren't getting negative solutions for value functions
+        a_mat = identity(ncols) - m_tilde
+        z_vec = splinalg.spsolve(a_mat, rhs)
+        z_vec = np.atleast_2d(z_vec).T  # Transpose to have appropriate dims
         if z_vec.min() <= min(-1e-10, Optimiser.NUMERICAL_ERROR_THRESH):
             # thresh on this?
-            self.flag_exp_val_funcs_error = True
-            return
+            error_flag = True
             # handling via flag rather than exceptions for efficiency
             # raise ValueError("value function has too small entries")
-
-        if np.any(z_vec < 0):
+        elif np.any(z_vec < 0):
             raise ValueError("value function had negative solution, cannot take "
-                             "logarithm") # TODO note tien mai code just takes abs value
-        # Note the transpose here is not mathematical, it is scipy being
-        # lax about row and column vectors
+                             "logarithm")
+            # TODO note tien mai code just takes abs value
 
         # Norm of residual
             # Note: Scipy sparse norm doesn't have a 2 norm so we use this
-            # note this is expensive, in practice we may want to switch to sparse frobenius norm
-            # element wise norm so doable sparsely
-        # note that z_vec is dense so this should be dense without explicit cae
-        if linalg.norm(
-                np.array(A @ z_vec - rhs)) > Optimiser.RESIDUAL:  # residual - i.e. ill
-            # conditioned solution
+            # TODO note this is expensive, in practice we may want to switch to sparse frobenius
+            #  norm element wise norm which would be convenient for sparse matrices
+        # residual - i.e. ill conditioned solution
+        # note that z_vec is dense so this should be dense without explicit cast
+        elif linalg.norm(
+                np.array(a_mat @ z_vec - rhs)) > Optimiser.RESIDUAL:
             self.flag_exp_val_funcs_error = True
             print("W: Value function solution is not exact, has residual.")
-            return
+            # TODO convert from soft warning to legitimate warning. Soft since it happens
+            #  relatively frequently
+            error_flag = True
             # raise ValueError("value function solution does not satisfy system well.")
-        z_vec =np.squeeze(z_vec.T) # not required but convenient at this point !TODO
-        zeroes = z_vec[z_vec == 0]
-        if len(zeroes) > 0:
-            # print("'Soft Warning', Z contains zeros in it, so value functions are undefined")
-            val_funcs_tmp = z_vec.copy()
-            val_funcs_tmp[val_funcs_tmp == 0] = np.nan  # TODO propagate nan handling
-            # in the cases where nans occur we might not actually need to deal with the numbers
-            # that are nans
+        else:  # No errors or non terminal errors
+            z_vec = np.squeeze(z_vec.T)  # not required but convenient at this point !TODO
+            zeroes = z_vec[z_vec == 0]
+            # Not considered error, even though degenerate case.
+            if len(zeroes) > 0:
+                print("W: Z contains zeros in it, so value functions are undefined for some nodes")
+                val_funcs_tmp = z_vec.copy()
+                val_funcs_tmp[val_funcs_tmp == 0] = np.nan
+                # in the cases where nans occur we might not actually need to deal with the numbers
+                # that are nans
 
-        else:
-            val_funcs_tmp = z_vec
-        self.flag_exp_val_funcs_error = False # execution finished as normal
-        self._value_functions = np.log(val_funcs_tmp)
-        self._exp_value_functions = z_vec
-
-    # def get_value_functions(self, return_exponentiated=False):
-    #     if return_exponentiated:
-    #         return self._value_functions, self._exp_value_functions
-    #     return self._value_functions
+            else:
+                val_funcs_tmp = z_vec
+            self._value_functions = np.log(val_funcs_tmp)
+            self._exp_value_functions = z_vec # TODO should this be saved onto OptimStruct?
+        return error_flag
 
     def eval_log_like_at_new_beta(self, beta_vec):
         """update beta vec and compute log likelihood in one step - used for lambdas
@@ -345,70 +335,49 @@ class RecursiveLogitModel(object):
         """Compute the log likelihood of the data with the current beta vec
                 n_obs override is for debug purposes to artificially lower the number of observations"""
         self.n_log_like_calls += 1
+        # TODO reinstate caching, currently have problems because beta can update externally
         # if self.flag_log_like_stored:
         #     return self.log_like_stored, self.grad_stored
         self.n_log_like_calls_non_redundant += 1
-        # print_sparse(v_mat)
 
-        # TODO majorly wrong, doesn't use the obs matrix!
-        #   m and v are supposed to depend on current obs
         obs_mat = self.user_obs_mat
         num_obs, path_max_len = np.shape(obs_mat)
         if n_obs_override is not None:
             num_obs = n_obs_override
         # local references with idomatic names
-        N = self.n_dims  # number of attributes in data
+        n_dims = self.n_dims  # number of attributes in data
         mu = self.mu
         v_mat = self.get_short_term_utility()  # capital u in tien mai's code
         m_mat = self.get_exponential_utility_matrix()
 
-        # value_funcs, exp_val_funcs = self.get_value_functions(return_exponentiated=True)
-        # print("printing v_mat")
-        # print_sparse(v_mat)
-        #
-        # print("printing m_mat")
-        # print_sparse(m_mat)
-
-
-        # grad = get_value_func_grad(m_mat, self, exp_val_funcs)
-
         log_like_cumulative = 0.0  # weighting of all observations
-        grad_cumulative = np.zeros(N)  # gradient combined across all observations
-        gradient_each_obs = np.zeros((num_obs, N))  # store gradient according to each obs
+        grad_cumulative = np.zeros(n_dims)  # gradient combined across all observations
+        gradient_each_obs = np.zeros((num_obs, n_dims))  # store gradient according to each obs
         # tODO this looks redundant to store these at
         #  the moment but this is a global variable in TIEN's code
 
         # iterate through observation number
         for n in range(num_obs):
-            # print("obs num: ", n, "--------------------------------------")
             dest = obs_mat[n, 0]
             orig_index = obs_mat[n, 1] - 1  # subtract 1 for zero based python
             # first_action = obs_mat[n, 2]
 
+            # TODO review this, still not sure it makes mathematical sense
             # Compute modified matrices for current dest
             old_row_shape = m_mat.shape[0]
             last_index_in_rows = old_row_shape-1
 
-
-            m_tilde = m_mat[0:last_index_in_rows+1, 0:last_index_in_rows+1] # plus 1 for inclusive
+            m_tilde = m_mat[0:last_index_in_rows + 1,
+                      0:last_index_in_rows + 1]  # plus 1 for inclusive
             # print("m_mat shape", m_mat.shape, m_tilde.shape)
-            m_tilde[:, last_index_in_rows,] = m_mat[:, dest-1]
+            m_tilde[:, last_index_in_rows, ] = m_mat[:, dest - 1]
             # force an extra final row
 
-            # m_tilde.resize(old_row_shape+1, old_row_shape+1)
-
-            # print("m mat")
-            # print(m_mat.toarray())
-            #
-            # print(("m_tilde"))
-            # print(m_tilde.toarray())
-
             # Now get exponentiated value funcs
-            # TODO this is bad api
-            self._compute_value_function(m_tilde)
-            # IF we had numerical issues in computing value functions
+            error_flag = self._compute_value_function(m_tilde)
+            # If we had numerical issues in computing value functions
             # TODO should this flag just be part of the the return?
-            if self.flag_exp_val_funcs_error:
+            if error_flag: # terminate early with error vals
                 self.log_like_stored = Optimiser.LL_ERROR_VALUE
                 self.grad_stored = np.ones(num_obs)
                 self.flag_log_like_stored = True
@@ -416,14 +385,12 @@ class RecursiveLogitModel(object):
 
             value_funcs, exp_val_funcs = self._value_functions, self._exp_value_functions
             grad_orig = self.get_value_func_grad_orig(orig_index, m_tilde, exp_val_funcs)
-            # print("grad orig", grad_orig, orig_index, "\n\t", exp_val_funcs)
-            # print("grad orig", grad_orig)
             orig_utility = value_funcs[orig_index]
             # note we are adding to this, this is a progress value
             log_like_orig = -1 * (1 / mu) * orig_utility  # log probability from orign
 
             sum_inst_util = 0.0  # keep sum of instantaneous utility
-            sum_current_attr = np.zeros(N)  # sum of observed attributes
+            sum_current_attr = np.zeros(n_dims)  # sum of observed attributes
 
             # # TODO this is inefficient since we've just casted a whole bunch of dense zeros,
             #    but not sure
@@ -431,7 +398,7 @@ class RecursiveLogitModel(object):
             # #  easiest solution would be to make path length appear in input file
             path = obs_mat[n, :].toarray().squeeze()  # kill off singleton 2d dim
             # know all zeros are at end so can just count nonempty
-            path_len = np.count_nonzero(path)
+            path_len = obs_mat[n, :].count_nonzero()
 
             # TODO vectorise all of this
             # -1 again since loop is forward set, probably could reindex
@@ -452,7 +419,7 @@ class RecursiveLogitModel(object):
                 # TODO this should directly unwrap, checking things line up first - not easy to do
                 # is the first dim is kind of a numpy list around sparse matrices
                 # current data attribute (travel time, turn angle, ...)
-                for attr in range(N):
+                for attr in range(n_dims):
                     sum_current_attr[attr] += self.network_data.data_array[attr][
                         current_node_index, next_node_index]
             #
