@@ -161,8 +161,6 @@ class RecursiveLogitModel(object):
         self.user_obs_mat = user_obs_mat  # matrix of observed trips
         self.data_array = data_struct.data_array
         self.n_dims = len(self.data_array)
-        # TODO maybe have to handle more complex initialisations
-        self.beta_vec = np.array([initial_beta for _ in range(self.n_dims)])
         self.mu = mu
 
         self._short_term_utility = None
@@ -171,47 +169,41 @@ class RecursiveLogitModel(object):
         self._exp_value_functions = None
 
         self.flag_log_like_stored = False
-
-        self.hessian = np.identity(data_struct.n_dims)  # TODO should this be on optimser instead?
         self.flag_exp_val_funcs_error = True
 
-        self.update_beta_vec(self.beta_vec)  # to this to refresh dependent matrix quantitites
         self.n_log_like_calls = 0
         self.n_log_like_calls_non_redundant = 0
 
+        # allow for specification of vector beta or scalar beta repeated
+        if isinstance(initial_beta, (float, int)):
+            beta_vec = np.array([initial_beta for _ in range(self.n_dims)])
+        else:
+            beta_vec = initial_beta
         # setup optimiser initialisation
+        self.optim_function_state = OptimFunctionState(None, None, np.identity(data_struct.n_dims),
+                                        self.optimiser.hessian_type,
+                                        self.eval_log_like_at_new_beta,
+                                        beta_vec,
+                                        self._get_n_func_evals)
+        self.update_beta_vec(beta_vec)  # to this to refresh dependent matrix quantitites
         self.get_log_likelihood()  # need to compute starting LL for optimiser
-        optimiser.set_beta_vec(self.beta_vec)
+        optimiser.set_beta_vec(beta_vec)
         optimiser.set_current_value(self.log_like_stored)
 
     def _get_n_func_evals(self):
-        return  self.n_log_like_calls_non_redundant
+        return self.n_log_like_calls_non_redundant
 
     def solve_for_optimal_beta(self, output_file=None):
         """Runs the line search optimisation algorithm until a termination condition is reached.
         Print output"""
         # print out iteration 0 information
-        val, grad = self.get_log_likelihood()
-        optim_vals = OptimFunctionState(val, grad, self.hessian,
-                                        self.optimiser.hessian_type,
-                                        self.eval_log_like_at_new_beta,
-                                        self.get_beta_vec(), )
-
-        print(self.optimiser.get_iteration_log(optim_vals), file=None)
+        print(self.optimiser.get_iteration_log(self.optim_function_state), file=None)
         n = 0
         while n <= 1000:
             if self.optimiser.METHOD_FLAG == OptimType.LINE_SEARCH:
-                val, grad = self.get_log_likelihood()
-                optim_vals = OptimFunctionState(val, grad, self.hessian,
-                                                self.optimiser.hessian_type,
-                                                self.eval_log_like_at_new_beta,
-                                                self.get_beta_vec(),
-                                                self._get_n_func_evals)
-                ok_flag, hessian, log_msg = self.optimiser.iterate_step(optim_vals,
-
+                ok_flag, hessian, log_msg = self.optimiser.iterate_step(self.optim_function_state,
                                                                         verbose=False,
                                                                         output_file=None)
-                self.hessian = hessian # TODO review if necessary
                 if ok_flag:
                     print(log_msg)
                 else:
@@ -228,15 +220,15 @@ class RecursiveLogitModel(object):
 
     def get_beta_vec(self):
         """Getter is purely to imply that beta vec is not a fixed field"""
-        return self.beta_vec
+        return self.optim_function_state.beta_vec
 
     def update_beta_vec(self, new_beta_vec):
         """Change the current parameter vector beta and update intermediate results which depend
         on this"""
         # If beta has changed we need to refresh values
-        if (new_beta_vec != self.beta_vec).any():
+        if (new_beta_vec != self.optim_function_state.beta_vec).any():
             self.flag_log_like_stored = False
-        self.beta_vec = new_beta_vec
+        self.optim_function_state.beta_vec = new_beta_vec
 
         # self._beta_changed = True
         # TODO delay this from happening until the update is needed - use flag
@@ -247,9 +239,8 @@ class RecursiveLogitModel(object):
         # TODO make sure new stuff gets added here
 
     def _compute_short_term_utility(self):
-        # print("beta", self.beta_vec.shape)
         # print("data dim", self.data_array)
-        self.short_term_utility = np.sum(self.beta_vec * self.data_array)
+        self.short_term_utility = np.sum(self.optim_function_state.beta_vec * self.data_array)
         # print(type(self.short_term_utility))
 
     def get_short_term_utility(self):
@@ -288,7 +279,6 @@ class RecursiveLogitModel(object):
         rhs = scipy.sparse.lil_matrix((ncols, 1))  # supressing needless sparsity warning
         rhs[-1, 0] = 1
         # (I-M)z =b
-
 
         # TODO tien takes the absolute value for numerical safety here
         A = identity(ncols) - m_tilde
@@ -355,8 +345,8 @@ class RecursiveLogitModel(object):
         """Compute the log likelihood of the data with the current beta vec
                 n_obs override is for debug purposes to artificially lower the number of observations"""
         self.n_log_like_calls += 1
-        if self.flag_log_like_stored:
-            return self.log_like_stored, self.grad_stored
+        # if self.flag_log_like_stored:
+        #     return self.log_like_stored, self.grad_stored
         self.n_log_like_calls_non_redundant += 1
         # print_sparse(v_mat)
 
@@ -488,6 +478,8 @@ class RecursiveLogitModel(object):
             # TODO negation of gradient_each_obs is used as global var elsewhere
         self.log_like_stored = -log_like_cumulative
         self.grad_stored = -grad_cumulative
+        self.optim_function_state.value  = -log_like_cumulative
+        self.optim_function_state.grad = -grad_cumulative
         self.flag_log_like_stored = True
         return self.log_like_stored, self.grad_stored
 

@@ -33,7 +33,7 @@ model = RecursiveLogitModel(network_data_struct, optimiser, user_obs_mat=obs_mat
 
 log_like_out, grad_out = model.get_log_likelihood(n_obs_override=1)
 
-model.hessian = np.identity(network_data_struct.n_dims)
+
 n = 0
 print("Initial Values:")
 optimiser.set_beta_vec(model.beta_vec)

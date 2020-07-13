@@ -33,5 +33,6 @@ class OptimFunctionState(object):
 
     def function(self, beta_vec=None):
         if beta_vec is not None:
+
             self.beta_vec = beta_vec
         return self._function(self.beta_vec)

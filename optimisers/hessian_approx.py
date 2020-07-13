@@ -42,7 +42,6 @@ def _hessian_bfgs(step, delta_grad, hessian):
         # print((delta_grad @ np.transpose(delta_grad)) / temp)
         # print(- ((hessian @ step) @ (step_trans @ hessian)) / (step_trans @ hessian @ step))
 
-
         return h_new, True
     else:
         return hessian, False

@@ -36,7 +36,6 @@ class TestSimpleCases:
 
         travel_times_mat = load_csv_to_sparse(file_travel_time).todok()
         incidence_mat = load_csv_to_sparse(file_incidence, dtype='int').todok()
-        turn_angle_mat = load_csv_to_sparse(file_turn_angle).todok()
 
         obs_mat = load_csv_to_sparse(file_obs, dtype='int', square_matrix=False).todok()
 
@@ -49,15 +48,13 @@ class TestSimpleCases:
         model = RecursiveLogitModel(network_data_struct, optimiser, user_obs_mat=obs_mat)
 
         log_like_out, grad_out = model.get_log_likelihood()
-        optimiser.set_beta_vec(model.beta_vec)  # TODO this is still kind of hacky
-        optimiser.set_current_value(log_like_out)
         eps = 1e-6
         assert np.abs(log_like_out - 0.6931471805599454) < eps
         assert np.abs(linalg.norm(grad_out) - 0) < eps
 
-        model.hessian = np.identity(network_data_struct.n_dims)
-        out_flag, hessian, log = optimiser.iterate_step(model, verbose=False)
-        assert out_flag == True
+        # model.hessian = np.identity(network_data_struct.n_dims)
+        out_flag, hessian, log = optimiser.iterate_step(model.optim_function_state, verbose=False)
+        assert out_flag is True
         assert (hessian == np.identity(2)).all()
         assert optimiser.n_func_evals == 1
 
@@ -73,14 +70,12 @@ class TestSimpleCases:
         model = RecursiveLogitModel(network_data_struct, optimiser, user_obs_mat=obs_mat)
 
         log_like_out, grad_out = model.get_log_likelihood()
-        optimiser.set_beta_vec(model.beta_vec)  # TODO this is still kind of hacky
-        optimiser.set_current_value(log_like_out)
         eps = 1e-6
         assert np.abs(log_like_out - 0.6931471805599454) < eps
         assert np.abs(linalg.norm(grad_out) - 0) < eps
 
-        model.hessian = np.identity(network_data_struct.n_dims)
-        out_flag, hessian, log = optimiser.iterate_step(model, verbose=False)
+        # model.hessian = np.identity(network_data_struct.n_dims)
+        out_flag, hessian, log = optimiser.iterate_step(model.optim_function_state, verbose=False)
         assert out_flag == True
         assert (hessian == np.identity(2)).all()
         assert optimiser.n_func_evals == 1
@@ -97,13 +92,11 @@ class TestSimpleCases:
         model = RecursiveLogitModel(network_data_struct, optimiser, user_obs_mat=obs_mat)
 
         log_like_out, grad_out = model.get_log_likelihood()
-        optimiser.set_beta_vec(model.beta_vec)
-        optimiser.set_current_value(log_like_out)
         eps = 1e-6
 
-        print(optimiser.get_iteration_log(model)) # Note this is currently required to
+        print(optimiser.get_iteration_log(model.optim_function_state)) # Note this is currently required to
         # set the gradient so that compute relative gradient works, really bad
-        model.hessian = np.identity(network_data_struct.n_dims)
+        # model.hessian = np.identity(network_data_struct.n_dims)
         ll, line_search_step, grad_norm, rel_grad_norm = (0.519860, 0.0, 0.467707, 0.375000)
         assert np.abs(log_like_out - ll) < eps
         assert np.abs(model.optimiser.step - line_search_step) < eps
@@ -117,7 +110,7 @@ class TestSimpleCases:
         ]
         for t in targets:
             ll, line_search_step, grad_norm, rel_grad_norm = t
-            out_flag, hessian, log = optimiser.iterate_step(model, verbose=False)
+            out_flag, hessian, log = optimiser.iterate_step(model.optim_function_state, verbose=False)
             log_like_out, grad_out = model.get_log_likelihood()
             assert np.abs(log_like_out - ll) < eps
             assert np.abs(linalg.norm(model.optimiser.step) - line_search_step) < eps

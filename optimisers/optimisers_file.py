@@ -123,13 +123,13 @@ class LineSearchOptimiser(Optimiser):
         stp = self.INITIAL_STEP_LENGTH # for each iteration we start from a fixed step length
         x = optim_vals.beta_vec
 
-        def compute_new_log_like(new_beta_vec):
+        def compute_log_like_callback(new_beta_vec):
             """Note function not method: 'lambda' passed to optim alg, lets us update the
             n_func_evals with each call"""
             self.n_func_evals += 1
             return optim_vals.function(new_beta_vec)
 
-        optim_func = compute_new_log_like
+        optim_func = compute_log_like_callback
         x, val_new, grad_new, stp, info, n_func_evals = line_search_asrch(
             optim_func, x, value_in, grad, arc, stp,
             maxfev=OPTIMIZE_CONSTANT_MAX_FEV)
@@ -144,7 +144,9 @@ class LineSearchOptimiser(Optimiser):
             self.beta_vec = x
             self.grad = grad_new
             hessian, ok = update_hessian_approx(optim_vals.hessian_approx_type, self.step, self.delta_grad,
-                                                hessian_old)  #
+                                                hessian_old)
+            # update hessian stored to new value
+            optim_vals.hessian = hessian
             out_flag = True
         else:
             out_flag = False
