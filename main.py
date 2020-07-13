@@ -107,7 +107,8 @@ class RecursiveLogitDataStruct(object):
         self.data_fields.append("nonzero_arc_incidence")
 
     @classmethod
-    def from_directory(cls, path, add_angles=True, angle_type='correct', delim=None):
+    def from_directory(cls, path, add_angles=True, angle_type='correct', delim=None,
+                       match_tt_shape=False):
         """Creates data set from specified folder, assuming standard file path names.
         Also returns obs mat to keep IO tidy and together"""
         if add_angles and angle_type not in ['correct', 'comparison']:
@@ -123,9 +124,13 @@ class RecursiveLogitDataStruct(object):
 
         travel_times_mat = load_csv_to_sparse(file_travel_time, delim=delim,
                                               ).todok()
-        fixed_dims = travel_times_mat.shape
+        # print("travel time shape:", travel_times_mat.shape)
+        if match_tt_shape:
+            fixed_dims = travel_times_mat.shape
+        else:
+            fixed_dims = None
         incidence_mat = load_csv_to_sparse(
-            file_incidence, dtype='int', delim=delim).todok()
+            file_incidence, dtype='int', delim=delim, shape=fixed_dims).todok()
         # Get observations matrix - note: observation matrix is in sparse format, but is of the form
         #   each row == [dest node, orig node, node 2, node 3, ... dest node, 0 padding ....]
         obs_mat = load_csv_to_sparse(
@@ -191,7 +196,6 @@ class RecursiveLogitModel(object):
         self.get_log_likelihood()  # need to compute starting LL for optimiser
         optimiser.set_beta_vec(beta_vec)
         optimiser.set_current_value(self.log_like_stored)
-
 
         self._path_start_nodes = None
         self._path_finish_nodes = None
@@ -266,6 +270,8 @@ class RecursiveLogitModel(object):
         # note we currently use incidence matrix here, since this distinguishes the
         # genuine zero arcs from the absent arcs
         # (since data format has zero arcs for silly reasons)
+        print(self.network_data.incidence_matrix.shape)
+        print(m_mat.shape)
         nonzero_entries = self.network_data.incidence_matrix.nonzero()
         m_mat[nonzero_entries] = np.exp(1 / self.mu * m_mat[nonzero_entries].todense())
         self._exponential_utility_matrix = m_mat
@@ -285,7 +291,6 @@ class RecursiveLogitModel(object):
         rhs = scipy.sparse.lil_matrix((ncols, 1))  # suppressing needless sparsity warning
         rhs[-1, 0] = 1
         # (I-M)z =b
-
         a_mat = identity(ncols) - m_tilde
         z_vec = splinalg.spsolve(a_mat, rhs)
         z_vec = np.atleast_2d(z_vec).T  # Transpose to have appropriate dims
@@ -377,16 +382,17 @@ class RecursiveLogitModel(object):
             # If we had numerical issues in computing value functions
             if error_flag:  # terminate early with error vals
                 self.log_like_stored = Optimiser.LL_ERROR_VALUE
-                self.grad_stored = np.ones(num_obs)
+                self.grad_stored = np.ones(n_dims)
                 self.flag_log_like_stored = True
                 return self.log_like_stored, self.grad_stored
 
             value_funcs, exp_val_funcs = self._value_functions, self._exp_value_functions
             # Gradient and log like depend on origin values
-            orig_utility = value_funcs[orig_index]
+            orig_utility = value_funcs[orig_index]  # TODO should these be nested inside
+            # respective sub function? probably yes
             grad_orig = self.get_value_func_grad_orig(orig_index, m_tilde, exp_val_funcs)
 
-            self._compute_obs_path_indices(obs_mat[n, :]) # required to compute LL & grad
+            self._compute_obs_path_indices(obs_mat[n, :])  # required to compute LL & grad
             # LogLikeGrad in Code doc
             gradient_current_obs = self._compute_obs_log_like_grad(grad_orig)
             # LogLikeFn in Code Doc
