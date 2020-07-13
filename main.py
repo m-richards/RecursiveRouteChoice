@@ -171,6 +171,7 @@ class RecursiveLogitModel(object):
 
         self.flag_log_like_stored = False
         self.flag_exp_val_funcs_error = True
+        self._prev_path = None
 
         self.n_log_like_calls = 0
         self.n_log_like_calls_non_redundant = 0
@@ -190,6 +191,10 @@ class RecursiveLogitModel(object):
         self.get_log_likelihood()  # need to compute starting LL for optimiser
         optimiser.set_beta_vec(beta_vec)
         optimiser.set_current_value(self.log_like_stored)
+
+
+        self._path_start_nodes = None
+        self._path_finish_nodes = None
 
     def _get_n_func_evals(self):
         return self.n_log_like_calls_non_redundant
@@ -352,103 +357,113 @@ class RecursiveLogitModel(object):
 
         log_like_cumulative = 0.0  # weighting of all observations
         grad_cumulative = np.zeros(n_dims)  # gradient combined across all observations
-        gradient_each_obs = np.zeros((num_obs, n_dims))  # store gradient according to each obs
-        # tODO this looks redundant to store these at
-        #  the moment but this is a global variable in TIEN's code
 
         # iterate through observation number
         for n in range(num_obs):
-            dest = obs_mat[n, 0]
-            orig_index = obs_mat[n, 1] - 1  # subtract 1 for zero based python
-            # first_action = obs_mat[n, 2]
+            dest_index = obs_mat[n, 0] - 1  # subtract 1 for zero based python
+            orig_index = obs_mat[n, 1] - 1
 
             # TODO review this, still not sure it makes mathematical sense
             # Compute modified matrices for current dest
             old_row_shape = m_mat.shape[0]
-            last_index_in_rows = old_row_shape-1
+            last_index_in_rows = old_row_shape - 1
 
             m_tilde = m_mat[0:last_index_in_rows + 1,
-                      0:last_index_in_rows + 1]  # plus 1 for inclusive
-            # print("m_mat shape", m_mat.shape, m_tilde.shape)
-            m_tilde[:, last_index_in_rows, ] = m_mat[:, dest - 1]
-            # force an extra final row
+                            0:last_index_in_rows + 1]  # plus 1 for inclusive
+            m_tilde[:, last_index_in_rows, ] = m_mat[:, dest_index]
 
             # Now get exponentiated value funcs
             error_flag = self._compute_value_function(m_tilde)
             # If we had numerical issues in computing value functions
-            # TODO should this flag just be part of the the return?
-            if error_flag: # terminate early with error vals
+            if error_flag:  # terminate early with error vals
                 self.log_like_stored = Optimiser.LL_ERROR_VALUE
                 self.grad_stored = np.ones(num_obs)
                 self.flag_log_like_stored = True
                 return self.log_like_stored, self.grad_stored
 
             value_funcs, exp_val_funcs = self._value_functions, self._exp_value_functions
-            grad_orig = self.get_value_func_grad_orig(orig_index, m_tilde, exp_val_funcs)
+            # Gradient and log like depend on origin values
             orig_utility = value_funcs[orig_index]
-            # note we are adding to this, this is a progress value
-            log_like_orig = -1 * (1 / mu) * orig_utility  # log probability from orign
+            grad_orig = self.get_value_func_grad_orig(orig_index, m_tilde, exp_val_funcs)
 
-            sum_inst_util = 0.0  # keep sum of instantaneous utility
-            sum_current_attr = np.zeros(n_dims)  # sum of observed attributes
-
-            # # TODO this is inefficient since we've just casted a whole bunch of dense zeros,
-            #    but not sure
-            # #  that there is a convenient better way that doesn't already ruin sparsity.
-            # #  easiest solution would be to make path length appear in input file
-            path = obs_mat[n, :].toarray().squeeze()  # kill off singleton 2d dim
-            # know all zeros are at end so can just count nonempty
-            path_len = obs_mat[n, :].count_nonzero()
-
-            # TODO vectorise all of this
-            # -1 again since loop is forward set, probably could reindex
-            for node_index in np.arange(1, path_len - 1):
-                # entry [k,a] is in matrix index [k-1, a-1] : -1  since zero based
-                current_node_index = path[node_index] - 1
-                next_node_index = path[node_index + 1] - 1
-
-                final_index_in_data = np.shape(self.network_data.incidence_matrix)[0]
-                if next_node_index > final_index_in_data:
-                    # I can't see when this would happen
-                    print("WARN, dodgy bounds indexing hack occur in path tracing,"
-                          " changed next node")
-                    next_node_index = final_index_in_data
-
-                sum_inst_util += v_mat[current_node_index, next_node_index]
-
-                # TODO this should directly unwrap, checking things line up first - not easy to do
-                # is the first dim is kind of a numpy list around sparse matrices
-                # current data attribute (travel time, turn angle, ...)
-                for attr in range(n_dims):
-                    sum_current_attr[attr] += self.network_data.data_array[attr][
-                        current_node_index, next_node_index]
-            #
-            # print("sum current_attr", sum_current_attr, grad_orig)
-
-            gradient_each_obs[n, :] = sum_current_attr - grad_orig  # LogLikeGrad in Code doc
-            # print("grad each obs", gradient_each_obs[n, :])
-            log_like_obs = 1 / mu * sum_inst_util + log_like_orig  # LogLikeFn in Code Doc
+            self._compute_obs_path_indices(obs_mat[n, :]) # required to compute LL & grad
+            # LogLikeGrad in Code doc
+            gradient_current_obs = self._compute_obs_log_like_grad(grad_orig)
+            # LogLikeFn in Code Doc
+            log_like_obs = self._compute_obs_log_like(v_mat, orig_utility, mu)
 
             # Some kind of successive over relaxation/ momentum
             log_like_cumulative += (log_like_obs - log_like_cumulative) / (n + 1)
-            pre = grad_cumulative.copy()
-            new_grad = (gradient_each_obs[n, :] - grad_cumulative) / (n + 1)
-            # print("current grad weighted", new_grad)
-            a = gradient_each_obs[n, :]
-            b = -grad_cumulative
-            c = n + 1
-
-            grad_cumulative += (gradient_each_obs[n, :] - grad_cumulative) / (n + 1)
+            grad_cumulative += (gradient_current_obs - grad_cumulative) / (n + 1)
             # print("current grad weighted", grad_cumulative)
 
-
-            # TODO negation of gradient_each_obs is used as global var elsewhere
         self.log_like_stored = -log_like_cumulative
         self.grad_stored = -grad_cumulative
-        self.optim_function_state.value  = -log_like_cumulative
+        self.optim_function_state.value = -log_like_cumulative
         self.optim_function_state.grad = -grad_cumulative
         self.flag_log_like_stored = True
         return self.log_like_stored, self.grad_stored
+
+    def _compute_obs_path_indices(self, obs_row:scipy.sparse.dok_matrix):
+        """Takes in the current iterate row of the observation matrix.
+        Returns the vectors of start positions and end positions in the provided observation.
+        This is used in computation of the particular observations log likelihood and its
+        gradient. This essentially slices indices from [:-1] and from [1:] with
+        some extra index handling included. Cache values since typically called twice in
+        sequence. Changed so that this is called once, but second call assumes this function
+        has been called and values are set appropriately."""
+        # obs_row note this is a shape (1,m) array not (m,)
+        # know all zeros are at the end since row is of the form:
+        #   [dest, orig, ... , dest, 0 padding since sparse]
+        path_len = obs_row.count_nonzero()
+        # Note that this is now dense, so cast isn't so bad (required since subtract not
+        # defined for sparse matrices)
+        # start at 1 to omit the leading dest node marking
+        path = obs_row[0, 1:path_len].toarray().squeeze()
+
+        if np.any(path != self._prev_path):
+            # subtract 1 to get 0 based indexes
+            path_arc_start_nodes = path[:-1] - 1  # all nodes i in (i ->j) transitions
+            path_arc_finish_nodes_tmp = path[1:] - 1  # all nodes j
+
+            final_index_in_data = np.shape(self.network_data.incidence_matrix)[0]
+            path_arc_finish_nodes = np.minimum(path_arc_finish_nodes_tmp, final_index_in_data)
+            if np.any(path_arc_finish_nodes != path_arc_finish_nodes_tmp):
+                # I can't see when this would happen
+                print("WARN, dodgy bounds indexing hack occur in path tracing,"
+                      " changed a node to not exceed maximum")
+            self._path_start_nodes = path_arc_start_nodes
+            self._path_finish_nodes = path_arc_finish_nodes
+        return self._path_start_nodes, self._path_finish_nodes
+
+    def _compute_obs_log_like(self, v_mat, orig_utility, mu):
+        """# LogLikeFn in Code Doc
+        Compute the log likelihood function for the currently observed path.
+        "Current" in this sense stipulates that compute_obs_path_indices has been called prior
+        in order to update these indices."""
+        arc_start_nodes = self._path_start_nodes
+        arc_finish_nodes = self._path_finish_nodes
+
+        sum_inst_util = v_mat[arc_start_nodes, arc_finish_nodes].sum()
+        log_like_orig = -1 * (1 / mu) * orig_utility  # log probability from origin
+        log_like_obs = 1 / mu * sum_inst_util + log_like_orig  # LogLikeFn in Code Doc
+        return log_like_obs
+
+    def _compute_obs_log_like_grad(self, grad_orig):
+        """# LogLikeGrad in Code doc
+        Compute the log likelihood function gradient for the currently observed path.
+        "Current" in this sense stipulates that compute_obs_path_indices has been called prior
+        in order to update these indices."""
+        # subtract 1 to get 0 based indexes
+        arc_start_nodes = self._path_start_nodes
+        arc_finish_nodes = self._path_finish_nodes
+
+        sum_current_attr = np.zeros(self.n_dims)  # sum of observed attributes
+        for attr in range(self.n_dims):  # small number of dims so inexpensive
+            sum_current_attr[attr] = self.network_data.data_array[attr][
+                arc_start_nodes, arc_finish_nodes].sum()
+
+        return sum_current_attr - grad_orig  # LogLikeGrad in Code doc
 
     def get_value_func_grad_orig(self, orig_index, m_tilde, exp_val_funcs):
         """Note relies on 'self' for the attribute data.
@@ -456,10 +471,7 @@ class RecursiveLogitModel(object):
         Named GradValFnOrig in companion notes, see also GradValFn2 for component part
         - this function applies the 1/z_{orig} * [rest]_{evaluated at orig}
         """
-
         partial_grad = self._get_value_func_incomplete_grad(m_tilde, exp_val_funcs)
-        b = m_tilde.toarray()
-        # print("partial grad\n", partial_grad)
         # with np.errstate(divide='ignore', invalid='ignore'):
         return partial_grad[:, orig_index] / exp_val_funcs[orig_index]
 
@@ -489,7 +501,6 @@ class RecursiveLogitModel(object):
         # print("incomplete grad func recieved for expV\n", exp_val_funcs)
         grad_v = np.zeros((self.n_dims, np.shape(m_tilde)[0]))
         I = identity(np.shape(m_tilde)[0])
-
         z = exp_val_funcs  # consistency with maths doc
 
         # low number of dims -> not vectorised for convenience
