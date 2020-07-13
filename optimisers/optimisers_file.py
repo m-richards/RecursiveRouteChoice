@@ -120,7 +120,7 @@ class LineSearchOptimiser(Optimiser):
             return step * ds, ds  # TODO note odd function form
 
         arc = functools.partial(line_arc, ds=p)
-        stp = self.INITIAL_STEP_LENGTH # for each iteration we start from a fixed step length
+        stp = self.INITIAL_STEP_LENGTH  # for each iteration we start from a fixed step length
         x = optim_vals.beta_vec
 
         def compute_log_like_callback(new_beta_vec):
@@ -128,11 +128,13 @@ class LineSearchOptimiser(Optimiser):
             n_func_evals with each call"""
             self.n_func_evals += 1
             return optim_vals.function(new_beta_vec)
+        print("start line search")
 
         optim_func = compute_log_like_callback
         x, val_new, grad_new, stp, info, n_func_evals = line_search_asrch(
             optim_func, x, value_in, grad, arc, stp,
             maxfev=OPTIMIZE_CONSTANT_MAX_FEV)
+        print("end line search")
 
         if val_new <= value_in:
             # TODO need to collect these things into a struct
@@ -143,7 +145,8 @@ class LineSearchOptimiser(Optimiser):
             self.value = val_new
             self.beta_vec = x
             self.grad = grad_new
-            hessian, ok = update_hessian_approx(optim_vals.hessian_approx_type, self.step, self.delta_grad,
+            hessian, ok = update_hessian_approx(optim_vals.hessian_approx_type,
+                                                self.step, self.delta_grad,
                                                 hessian_old)
             # update hessian stored to new value
             optim_vals.hessian = hessian
@@ -156,7 +159,7 @@ class LineSearchOptimiser(Optimiser):
             print(log, file=output_file)
         return out_flag, hessian, log
 
-    def get_iteration_log(self, optim_vals:OptimFunctionState):  # TODO fix hacky argument
+    def get_iteration_log(self, optim_vals:OptimFunctionState):
         out = f"[Iteration]: {self.iter_count}\n"
         val, grad = optim_vals.function()
         if self.grad is None:
@@ -178,6 +181,6 @@ class TrustRegionOptimiser(Optimiser):
     METHOD_FLAG = method = OptimType.TRUST_REGION
 
     def __init__(self, hessian_type=OptimHessianType.BFGS,
-                 vec_length=1, max_iter=4, ):
+                 max_iter=4, ):
         super().__init__(hessian_type, max_iter)
         raise NotImplementedError()

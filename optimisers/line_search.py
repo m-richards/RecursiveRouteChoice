@@ -352,7 +352,7 @@ def line_search_asrch(fcn, x, f, g, arc, stp, maxfev,
   % amax = maximum step size
   % ucase = arc search update case
   """
-
+    g_start = g
     # parameters
     xtrapu = 4
     p66 = 0.66
@@ -416,7 +416,7 @@ def line_search_asrch(fcn, x, f, g, arc, stp, maxfev,
         # print("(s, ds) = ", s, ds)
         # Likelihood at new beta
         f, g = fcn(x + s)
-        # print("g= ", g)
+        # print("\t g= ", np.all(g==g_start), g, g_start)
 
         fp = f
         dp = np.dot(g, ds)
