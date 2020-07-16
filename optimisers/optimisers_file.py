@@ -45,6 +45,9 @@ class Optimiser(abc.ABC):
         self.beta_vec = None
         self.grad = None
 
+        self.delta_grad = None
+        self.delta_value = None
+
     def check_stopping_criteria(self):
         is_stopping = True
         if self.iter_count > self.max_iter:
@@ -71,7 +74,14 @@ class Optimiser(abc.ABC):
         # TODO review mathematics behind this
         val = self.current_value
         grad = self.grad
+        # typf = 1.0 # some parameter? (input in tien code
         typxi = 1.0  # fixed in tien code
+        gmax = 0.0
+        # print("compute relative gradient start--------------------")
+        # print("val", val)
+        # print("grad", grad)
+        # print("beta", self.beta_vec)
+        # print("typf", typf)
         tmp_beta_max = np.maximum(self.beta_vec, typxi)
         gmax = np.abs(grad * tmp_beta_max / max(abs(val), typf)).max()
 
@@ -110,7 +120,7 @@ class LineSearchOptimiser(Optimiser):
             evaluating the value function and taking a step based upon the gradient"""
         self.iter_count += 1
         hessian_old = optim_vals.hessian
-        value_in, grad = optim_vals.value, optim_vals.grad
+        value_old, grad = optim_vals.value, optim_vals.grad
         p = np.linalg.solve(hessian_old, -grad)
 
         if np.dot(p, grad) > 0:
@@ -128,21 +138,19 @@ class LineSearchOptimiser(Optimiser):
             n_func_evals with each call"""
             self.n_func_evals += 1
             return optim_vals.function(new_beta_vec)
-        print("start line search")
 
         optim_func = compute_log_like_callback
         x, val_new, grad_new, stp, info, n_func_evals = line_search_asrch(
-            optim_func, x, value_in, grad, arc, stp,
+            optim_func, x, value_old, grad, arc, stp,
             maxfev=OPTIMIZE_CONSTANT_MAX_FEV)
-        print("end line search")
+        print("line search asrch result", val_new)
 
-        if val_new <= value_in:
-            # TODO need to collect these things into a struct
-            #   think there already is an outline of one
+        if val_new <= value_old:
+            # TODO need to collect these things into a struct?
             self.step = p * stp
             self.delta_grad = grad_new - grad
-            self.delta_value = val_new - value_in
-            self.value = val_new
+            self.delta_value = val_new - value_old
+            self.current_value = val_new
             self.beta_vec = x
             self.grad = grad_new
             hessian, ok = update_hessian_approx(optim_vals.hessian_approx_type,

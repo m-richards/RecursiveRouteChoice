@@ -34,9 +34,10 @@ def load_csv_to_sparse(fname, dtype=None, delim=None, square_matrix=True, shape=
             max_dim = max(np.max(rows_integer), np.max(cols_integer))+1
             # print(max_dim)
             shape = (max_dim, max_dim)
-        mat = coo_matrix((data, (rows_integer, cols_integer)), shape=shape,
+        mat = coo_matrix((data, (rows_integer, cols_integer)),
                          dtype=dtype)
         # print(mat.shape)
+        mat.resize(shape) # trim cols
 
     # if mat.shape[0] == mat.shape[1] - 1 and square_matrix:
     #     # this means we have 1 less row than columns from our input data

@@ -72,6 +72,31 @@ class RecursiveLogitDataStruct(object):
         self.data_fields = ['travel_time', 'travel_time']
         self.n_dims = len(self.data_array)
 
+    def add_left_turn_incidence_uturn_for_comparison(self, left_turn_thresh=None,
+                                                     u_turn_thresh=None):
+        """Temporary method for comparison with Tien Mai's code to add data matrices in the same
+        order, shouldn't be used generally. Messy combination of
+            add_turn_categorical_variables and add_nonzero_arc_incidence methods."""
+        nz_arc_incidence = (self.travel_times > 0).astype('int').todok()
+        if self.has_categorical_turns:
+            return
+        self.has_categorical_turns = True
+        if self.turn_angle_mat is None:
+            raise ValueError("Creating categorical turn matrices failed. Raw turn angles matrix "
+                             "must be supplied in the constructor")
+        left_turn_dummy = get_left_turn_categorical_matrix(self.turn_angle_mat, left_turn_thresh,
+                                                           u_turn_thresh)
+        u_turn_dummy = get_uturn_categorical_matrix(self.turn_angle_mat, u_turn_thresh)
+        self.data_array = np.concatenate(
+            (self.data_array, np.array((left_turn_dummy, nz_arc_incidence, u_turn_dummy)))
+        )
+        self.n_dims = len(self.data_array)
+        self.has_turn_angles = True
+        self.has_nz_incidence_mat = True
+        self.data_fields.extend(("left_turn_dummy", "nonzero_arc_incidence", "u_turn_dummy"))
+
+
+
     def add_turn_categorical_variables(self, left_turn_thresh=None, u_turn_thresh=None):
         """Uses the turn matrix in the constructor and splits out into categorical matrices
         for uturns and left uturns.
@@ -138,14 +163,17 @@ class RecursiveLogitDataStruct(object):
 
         if add_angles:
             turn_angle_mat = load_csv_to_sparse(file_turn_angle, delim=delim).todok()
-            resize_to_dims(turn_angle_mat, fixed_dims, "Turn Angles")
+            if fixed_dims is not None:
+                resize_to_dims(turn_angle_mat, fixed_dims, "Turn Angles")
             # print("qq", turn_angle_mat.shape, fixed_dims)
             out = RecursiveLogitDataStruct(travel_times_mat, incidence_mat, turn_angle_mat)
             if angle_type == 'correct':
                 out.add_turn_categorical_variables()
             else:
-                out.add_turn_categorical_variables()
-                out.add_nonzero_arc_incidence()
+                out.add_left_turn_incidence_uturn_for_comparison()
+                # out.add_turn_categorical_variables()
+                # out.add_nonzero_arc_incidence()  # swap f
+
         else:
             out = RecursiveLogitDataStruct(travel_times_mat, incidence_mat, turn_angle_mat=None)
         return out, obs_mat
@@ -270,8 +298,6 @@ class RecursiveLogitModel(object):
         # note we currently use incidence matrix here, since this distinguishes the
         # genuine zero arcs from the absent arcs
         # (since data format has zero arcs for silly reasons)
-        print(self.network_data.incidence_matrix.shape)
-        print(m_mat.shape)
         nonzero_entries = self.network_data.incidence_matrix.nonzero()
         m_mat[nonzero_entries] = np.exp(1 / self.mu * m_mat[nonzero_entries].todense())
         self._exponential_utility_matrix = m_mat
@@ -294,15 +320,15 @@ class RecursiveLogitModel(object):
         a_mat = identity(ncols) - m_tilde
         z_vec = splinalg.spsolve(a_mat, rhs)
         z_vec = np.atleast_2d(z_vec).T  # Transpose to have appropriate dims
+        # if we have non near zero negative, we have a problem and parameters are infeasible
+        # since log will be complex
         if z_vec.min() <= min(-1e-10, Optimiser.NUMERICAL_ERROR_THRESH):
             # thresh on this?
-            error_flag = True
+            error_flag = True # TODO abs and stuff once i fix tests
             # handling via flag rather than exceptions for efficiency
             # raise ValueError("value function has too small entries")
-        elif np.any(z_vec < 0):
-            raise ValueError("value function had negative solution, cannot take "
-                             "logarithm")
-            # TODO note tien mai code just takes abs value
+        # z_vec = abs()
+
 
         # Norm of residual
             # Note: Scipy sparse norm doesn't have a 2 norm so we use this
@@ -384,6 +410,7 @@ class RecursiveLogitModel(object):
                 self.log_like_stored = Optimiser.LL_ERROR_VALUE
                 self.grad_stored = np.ones(n_dims)
                 self.flag_log_like_stored = True
+                print("Parameters are infeasible.")
                 return self.log_like_stored, self.grad_stored
 
             value_funcs, exp_val_funcs = self._value_functions, self._exp_value_functions

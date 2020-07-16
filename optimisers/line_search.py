@@ -314,7 +314,7 @@ def line_search_asrch(fcn, x, f, g, arc, stp, maxfev,
                       ftol=SUFFICIENT_DECREASE_PARAMETER,
                       gtol=CURVATURE_CONDITION_PARAMETER,
                       xtol=X_TOLERENT, stpmin=MINIMUM_STEP_LENGTH,
-                      stpmax=MAXIMUM_STEP_LENGTH, print_flag=False, fname=None,
+                      stpmax=MAXIMUM_STEP_LENGTH, print_flag=True, fname=None,
                       bisect=0.0):
     """outputs [x f g stp info_out_flag nfev] =
   % list of variables and parameters
@@ -370,25 +370,25 @@ def line_search_asrch(fcn, x, f, g, arc, stp, maxfev,
     # inital values
     [s, ds] = arc(0)
 
-    stx = 0
+    stx = 0.0
     fx = f
     dx = np.dot(g, ds)
 
     finit = fx
     ginit = dx
 
-    fp = 0
-    dp = 0
+    fp = 0.0
+    dp = 0.0
 
-    sty = 0
-    fy = 0
-    dy = 0
+    sty = 0.0
+    fy = 0.0
+    dy = 0.0
 
     # formatting & printing
     if print_flag or fname is not None:
         print_flag = True
-        header_format = "{:4} {:1}" + 4 * " {:12}" + "|{:4}\n"
-        data_format_1 = "{:4} {:1}" + 5 * " {:12}"
+        header_format = "{:4} {:6}" + 5 * " {:14.14}" + "|{:4.4}\n"
+        data_format_1 = "{:4} {:6}" + 5 * " {:14.8g}"
         data_format_2 = "|{:4}\n"
         print(header_format.format("nfev", "b", "stx", "sty", "stp", "fp", "dp", "case",
                                    file=fname), end="")
@@ -418,12 +418,13 @@ def line_search_asrch(fcn, x, f, g, arc, stp, maxfev,
         f, g = fcn(x + s)
         # print("\t g= ", np.all(g==g_start), g, g_start)
 
-        fp = f
+        fp = float(f)
         dp = np.dot(g, ds)
         nfev += 1
 
         if print_flag:
-            print(data_format_1.format(nfev, is_bracketed, stx, sty, stp, fp, dp), file=fname)
+            print(data_format_1.format(nfev, is_bracketed, stx, sty, stp, fp, dp), file=fname,
+                  end="")
 
         # compute modified function values
         mstx = stx
@@ -473,7 +474,7 @@ def line_search_asrch(fcn, x, f, g, arc, stp, maxfev,
         if info_out_flag is not False:  # if we have info_out_flag
             x = x + s
             if print_flag:
-                print('t = ', LineSearchFlags(info_out_flag).name, file=fname)
+                print(f"|t-{LineSearchFlags(info_out_flag).name}", file=fname)
             return (x, f, g, stp, info_out_flag, nfev)
 
         # update the interval
@@ -506,7 +507,7 @@ def line_search_asrch(fcn, x, f, g, arc, stp, maxfev,
 
         # print the case
         if print_flag:
-            print('u_case = ', ucase)
+            print(f"|u-{ucase}")
             # compute new trial step size
         if is_bracketed and bisect:
             # bisect if desired
