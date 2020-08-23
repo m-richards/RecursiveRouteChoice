@@ -315,43 +315,44 @@ def line_search_asrch(fcn, x, f, g, arc, stp, maxfev,
                       gtol=CURVATURE_CONDITION_PARAMETER,
                       xtol=X_TOLERENT, stpmin=MINIMUM_STEP_LENGTH,
                       stpmax=MAXIMUM_STEP_LENGTH, print_flag=True, fname=None,
-                      bisect=0.0):
+                      bisect=0.0,
+                      debug_counter=None):
     """outputs [x f g stp info_out_flag nfev] =
-  % list of variables and parameters
-  % extrap = parameter for extrapolations
-  % is_bracketed = true once bracket containing solution is found
-  % info_out_flag = status flag for output
-  % nfev = number of function evaluations
-  % s = displacement vector from arc
-  % ds = derivative of displacement vector from arc
-  %
-  % stx = step size at "l" point
-  % fx = function value at "l" point
-  % dx = derivative of search function at "l" point
-  %
-  % sty = step size at "u" point
-  % fy = function value at "u" point
-  % dy = derivative of search function at "u" point
-  %
-  % stp = trial step size
-  % fp = function value at trial step size
-  % dp = derivative of search function at trial step size
-  %
-  % mfx = modified function value at "l" point
-  % mdx = modified derivative value at "l" point
-  %
-  % mfp = modified function value at trial point
-  % mdp = modified derivative value at trial point
-  %
-  % Note al and au define the bounds of the bracket if one is found. al and au
-  % are the endpoints of the bracket, but are not ordered.
-  %
-  % finit = initial function value
-  % ginit = initial gradient
-  % amin = minimium step size
-  % amax = maximum step size
-  % ucase = arc search update case
-  """
+    % list of variables and parameters
+    % extrap = parameter for extrapolations
+    % is_bracketed = true once bracket containing solution is found
+    % info_out_flag = status flag for output
+    % nfev = number of function evaluations
+    % s = displacement vector from arc
+    % ds = derivative of displacement vector from arc
+    %
+    % stx = step size at "l" point
+    % fx = function value at "l" point
+    % dx = derivative of search function at "l" point
+    %
+    % sty = step size at "u" point
+    % fy = function value at "u" point
+    % dy = derivative of search function at "u" point
+    %
+    % stp = trial step size
+    % fp = function value at trial step size
+    % dp = derivative of search function at trial step size
+    %
+    % mfx = modified function value at "l" point
+    % mdx = modified derivative value at "l" point
+    %
+    % mfp = modified function value at trial point
+    % mdp = modified derivative value at trial point
+    %
+    % Note al and au define the bounds of the bracket if one is found. al and au
+    % are the endpoints of the bracket, but are not ordered.
+    %
+    % finit = initial function value
+    % ginit = initial gradient
+    % amin = minimium step size
+    % amax = maximum step size
+    % ucase = arc search update case
+    """
     g_start = g
     # parameters
     xtrapu = 4
@@ -392,8 +393,10 @@ def line_search_asrch(fcn, x, f, g, arc, stp, maxfev,
         data_format_2 = "|{:4}\n"
         print(header_format.format("nfev", "b", "stx", "sty", "stp", "fp", "dp", "case",
                                    file=fname), end="")
-
+    n = 0
     while True:
+        print(f"count: {debug_counter}:{n}")
+        n += 1
         if is_bracketed:
             stmin = min(stx, sty)
             stmax = max(stx, sty)

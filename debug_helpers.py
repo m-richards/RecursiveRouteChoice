@@ -1,11 +1,12 @@
 
-
-
-def print_sparse(mat, round_=6):
+import numpy as np
+# np.get_printoptions()['precision']
+def print_sparse(mat, round_=16):
+    zzz
     for x in range(mat.shape[0]):
         for y in range(mat.shape[1]):
             if mat[x, y] != 0:
-                print(f"{(x + 1, y + 1)}: {mat[x, y]:.6g}")
+                print(f"{(x + 1, y + 1)}: {mat[x, y]:.{round_}g}")
     try:
 
         print("nnz", mat.count_nonzero())

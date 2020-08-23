@@ -96,7 +96,7 @@ class Optimiser(abc.ABC):
     def get_iteration_log(self, model):
         raise NotImplementedError()
 
-    def iterate_step(self, model, verbose=False, output_file=None):
+    def iterate_step(self, model, verbose=False, output_file=None, debug_counter=None):
         raise NotImplementedError()
 
 
@@ -115,7 +115,8 @@ class LineSearchOptimiser(Optimiser):
         super().__init__(hessian_type, max_iter)
 
     # TODO what if optimvals is part of state on both, rather than an argument
-    def iterate_step(self, optim_vals:OptimFunctionState, verbose=True, output_file=None):
+    def iterate_step(self, optim_vals:OptimFunctionState, verbose=True, output_file=None,
+                     debug_counter=None):
         """ Performs a single step of the line search iteration,
             evaluating the value function and taking a step based upon the gradient"""
         self.iter_count += 1
@@ -142,7 +143,7 @@ class LineSearchOptimiser(Optimiser):
         optim_func = compute_log_like_callback
         x, val_new, grad_new, stp, info, n_func_evals = line_search_asrch(
             optim_func, x, value_old, grad, arc, stp,
-            maxfev=OPTIMIZE_CONSTANT_MAX_FEV)
+            maxfev=OPTIMIZE_CONSTANT_MAX_FEV, debug_counter=debug_counter)
         print("line search asrch result", val_new)
 
         if val_new <= value_old:
