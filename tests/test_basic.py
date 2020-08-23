@@ -11,9 +11,9 @@ import numpy as np
 from scipy import linalg
 from scipy.sparse import csr_matrix
 
-from data_loading import load_csv_to_sparse, get_uturn_categorical_matrix, \
-    get_left_turn_categorical_matrix
-from main import RecursiveLogitModel, RecursiveLogitDataStruct
+from data_loading import load_csv_to_sparse, load_standard_path_format_csv
+from data_processing import AngleProcessor
+from main import RecursiveLogitModelEstimation, RecursiveLogitDataStruct
 
 import os
 from os.path import join
@@ -39,13 +39,13 @@ class TestSimpleCases:
 
         obs_mat = load_csv_to_sparse(file_obs, dtype='int', square_matrix=False).todok()
 
-        network_data_struct = RecursiveLogitDataStruct(travel_times=travel_times_mat,
-                                                       incidence_matrix=incidence_mat,
-                                                       turn_angle_mat=None)
-        network_data_struct.add_second_travel_time_for_testing()
+        data_list = [travel_times_mat, travel_times_mat]
+        network_data_struct = RecursiveLogitDataStruct(data_list,
+                                                       incidence_matrix=incidence_mat)
+        # network_data_struct.add_second_travel_time_for_testing()
         optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)  # TODO check these parameters & defaults
 
-        model = RecursiveLogitModel(network_data_struct, optimiser, user_obs_mat=obs_mat)
+        model = RecursiveLogitModelEstimation(network_data_struct, optimiser, user_obs_mat=obs_mat)
 
         log_like_out, grad_out = model.get_log_likelihood()
         eps = 1e-6
@@ -58,16 +58,40 @@ class TestSimpleCases:
         assert (hessian == np.identity(2)).all()
         assert optimiser.n_func_evals == 1
 
-    def test_basic_new_syntax(self):
+    # def test_basic_new_syntax(self):
+    #     subfolder = "ExampleTiny"  # big data from classical v2
+    #     folder = join("../Datasets", subfolder)
+    #     network_data_struct, obs_mat = RecursiveLogitDataStruct.from_directory(folder,
+    #                                                                            add_angles=False,
+    #                                                                            delim=" ")
+    #     network_data_struct.add_second_travel_time_for_testing()
+    #     optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
+    #
+    #     model = RecursiveLogitModel(network_data_struct, optimiser, user_obs_mat=obs_mat)
+    #
+    #     log_like_out, grad_out = model.get_log_likelihood()
+    #     eps = 1e-6
+    #     assert np.abs(log_like_out - 0.6931471805599454) < eps
+    #     assert np.abs(linalg.norm(grad_out) - 0) < eps
+    #
+    #     # model.hessian = np.identity(network_data_struct.n_dims)
+    #     out_flag, hessian, log = optimiser.iterate_step(model.optim_function_state, verbose=False)
+    #     assert out_flag == True
+    #     assert (hessian == np.identity(2)).all()
+    #     assert optimiser.n_func_evals == 1
+    #
+    def test_basic_new_new_syntax(self):
         subfolder = "ExampleTiny"  # big data from classical v2
         folder = join("../Datasets", subfolder)
-        network_data_struct, obs_mat = RecursiveLogitDataStruct.from_directory(folder,
-                                                                               add_angles=False,
-                                                                               delim=" ")
-        network_data_struct.add_second_travel_time_for_testing()
+        obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=False)
+        incidence_mat, travel_times_mat = attrs
+        # left, right, _, u_turn = AngleProcessor.get_turn_categorical_matrices()
+        data_list =[travel_times_mat, travel_times_mat]
+        network_data_struct = RecursiveLogitDataStruct(data_list, incidence_mat)
+
         optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
 
-        model = RecursiveLogitModel(network_data_struct, optimiser, user_obs_mat=obs_mat)
+        model = RecursiveLogitModelEstimation(network_data_struct, optimiser, user_obs_mat=obs_mat)
 
         log_like_out, grad_out = model.get_log_likelihood()
         eps = 1e-6
@@ -83,13 +107,20 @@ class TestSimpleCases:
     def test_example_tiny_modified(self):
         subfolder = "ExampleTinyModifiedObs"  # big data from classical v2
         folder = join("../Datasets", subfolder)
-        network_data_struct, obs_mat = RecursiveLogitDataStruct.from_directory(folder,
-                                        add_angles=True, angle_type='comparison',
-                                        delim=" ")
+
+        obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=True)
+        incidence_mat, travel_times_mat, angle_cts_mat = attrs
+        left, _, _, u_turn = AngleProcessor.get_turn_categorical_matrices(angle_cts_mat,
+                                                                          incidence_mat)
+        # incidence matrix which only has nonzero travel times - rather than what is specified in file
+        t_time_incidence = (travel_times_mat > 0).astype('int').todok()
+        data_list = [travel_times_mat, left, u_turn, t_time_incidence]
+        network_data_struct = RecursiveLogitDataStruct(data_list, incidence_mat)
+
         # network_data_struct.add_second_travel_time_for_testing()
         optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
 
-        model = RecursiveLogitModel(network_data_struct, optimiser, user_obs_mat=obs_mat)
+        model = RecursiveLogitModelEstimation(network_data_struct, optimiser, user_obs_mat=obs_mat)
 
         log_like_out, grad_out = model.get_log_likelihood()
         eps = 1e-6
@@ -125,8 +156,8 @@ class TestSimpleCases:
 
         b = a * np.pi / 180
         b = csr_matrix(b)
-        actual_left_turn = get_left_turn_categorical_matrix(b.todok()).toarray()
-        actual_u_turn = get_uturn_categorical_matrix(b.todok()).toarray()
+        actual_left_turn = AngleProcessor.get_left_turn_categorical_matrix(b.todok()).toarray()
+        actual_u_turn = AngleProcessor.get_u_turn_categorical_matrix(b.todok()).toarray()
 
         expected_left_turn = np.array([[0, 0, 0], [0, 0, 1], [1, 0, 0]])
         expected_u_turn = np.array([[0, 0, 1], [0, 0, 0], [0, 0, 0]])

@@ -1,13 +1,13 @@
 import os
-
+from typing import List
 import scipy
 from scipy import linalg
 from scipy.sparse import coo_matrix, csr_matrix, identity
 from scipy.sparse import linalg as splinalg
 
-from data_loading import load_csv_to_sparse, get_left_turn_categorical_matrix, \
-    get_uturn_categorical_matrix, resize_to_dims
-from debug_helpers import print_sparse
+from data_loading import load_csv_to_sparse, resize_to_dims, load_standard_path_format_csv
+from data_processing import AngleProcessor
+from debug_helpers import print_sparse, print_data_struct
 from optimisers.extra_optim import OptimFunctionState
 from optimisers.optimisers_file import Optimiser, OptimType
 import numpy as np
@@ -40,11 +40,36 @@ Class to store data
 
 
 """
-
+# TODO think perhaps no specific labels should be here, that these should be done by some
+#  other preprocessing step before this class and
+#  this should be a generic data class.
+#  On review, easiest to have this non generic for now, but could easily
+#  move init to classmethods. Wait for real data to see.
+#  Should at least have methods to allow generic initialisation
 
 class RecursiveLogitDataStruct(object):
     """Generic struct which stores all the arc attributes together in a convenient manner.
     Also provides convenience constructors.
+    generic
+    """
+
+    def __init__(self, data_matrix_list: List[scipy.sparse.dok_matrix],
+                 incidence_matrix: scipy.sparse.dok_matrix, data_array_names_debug=None):
+
+        self.incidence_matrix = incidence_matrix
+
+        self.data_array = np.array(data_matrix_list)
+        if data_array_names_debug is None:
+            data_array_names_debug = (),
+        self.data_fields = data_array_names_debug  # convenience for debugging
+        self.n_dims = len(self.data_array)
+
+
+class RecursiveLogitDataStructDeprecated(object):
+    """Generic struct which stores all the arc attributes together in a convenient manner.
+    Also provides convenience constructors.
+    # TODO want to kill this in favour of some kind of preprocessing and then have this totally
+    generic
     """
 
     def __init__(self, travel_times: scipy.sparse.dok_matrix,
@@ -84,9 +109,11 @@ class RecursiveLogitDataStruct(object):
         if self.turn_angle_mat is None:
             raise ValueError("Creating categorical turn matrices failed. Raw turn angles matrix "
                              "must be supplied in the constructor")
-        left_turn_dummy = get_left_turn_categorical_matrix(self.turn_angle_mat, left_turn_thresh,
-                                                           u_turn_thresh)
-        u_turn_dummy = get_uturn_categorical_matrix(self.turn_angle_mat, u_turn_thresh)
+        left_turn_dummy = AngleProcessor.get_left_turn_categorical_matrix(self.turn_angle_mat,
+                                                                          left_turn_thresh,
+                                                                          u_turn_thresh)
+        u_turn_dummy = AngleProcessor.get_u_turn_categorical_matrix(self.turn_angle_mat,
+                                                                    u_turn_thresh)
         self.data_array = np.concatenate(
             (self.data_array, np.array((left_turn_dummy, nz_arc_incidence, u_turn_dummy)))
         )
@@ -94,8 +121,6 @@ class RecursiveLogitDataStruct(object):
         self.has_turn_angles = True
         self.has_nz_incidence_mat = True
         self.data_fields.extend(("left_turn_dummy", "nonzero_arc_incidence", "u_turn_dummy"))
-
-
 
     def add_turn_categorical_variables(self, left_turn_thresh=None, u_turn_thresh=None):
         """Uses the turn matrix in the constructor and splits out into categorical matrices
@@ -110,9 +135,11 @@ class RecursiveLogitDataStruct(object):
         if self.turn_angle_mat is None:
             raise ValueError("Creating categorical turn matrices failed. Raw turn angles matrix "
                              "must be supplied in the constructor")
-        left_turn_dummy = get_left_turn_categorical_matrix(self.turn_angle_mat, left_turn_thresh,
-                                                           u_turn_thresh)
-        u_turn_dummy = get_uturn_categorical_matrix(self.turn_angle_mat, u_turn_thresh)
+        left_turn_dummy = AngleProcessor.get_left_turn_categorical_matrix(self.turn_angle_mat,
+                                                                          left_turn_thresh,
+                                                                          u_turn_thresh)
+        u_turn_dummy = AngleProcessor.get_u_turn_categorical_matrix(self.turn_angle_mat,
+                                                                    u_turn_thresh)
         self.data_array = np.concatenate(
             (self.data_array, np.array((left_turn_dummy, u_turn_dummy)))
         )
@@ -138,44 +165,26 @@ class RecursiveLogitDataStruct(object):
         Also returns obs mat to keep IO tidy and together"""
         if add_angles and angle_type not in ['correct', 'comparison']:
             raise KeyError("Angle type should be 'correct' or 'comparison'")
-        INCIDENCE = "incidence.txt"
-        TRAVEL_TIME = 'travelTime.txt'
-        OBSERVATIONS = "observations.txt"
-        TURN_ANGLE = "turnAngle.txt"
-        file_incidence = os.path.join(path, INCIDENCE)
-        file_travel_time = os.path.join(path, TRAVEL_TIME)
-        file_turn_angle = os.path.join(path, TURN_ANGLE)
-        file_obs = os.path.join(path, OBSERVATIONS)
 
-        travel_times_mat = load_csv_to_sparse(file_travel_time, delim=delim,
-                                              ).todok()
-        # print("travel time shape:", travel_times_mat.shape)
-        if match_tt_shape:
-            fixed_dims = travel_times_mat.shape
-        else:
-            fixed_dims = None
-        incidence_mat = load_csv_to_sparse(
-            file_incidence, dtype='int', delim=delim, shape=fixed_dims).todok()
-        # Get observations matrix - note: observation matrix is in sparse format, but is of the form
-        #   each row == [dest node, orig node, node 2, node 3, ... dest node, 0 padding ....]
-        obs_mat = load_csv_to_sparse(
-            file_obs, dtype='int', square_matrix=False, delim=delim).todok()
-
+        obs_mat, (network_attribs) = load_standard_path_format_csv(path,
+                                                                   delim, match_tt_shape,
+                                                                   angles_included=add_angles)
         if add_angles:
-            turn_angle_mat = load_csv_to_sparse(file_turn_angle, delim=delim).todok()
-            if fixed_dims is not None:
-                resize_to_dims(turn_angle_mat, fixed_dims, "Turn Angles")
-            # print("qq", turn_angle_mat.shape, fixed_dims)
-            out = RecursiveLogitDataStruct(travel_times_mat, incidence_mat, turn_angle_mat)
+            incidence_mat, travel_times_mat, turn_angle_mat = network_attribs
+            out = RecursiveLogitDataStructDeprecated(travel_times_mat, incidence_mat, turn_angle_mat)
             if angle_type == 'correct':
                 out.add_turn_categorical_variables()
             else:
-                out.add_left_turn_incidence_uturn_for_comparison()
-                # out.add_turn_categorical_variables()
-                # out.add_nonzero_arc_incidence()  # swap f
-
+                # BROKEN = True
+                BROKEN = False
+                if BROKEN:
+                    out.add_left_turn_incidence_uturn_for_comparison()
+                else:
+                    out.add_turn_categorical_variables()
+                    out.add_nonzero_arc_incidence()  # swap f
         else:
-            out = RecursiveLogitDataStruct(travel_times_mat, incidence_mat, turn_angle_mat=None)
+            incidence_mat, travel_times_mat = network_attribs
+            out = RecursiveLogitDataStructDeprecated(travel_times_mat, incidence_mat, turn_angle_mat=None)
         return out, obs_mat
 
 
@@ -188,10 +197,13 @@ class RecursiveLogitModel(object):
 
     """
 
-    def __init__(self, data_struct: RecursiveLogitDataStruct, optimiser: Optimiser, user_obs_mat,
+    def __init__(self, data_struct: RecursiveLogitDataStruct, user_obs_mat,
                  initial_beta=-1.5, mu=1, ):
         self.network_data = data_struct  # all network attributes
-        self.optimiser = optimiser  # optimisation alg wrapper class
+        # TODO this probably shouldn't know about the optimiser
+        #    on the basis that if it doesn't then we can use the same base class here fro
+        #    estimation. It might be easier for now to make a base class and have a
+        #    subclass which gets an optimiser
         self.user_obs_mat = user_obs_mat  # matrix of observed trips
         self.data_array = data_struct.data_array
         self.n_dims = len(self.data_array)
@@ -215,60 +227,27 @@ class RecursiveLogitModel(object):
         else:
             beta_vec = initial_beta
         # setup optimiser initialisation
-        self.optim_function_state = OptimFunctionState(None, None, np.identity(data_struct.n_dims),
-                                        self.optimiser.hessian_type,
-                                        self.eval_log_like_at_new_beta,
-                                        beta_vec,
-                                        self._get_n_func_evals)
-        self.update_beta_vec(beta_vec)  # to this to refresh dependent matrix quantitites
-        self.get_log_likelihood()  # need to compute starting LL for optimiser
-        optimiser.set_beta_vec(beta_vec)
-        optimiser.set_current_value(self.log_like_stored)
+        self._beta_vec = beta_vec
+        # self._compute_short_term_utility()
+        # self._compute_exponential_utility_matrix()
+        #
+        # self.get_log_likelihood()  # need to compute starting LL for optimiser
+
 
         self._path_start_nodes = None
         self._path_finish_nodes = None
 
-    def _get_n_func_evals(self):
-        return self.n_log_like_calls_non_redundant
-
-    def solve_for_optimal_beta(self, output_file=None):
-        """Runs the line search optimisation algorithm until a termination condition is reached.
-        Print output"""
-        # print out iteration 0 information
-        print(self.optimiser.get_iteration_log(self.optim_function_state), file=None)
-        n = 0
-        while n <= 1000:
-            if self.optimiser.METHOD_FLAG == OptimType.LINE_SEARCH:
-                ok_flag, hessian, log_msg = self.optimiser.iterate_step(self.optim_function_state,
-                                                                        verbose=False,
-                                                                        output_file=None)
-                if ok_flag:
-                    print(log_msg)
-                else:
-                    raise ValueError("Line search error flag was raised. Process failed.")
-            else:
-                raise NotImplementedError("Only have line search implemented")
-            # check stopping condition
-            is_stopping, stop_type, is_successful = self.optimiser.check_stopping_criteria()
-
-            if is_stopping:
-                print(f"The algorithm stopped due to condition: {stop_type}")
-                return
-        print("Infinite loop happened somehow, shouldn't have happened")
-
     def get_beta_vec(self):
         """Getter is purely to imply that beta vec is not a fixed field"""
-        return self.optim_function_state.beta_vec
+        return self._beta_vec
 
     def update_beta_vec(self, new_beta_vec):
         """Change the current parameter vector beta and update intermediate results which depend
         on this"""
         # If beta has changed we need to refresh values
-        if (new_beta_vec != self.optim_function_state.beta_vec).any():
+        if (new_beta_vec != self._beta_vec).any():
             self.flag_log_like_stored = False
-        self.optim_function_state.beta_vec = new_beta_vec
 
-        # self._beta_changed = True
         # TODO delay this from happening until the update is needed - use flag
 
         self._compute_short_term_utility()
@@ -277,8 +256,12 @@ class RecursiveLogitModel(object):
         # TODO make sure new stuff gets added here
 
     def _compute_short_term_utility(self):
-        # print("data dim", self.data_array)
-        self.short_term_utility = np.sum(self.optim_function_state.beta_vec * self.data_array)
+        print("data dim\n")
+        # print_data_struct(self.network_data)
+        print("beta", self.get_beta_vec())
+        self.short_term_utility = np.sum(self.get_beta_vec() * self.data_array)
+        print("vmat",)
+        # print_sparse(self.short_term_utility)
         # print(type(self.short_term_utility))
 
     def get_short_term_utility(self):
@@ -309,22 +292,26 @@ class RecursiveLogitModel(object):
 
         return self._exponential_utility_matrix
 
-    def _compute_value_function(self, m_tilde):
+    def compute_value_function(self, m_tilde):
         """Solves the system Z = Mz+b and stores the output for future use.
         Has rudimentary flagging of errors but doesn't attempt to solve any problems"""
+        print("mmat_int")
+        # print_sparse(m_tilde)
         error_flag = False # start with no errors
         ncols = self.network_data.incidence_matrix.shape[1]
         rhs = scipy.sparse.lil_matrix((ncols, 1))  # suppressing needless sparsity warning
         rhs[-1, 0] = 1
         # (I-M)z =b
         a_mat = identity(ncols) - m_tilde
-        z_vec = splinalg.spsolve(a_mat, rhs)
+        z_vec = splinalg.spsolve(a_mat, rhs) # rhs has to be (n,1) not (1,n)
         z_vec = np.atleast_2d(z_vec).T  # Transpose to have appropriate dims
         # if we have non near zero negative, we have a problem and parameters are infeasible
         # since log will be complex
+        print("z_pre", z_vec)
         if z_vec.min() <= min(-1e-10, Optimiser.NUMERICAL_ERROR_THRESH):
             # thresh on this?
             error_flag = True # TODO abs and stuff once i fix tests
+            return error_flag
             # handling via flag rather than exceptions for efficiency
             # raise ValueError("value function has too small entries")
         # z_vec = abs()
@@ -352,13 +339,13 @@ class RecursiveLogitModel(object):
                 print("W: Z contains zeros in it, so value functions are undefined for some nodes")
                 val_funcs_tmp = z_vec.copy()
                 val_funcs_tmp[val_funcs_tmp == 0] = np.nan
-                # in the cases where nans occur we might not actually need to deal with the numbers
-                # that are nans
-
+                with np.errstate(invalid='ignore'):
+                    self._value_functions = np.log(val_funcs_tmp)
+                    # in the cases where nans occur we might not actually need to deal with the numbers
+                    # that are nan so we don't just end here (this is not good justification TODO)
             else:
-                val_funcs_tmp = z_vec
-            self._value_functions = np.log(val_funcs_tmp)
-            self._exp_value_functions = z_vec # TODO should this be saved onto OptimStruct?
+                self._value_functions = np.log(z_vec)
+            self._exp_value_functions = z_vec  # TODO should this be saved onto OptimStruct?
         return error_flag
 
     def eval_log_like_at_new_beta(self, beta_vec):
@@ -370,6 +357,7 @@ class RecursiveLogitModel(object):
     def get_log_likelihood(self, n_obs_override=None):
         """Compute the log likelihood of the data with the current beta vec
                 n_obs override is for debug purposes to artificially lower the number of observations"""
+        # tODO should this only be on the subclass since it requires obs? probably yes
         self.n_log_like_calls += 1
         # TODO reinstate caching, currently have problems because beta can update externally
         # if self.flag_log_like_stored:
@@ -404,7 +392,7 @@ class RecursiveLogitModel(object):
             m_tilde[:, last_index_in_rows, ] = m_mat[:, dest_index]
 
             # Now get exponentiated value funcs
-            error_flag = self._compute_value_function(m_tilde)
+            error_flag = self.compute_value_function(m_tilde)
             # If we had numerical issues in computing value functions
             if error_flag:  # terminate early with error vals
                 self.log_like_stored = Optimiser.LL_ERROR_VALUE
@@ -422,18 +410,19 @@ class RecursiveLogitModel(object):
             self._compute_obs_path_indices(obs_mat[n, :])  # required to compute LL & grad
             # LogLikeGrad in Code doc
             gradient_current_obs = self._compute_obs_log_like_grad(grad_orig)
-            # LogLikeFn in Code Doc
+            # LogLikeFn in Code Doc - for this n
             log_like_obs = self._compute_obs_log_like(v_mat, orig_utility, mu)
 
-            # Some kind of successive over relaxation/ momentum
+            # # Some kind of successive over relaxation/ momentum
             log_like_cumulative += (log_like_obs - log_like_cumulative) / (n + 1)
+            # log_like_cumulative += log_like_obs
+            # grad_cumulative += gradient_current_obs
             grad_cumulative += (gradient_current_obs - grad_cumulative) / (n + 1)
             # print("current grad weighted", grad_cumulative)
 
         self.log_like_stored = -log_like_cumulative
         self.grad_stored = -grad_cumulative
-        self.optim_function_state.value = -log_like_cumulative
-        self.optim_function_state.grad = -grad_cumulative
+
         self.flag_log_like_stored = True
         return self.log_like_stored, self.grad_stored
 
@@ -547,3 +536,104 @@ class RecursiveLogitModel(object):
             # print(np.linalg.norm((I- m_tilde)*grad_v[q, :] - m_tilde.multiply(chi) * z))
 
         return grad_v
+
+
+class RecursiveLogitModelEstimation(RecursiveLogitModel):
+    """Abstraction of the linear algebra type relations on the recursive logit model to solve
+    the matrix system and compute log likelihood.
+
+    This extension has a handle to an optimiser class to enable dynamic updating of beta in a
+    nice way. Ideally, this dependency would work neutrally and this wouldn't
+     be a subclass. Makes sense for the Model not to be an arg to optimiser because optimiser should
+     be able to take in any function and optimise.
+
+
+
+    """
+
+    def __init__(self, data_struct: RecursiveLogitDataStruct, optimiser: Optimiser, user_obs_mat,
+                 initial_beta=-1.5, mu=1):
+        super().__init__(data_struct, user_obs_mat, initial_beta, mu)
+        self.optimiser = optimiser  # optimisation alg wrapper class
+        # TODO this probably shouldn't know about the optimiser
+        #    on the basis that if it doesn't then we can use the same base class here fro
+        #    estimation. It might be easier for now to make a base class and have a
+        #    subclass which gets an optimiser
+
+        beta_vec = super().get_beta_vec() # orig without optim tie in
+        # setup optimiser initialisation
+        self.optim_function_state = OptimFunctionState(None, None, np.identity(data_struct.n_dims),
+                                        self.optimiser.hessian_type,
+                                        self.eval_log_like_at_new_beta,
+                                        beta_vec,
+                                        self._get_n_func_evals)
+        self.update_beta_vec(beta_vec)  # to this to refresh dependent matrix quantitites
+        self.get_log_likelihood()  # need to compute starting LL for optimiser
+        optimiser.set_beta_vec(beta_vec)
+        optimiser.set_current_value(self.log_like_stored)
+
+        self._path_start_nodes = None
+        self._path_finish_nodes = None
+
+    def _get_n_func_evals(self):
+        return self.n_log_like_calls_non_redundant
+
+    def solve_for_optimal_beta(self, output_file=None):
+        """Runs the line search optimisation algorithm until a termination condition is reached.
+        Print output"""
+        # print out iteration 0 information
+        print(self.optimiser.get_iteration_log(self.optim_function_state), file=None)
+        n = 0
+        while n <= 1000:
+            n += 1
+            if self.optimiser.METHOD_FLAG == OptimType.LINE_SEARCH:
+                ok_flag, hessian, log_msg = self.optimiser.iterate_step(self.optim_function_state,
+                                                                        verbose=False,
+                                                                        output_file=None,
+                                                                        debug_counter=n)
+                if ok_flag:
+                    print(log_msg)
+                else:
+                    raise ValueError("Line search error flag was raised. Process failed.")
+            else:
+                raise NotImplementedError("Only have line search implemented")
+            # check stopping condition
+            is_stopping, stop_type, is_successful = self.optimiser.check_stopping_criteria()
+
+            if is_stopping:
+                print(f"The algorithm stopped due to condition: {stop_type}")
+                return
+        print("Infinite loop happened somehow, shouldn't have happened")
+
+    def get_beta_vec(self):
+        """Getter is purely to imply that beta vec is not a fixed field"""
+        return self.optim_function_state.beta_vec
+
+    def update_beta_vec(self, new_beta_vec):
+        """Change the current parameter vector beta and update intermediate results which depend
+        on this"""
+        # If beta has changed we need to refresh values
+        if (new_beta_vec != self.optim_function_state.beta_vec).any():
+            self.flag_log_like_stored = False
+        self.optim_function_state.beta_vec = new_beta_vec
+
+        # self._beta_changed = True
+        # TODO delay this from happening until the update is needed - use flag
+
+        self._compute_short_term_utility()
+        self._compute_exponential_utility_matrix()
+        # self._compute_value_function_matrix()
+        # TODO make sure new stuff gets added here
+
+
+    def get_log_likelihood(self, n_obs_override=None):
+        """Compute the log likelihood of the data with the current beta vec
+                n_obs override is for debug purposes to artificially lower the number of observations"""
+        super().get_log_likelihood(n_obs_override)
+        self.optim_function_state.value = self.log_like_stored
+        self.optim_function_state.grad = self.grad_stored
+
+        return self.log_like_stored, self.grad_stored
+
+
+

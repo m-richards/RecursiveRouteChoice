@@ -1,7 +1,8 @@
 import time
 import numpy as np
 
-from main import RecursiveLogitModel, RecursiveLogitDataStruct
+from data_loading import load_standard_path_format_csv
+from main import RecursiveLogitModelEstimation, RecursiveLogitDataStruct
 
 from os.path import join
 import optimisers as op
@@ -22,12 +23,15 @@ subfolder = "ExampleTiny"  # big data from classical v2
 folder = join("../Datasets", subfolder)
 
 time_io_end = time.time()
-network_data_struct, obs_mat = RecursiveLogitDataStruct.from_directory(folder, add_angles=False,
-                                                                       delim=" ")
-network_data_struct.add_second_travel_time_for_testing()
+obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=False)
+incidence_mat, travel_times_mat = attrs
+data_list =[travel_times_mat, travel_times_mat]
+network_data_struct = RecursiveLogitDataStruct(data_list, incidence_mat)
+
+
 optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
 
-model = RecursiveLogitModel(network_data_struct, optimiser, user_obs_mat=obs_mat)
+model = RecursiveLogitModelEstimation(network_data_struct, optimiser, user_obs_mat=obs_mat)
 
 model.solve_for_optimal_beta()
 

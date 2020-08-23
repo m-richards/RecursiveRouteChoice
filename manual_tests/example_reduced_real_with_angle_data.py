@@ -1,6 +1,6 @@
 import time
 import numpy as np
-from main import RecursiveLogitModel, RecursiveLogitDataStruct
+from main import RecursiveLogitModelEstimation, RecursiveLogitDataStructDeprecated
 
 import os
 import optimisers as op
@@ -20,16 +20,25 @@ time_io_start = time.time()
 subfolder = "TienMaiRealDataCut"  # big data from classical v2
 folder = os.path.join("../Datasets", subfolder)
 
-network_data_struct, obs_mat = RecursiveLogitDataStruct.from_directory(folder, add_angles=True,
-                                                                       angle_type='comparison',
-                                                                       delim='\t')
+
+# TODO needs work to work - don't have current code for comparison angle types
+# obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=False)
+# incidence_mat, travel_times_mat = attrs
+# # left, right, _, u_turn = AngleProcessor.get_turn_categorical_matrices()
+# data_list =[travel_times_mat, travel_times_mat]
+# network_data_struct = RecursiveLogitDataStruct2(data_list, incidence_mat)
+
+
+network_data_struct, obs_mat = RecursiveLogitDataStructDeprecated.from_directory(folder, add_angles=True,
+                                                                                 angle_type='comparison',
+                                                                                 delim='\t')
 
 time_io_end = time.time()
 
 optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS,
 
                                    max_iter=4)
-model = RecursiveLogitModel(network_data_struct, optimiser, user_obs_mat=obs_mat)
+model = RecursiveLogitModelEstimation(network_data_struct, optimiser, user_obs_mat=obs_mat)
 
 log_like_out, grad_out = model.get_log_likelihood(n_obs_override=1)
 
