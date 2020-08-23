@@ -1,9 +1,11 @@
 import os
+import warnings
 from typing import List
 import scipy
 from scipy import linalg
 from scipy.sparse import coo_matrix, csr_matrix, identity
 from scipy.sparse import linalg as splinalg
+from scipy import sparse
 
 from data_loading import load_csv_to_sparse, resize_to_dims, load_standard_path_format_csv
 from data_processing import AngleProcessor
@@ -11,6 +13,7 @@ from debug_helpers import print_sparse, print_data_struct
 from optimisers.extra_optim import OptimFunctionState
 from optimisers.optimisers_file import Optimiser, OptimType
 import numpy as np
+
 """
 Sketch of what we need
 
@@ -40,6 +43,51 @@ Class to store data
 
 
 """
+def _zero_pad_mat(mat, top=False, left=False, bottom=False, right=False):
+    """Abstracted since this will get done a fair bit and this is convenient way of doing it but
+    perhaps not the fastest"""
+    # pad_width =((int(top), int(bottom)), (int(left), int(right)))
+    # return np.pad(arr, pad_width=pad_width, mode='constant',
+    #               constant_values=0)
+    if scipy.sparse.issparse(mat):
+
+        if right:
+            m, n = mat.shape
+
+            # print(mat.shape, np.zeros(m).shape)
+            # print(mat, type(mat))
+            mat = sparse.hstack([mat, sparse.dok_matrix((m, 1))])
+        if bottom:
+            m, n = mat.shape
+            mat = sparse.vstack([mat, sparse.dok_matrix((1, n))])
+        if left:
+            m, n = mat.shape
+            mat = sparse.hstack([sparse.dok_matrix((m, 1)), mat])
+        if top:
+            m, n = mat.shape
+            mat = sparse.vstack([sparse.dok_matrix((1, n), mat, )])
+        return mat.todok() # don't want to stay as coo # TODO do explicit casts where we need them
+    else:
+        if right:
+            m, n = mat.shape
+            # print(mat.shape, np.zeros((m, 1)).shape)
+            # print(mat, type(mat))
+            mat = np.c_[mat, np.zeros((m, 1))]
+        if bottom:
+            m, n = mat.shape
+            # print(mat.shape, np.zeros((1, n)).shape)
+            # print(mat, type(mat))
+            mat = np.r_[mat, np.zeros((1, n))]
+        if left:
+            m, n = mat.shape
+            mat = np.c_[np.zeros((m, 1)), mat]
+        if top:
+            m, n = mat.shape
+            mat = np.r_[np.zeros((1, n)), mat]
+        return mat
+
+
+
 # TODO think perhaps no specific labels should be here, that these should be done by some
 #  other preprocessing step before this class and
 #  this should be a generic data class.
@@ -228,6 +276,7 @@ class RecursiveLogitModel(object):
             beta_vec = initial_beta
         # setup optimiser initialisation
         self._beta_vec = beta_vec
+        # TODO these should be in init, but aren't because of bad coupling in estimation subclass
         # self._compute_short_term_utility()
         # self._compute_exponential_utility_matrix()
         #
@@ -292,22 +341,31 @@ class RecursiveLogitModel(object):
 
         return self._exponential_utility_matrix
 
-    def compute_value_function(self, m_tilde):
-        """Solves the system Z = Mz+b and stores the output for future use.
-        Has rudimentary flagging of errors but doesn't attempt to solve any problems"""
-        print("mmat_int")
-        # print_sparse(m_tilde)
-        error_flag = False # start with no errors
-        ncols = self.network_data.incidence_matrix.shape[1]
+    @staticmethod
+    def _compute_exp_value_function(m_tilde, return_pieces=False):
+        """ Actual linear system solve without any error checking"""
+        ncols = m_tilde.shape[1]
         rhs = scipy.sparse.lil_matrix((ncols, 1))  # suppressing needless sparsity warning
         rhs[-1, 0] = 1
         # (I-M)z =b
         a_mat = identity(ncols) - m_tilde
-        z_vec = splinalg.spsolve(a_mat, rhs) # rhs has to be (n,1) not (1,n)
+        z_vec = splinalg.spsolve(a_mat, rhs)  # rhs has to be (n,1) not (1,n)
         z_vec = np.atleast_2d(z_vec).T  # Transpose to have appropriate dims
+        if return_pieces:
+            return a_mat, z_vec, rhs
+        else:
+            return z_vec
+
+    def compute_value_function(self, m_tilde):
+        """Solves the system Z = Mz+b and stores the output for future use.
+        Has rudimentary flagging of errors but doesn't attempt to solve any problems"""
+        # print("mmat_int")
+        # print_sparse(m_tilde)
+        error_flag = False  # start with no errors
+        a_mat, z_vec, rhs = self._compute_exp_value_function(m_tilde, return_pieces=True)
         # if we have non near zero negative, we have a problem and parameters are infeasible
         # since log will be complex
-        print("z_pre", z_vec)
+        # print("z_pre", z_vec)
         if z_vec.min() <= min(-1e-10, Optimiser.NUMERICAL_ERROR_THRESH):
             # thresh on this?
             error_flag = True # TODO abs and stuff once i fix tests
@@ -315,7 +373,6 @@ class RecursiveLogitModel(object):
             # handling via flag rather than exceptions for efficiency
             # raise ValueError("value function has too small entries")
         # z_vec = abs()
-
 
         # Norm of residual
             # Note: Scipy sparse norm doesn't have a 2 norm so we use this
@@ -339,8 +396,9 @@ class RecursiveLogitModel(object):
                 print("W: Z contains zeros in it, so value functions are undefined for some nodes")
                 val_funcs_tmp = z_vec.copy()
                 val_funcs_tmp[val_funcs_tmp == 0] = np.nan
-                with np.errstate(invalid='ignore'):
-                    self._value_functions = np.log(val_funcs_tmp)
+                # with np.errstate(invalid='ignore'):
+                # At the moment I would prefer this crashes
+                self._value_functions = np.log(val_funcs_tmp)
                     # in the cases where nans occur we might not actually need to deal with the numbers
                     # that are nan so we don't just end here (this is not good justification TODO)
             else:
@@ -634,6 +692,137 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         self.optim_function_state.grad = self.grad_stored
 
         return self.log_like_stored, self.grad_stored
+
+
+class RecursiveLogitModelPrediction(RecursiveLogitModel):
+    """Subclass which generates simulated observations based upon the supplied beta vector.
+    Uses same structure as estimator in the hopes I can unify these such that one can use the
+    estimator for prediction as well (probably have estimator inherit from this)"""
+    def __init__(self, data_struct: RecursiveLogitDataStruct, user_obs_mat, initial_beta=-1.5,
+                 mu=1):
+        super().__init__(data_struct, user_obs_mat, initial_beta, mu)
+        self._compute_short_term_utility()
+        self._compute_exponential_utility_matrix()
+
+    def generate_observations(self, origin_indices, dest_indices, num_obs_per_pair, iter_cap=1000,
+                              rng_seed=None):
+        """
+
+        :param origin_indices: iterable of indices to start paths from
+        :type origin_indices: list or iterable
+        :param dest_indices: iterable of indices to end paths at
+        :type dest_indices: List or iterable
+        :param num_obs_per_pair: Number of observations to generate for each OD pair
+        :type num_obs_per_pair: int
+        :param iter_cap: iteration cap in the case of non convergent value functions.
+                        Hopefully should not occur but may happen if the value function solutions
+                        are negative but ill conditioned.
+        :type iter_cap: int
+        :param rng_seed: Seed for numpy generator, or instance of np.random.BitGenerator
+        :type rng_seed: int or np.random.BitGenerator  (any legal input to np.random.default_rng())
+
+        """
+        rng = np.random.default_rng(rng_seed)
+
+        # store output as list of lists, using AwkwardArrays might be more efficient,
+        # but the output format will not be the memory bottleneck
+        output_path_list = []
+
+        local_short_term_util = self.get_short_term_utility().copy()
+        # this is never updated beyond initial padding (just need the zero col for dest util
+        local_short_term_util = _zero_pad_mat(local_short_term_util, right=True)
+
+
+        local_exp_util_mat =self.get_exponential_utility_matrix()
+        local_incidence_mat =self.network_data.incidence_matrix
+        m_tilde = local_exp_util_mat.copy()
+        i_tilde = local_incidence_mat.copy()
+
+        first_iter = True
+        m, n = m_tilde.shape
+        assert m == n  # paranoia
+
+        dest_dummy_arc_index = m  # zero based equivalent of m+1 cols
+
+        m_tilde = _zero_pad_mat(m_tilde, bottom=True, right=True)
+        incidence_tilde = _zero_pad_mat(i_tilde, bottom=True, right=True)
+
+        for dest in dest_indices:
+            print("dest = ", dest, "augmented dest col =", m)
+
+            # reset to default vals
+            if not first_iter:
+                m_tilde[:-1, :-1] = local_exp_util_mat
+                m_tilde[-1, :] = 0
+                m_tilde[:, -1] = 0
+
+                incidence_tilde[:-1, :-1] = local_incidence_mat
+                incidence_tilde[-1, :] = 0
+                incidence_tilde[:, -1] = 0
+
+                first_iter = False
+
+            # Destination enforcing # TODO review these assumptions and nonzero dest util
+            #                               note that dest util updates would need to update
+            #                               short term util locally as well (just final col).
+            m_tilde[dest, :] = 0.0
+            m_tilde[dest, -1] = 1  # exp(v(a|k)) = 1 when v(a|k) = 0 # try 0.2
+            incidence_tilde[dest, :] = 0
+            incidence_tilde[dest, -1] = 1
+
+            z_vec = self._compute_exp_value_function(m_tilde)
+            value_funcs = np.log(z_vec)
+            if np.any(value_funcs > 0):
+                warnings.warn(f"WARNING: Positive value functions: {value_funcs[value_funcs > 0]}",
+                              category='error')
+
+            # loop through path starts, with same base value functions
+            for orig in origin_indices:
+                if orig == dest:  # redundant case
+                    print("skipping o==d for o=", orig)
+                    continue
+
+                # repeat until we have specified number of obs
+                for i in range(num_obs_per_pair):
+                    # while we haven't reached the dest
+
+                    current_arc = orig
+                    current_path = [orig]
+                    path_string = f"Start: {orig}"
+                    count = 0
+                    while current_arc != dest_dummy_arc_index:  # index of augmented dest arc
+                        count += 1
+                        if count > iter_cap:
+                            raise ValueError(f"Max iterations reached. No path from {orig} to "
+                                             f"{dest} was found within cap.")
+                        current_incidence_col = incidence_tilde[current_arc, :]
+                        # all arcs current arc connects to (index converts from 2d to 1d)
+                        neighbour_arcs = current_incidence_col.nonzero()[0]
+
+                        # TODO it could be cheaper to block generate these in larger batches
+                        eps = rng.gumbel(loc=-np.euler_gamma, scale=1, size=len(neighbour_arcs))
+
+                        value_functions_observed = (
+                                local_short_term_util[current_arc, neighbour_arcs]
+                                + value_funcs[neighbour_arcs].T
+                                + eps)
+
+                        if np.any(np.isnan(value_functions_observed)):
+                            raise ValueError("beta vec is invalid, gives non real solution")
+
+                        next_arc_index = np.argmax(value_functions_observed)
+                        next_arc = neighbour_arcs[next_arc_index]
+                        # print(np.max(value_functions_observed), next_arc)
+                        path_string += f" -> {next_arc}"
+                        current_arc = next_arc
+                        current_path.append(current_arc)
+
+                    print(path_string + ": Fin")
+                    output_path_list.append(current_path)
+
+        return output_path_list
+
+
 
 
 

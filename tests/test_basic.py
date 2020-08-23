@@ -13,14 +13,15 @@ from scipy.sparse import csr_matrix
 
 from data_loading import load_csv_to_sparse, load_standard_path_format_csv
 from data_processing import AngleProcessor
-from main import RecursiveLogitModelEstimation, RecursiveLogitDataStruct
+from main import RecursiveLogitModelEstimation, RecursiveLogitDataStruct, \
+    RecursiveLogitModelPrediction
 
 import os
 from os.path import join
 import optimisers as op
 
 
-class TestSimpleCases:
+class TestSimpleCases(object):
 
     def test_first_example(self):
         subfolder = "ExampleTiny"  # big data from classical v2
@@ -168,4 +169,61 @@ class TestSimpleCases:
     def test_manual_tests_dont_throw(self):
         """Just checking these scripts don't crash due to changes in api"""
         from manual_tests import (example_tiny_with_angle_data, example_tiny_no_angle_data)
+
+
+class TestSimulation(object):
+
+    def test_basic_consistency(self):
+        Distances = np.array(
+            [[4, 3.5, 4.5, 3, 3, 0, 0, 0],
+             [3.5, 3, 4, 0, 2.5, 3, 3, 0],
+             [4.5, 4, 5, 0, 0, 0, 4, 3.5],
+             [3, 0, 0, 2, 2, 2.5, 0, 2],
+             [3, 2.5, 0, 2, 2, 2.5, 2.5, 0],
+             [0, 3, 0, 2.5, 2.5, 3, 3, 2.5],
+             [0, 3, 4, 0, 2.5, 3, 3, 2.5],
+             [0, 0, 3.5, 2, 0, 2.5, 2.5, 2]])
+
+        Angles = np.array(
+            [[180, -90, -45, 360, 90, 0, 0, 0],
+             [90, 180, -135, 0, -90, -45, 360, 0],
+             [45, 135, 180, 0, 0, 0, -90, 360],
+             [360, 0, 0, 180, -90, 135, 0, 90],
+             [-90, 90, 0, 90, 180, -135, -90, 0],
+             [0, 45, 0, -135, 135, 180, -135, 135],
+             [0, 360, 90, 0, 90, 135, 180, -90],
+             [0, 0, 360, -90, 0, -135, 90, 180]])
+
+        from scipy.sparse import dok_matrix
+
+        incidence_mat = (Distances > 0).astype(int)
+
+        angles_rad = AngleProcessor.to_radians(Angles)
+
+        left, right, neutral, u_turn = AngleProcessor.get_turn_categorical_matrices(dok_matrix(
+            angles_rad), dok_matrix(incidence_mat))
+
+        distances = dok_matrix(Distances)
+
+        data_list = [distances]
+        network_struct = RecursiveLogitDataStruct(data_list, incidence_mat,
+                                                  data_array_names_debug=("distances", "u_turn"))
+
+        beta_vec = np.array([-1])
+
+
+        model = RecursiveLogitModelPrediction(network_struct, user_obs_mat=None,
+                                              initial_beta=beta_vec, mu=1)
+
+        obs = model.generate_observations(origin_indices=[0, 1, 2, 7], dest_indices=[1, 6, 3],
+                                          num_obs_per_pair=4, iter_cap=15, rng_seed=1)
+        expected = [[0, 4, 5, 1, 8], [0, 1, 8], [0, 4, 1, 8], [0, 1, 8], [2, 1, 8], [2, 1, 8],
+                    [2, 1, 8], [2, 1, 8], [7, 7, 7, 5, 1, 8], [7, 6, 1, 8], [7, 3, 4, 1, 8],
+                    [7, 5, 1, 8], [0, 1, 8], [0, 1, 8], [0, 1, 8], [0, 1, 8], [1, 8], [1, 8],
+                    [1, 8], [1, 8], [2, 1, 8], [2, 6, 8], [2, 6, 8], [2, 1, 8], [7, 6, 8],
+                    [7, 6, 8], [7, 3, 3, 7, 5, 6, 8], [7, 6, 8], [0, 3, 8], [0, 3, 8], [0, 1, 8],
+                    [0, 3, 8], [1, 8], [1, 8], [1, 8], [1, 8], [2, 6, 8], [2, 6, 8],
+                    [2, 7, 7, 6, 8], [2, 1, 8], [7, 6, 8], [7, 7, 3, 8], [7, 7, 6, 8], [7, 6, 8]]
+
+        assert obs ==expected
 
