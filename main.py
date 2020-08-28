@@ -501,19 +501,19 @@ class RecursiveLogitModel(object):
         # start at 1 to omit the leading dest node marking
         path = obs_row[0, 1:path_len].toarray().squeeze()
 
-        if np.any(path != self._prev_path):
+        # if np.any(path != self._prev_path): # infer I was planning caching, unused though
             # subtract 1 to get 0 based indexes
-            path_arc_start_nodes = path[:-1] - 1  # all nodes i in (i ->j) transitions
-            path_arc_finish_nodes_tmp = path[1:] - 1  # all nodes j
+        path_arc_start_nodes = path[:-1] - 1  # all nodes i in (i ->j) transitions
+        path_arc_finish_nodes_tmp = path[1:] - 1  # all nodes j
 
-            final_index_in_data = np.shape(self.network_data.incidence_matrix)[0]
-            path_arc_finish_nodes = np.minimum(path_arc_finish_nodes_tmp, final_index_in_data)
-            if np.any(path_arc_finish_nodes != path_arc_finish_nodes_tmp):
-                # I can't see when this would happen
-                print("WARN, dodgy bounds indexing hack occur in path tracing,"
-                      " changed a node to not exceed maximum")
-            self._path_start_nodes = path_arc_start_nodes
-            self._path_finish_nodes = path_arc_finish_nodes
+        final_index_in_data = np.shape(self.network_data.incidence_matrix)[0]
+        path_arc_finish_nodes = np.minimum(path_arc_finish_nodes_tmp, final_index_in_data)
+        if np.any(path_arc_finish_nodes != path_arc_finish_nodes_tmp):
+            # I can't see when this would happen
+            print("WARN, dodgy bounds indexing hack occur in path tracing,"
+                  " changed a node to not exceed maximum")
+        self._path_start_nodes = path_arc_start_nodes
+        self._path_finish_nodes = path_arc_finish_nodes
         return self._path_start_nodes, self._path_finish_nodes
 
     def _compute_obs_log_like(self, v_mat, orig_utility, mu):
@@ -611,6 +611,10 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
 
     def __init__(self, data_struct: RecursiveLogitDataStruct, optimiser: Optimiser, user_obs_mat,
                  initial_beta=-1.5, mu=1):
+
+        if user_obs_mat is None:
+            raise ValueError("user_obs_mat cannot be 'None' for estimation code")
+
         super().__init__(data_struct, user_obs_mat, initial_beta, mu)
         self.optimiser = optimiser  # optimisation alg wrapper class
         # TODO this probably shouldn't know about the optimiser
@@ -705,7 +709,8 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
         self._compute_exponential_utility_matrix()
 
     def generate_observations(self, origin_indices, dest_indices, num_obs_per_pair, iter_cap=1000,
-                              rng_seed=None):
+                              rng_seed=None,
+                              ):
         """
 
         :param origin_indices: iterable of indices to start paths from
@@ -721,6 +726,8 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
         :param rng_seed: Seed for numpy generator, or instance of np.random.BitGenerator
         :type rng_seed: int or np.random.BitGenerator  (any legal input to np.random.default_rng())
 
+        :rtype list<list<int>>
+        :return List of list of all observations generated
         """
         rng = np.random.default_rng(rng_seed)
 
@@ -748,7 +755,7 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
         incidence_tilde = _zero_pad_mat(i_tilde, bottom=True, right=True)
 
         for dest in dest_indices:
-            print("dest = ", dest, "augmented dest col =", m)
+            # print("dest = ", dest, "augmented dest col =", m)
 
             # reset to default vals
             if not first_iter:
@@ -779,7 +786,7 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
             # loop through path starts, with same base value functions
             for orig in origin_indices:
                 if orig == dest:  # redundant case
-                    print("skipping o==d for o=", orig)
+                    # print("skipping o==d for o=", orig)
                     continue
 
                 # repeat until we have specified number of obs
@@ -788,16 +795,28 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
 
                     current_arc = orig
                     current_path = [orig]
-                    path_string = f"Start: {orig}"
+                    # path_string = f"Start: {orig}"
                     count = 0
                     while current_arc != dest_dummy_arc_index:  # index of augmented dest arc
                         count += 1
                         if count > iter_cap:
+                            # print("orig, dest =", orig, dest, value_funcs[0])
+                            # print("path failed, in progress is:", path_string)
+
                             raise ValueError(f"Max iterations reached. No path from {orig} to "
                                              f"{dest} was found within cap.")
                         current_incidence_col = incidence_tilde[current_arc, :]
                         # all arcs current arc connects to (index converts from 2d to 1d)
-                        neighbour_arcs = current_incidence_col.nonzero()[0]
+                        if sparse.issparse(current_incidence_col):
+                            # we get a matrix return type for 1 row * n cols
+                            # from .nonzero() - [0]th component is the row (always zero)
+                            # and [1]th component is col,
+                            neighbour_arcs = current_incidence_col.nonzero()[1]
+                        else:
+                            # nd-arrays are smart enough to work out they are 1d
+                            neighbour_arcs = current_incidence_col.nonzero()[0]
+                        # print(neighbour_arcs, "curr inc", current_incidence_col)
+                        # print('\t', current_incidence_col.nonzero())
 
                         # TODO it could be cheaper to block generate these in larger batches
                         eps = rng.gumbel(loc=-np.euler_gamma, scale=1, size=len(neighbour_arcs))
