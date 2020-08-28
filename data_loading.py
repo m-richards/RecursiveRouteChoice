@@ -1,5 +1,6 @@
 """File containing IO data loading and standard preprocessing steps to construct
 data matrices from input files"""
+import json
 import os
 
 import numpy as np
@@ -179,6 +180,26 @@ def load_tnpm_to_sparse(net_fpath, columns_to_extract=None, use_file_order_for_a
                            arc_to_index_map[end_arc]] = (start_len + end_len) / 2
     print(arc_to_index_map)
     return arc_to_index_map, arc_matrix
+
+
+def load_obs_from_json(filename):
+    with open(filename, 'r') as f:
+        return json.load(f)
+
+
+def write_obs_to_json(filename, obs, allow_rewrite=False):
+    if os.path.exists(filename) and allow_rewrite is False:
+        raise IOError("File already exists. Specify 'force_override=True' to enable re-writing.")
+    with open(filename, 'w') as f:
+        json.dump(obs, f)
+    # Naive plaintest
+
+    # with open(filename, 'w') as f:
+    #
+    #     for ob in obs:
+    #         for arc in obs:
+    #             print(arc, end=", ", file=filename)
+    #         print(file=filename)
 
 
 
