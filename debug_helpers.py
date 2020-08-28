@@ -2,7 +2,7 @@
 import numpy as np
 # np.get_printoptions()['precision']
 def print_sparse(mat, round_=16):
-    zzz
+    # zzz
     for x in range(mat.shape[0]):
         for y in range(mat.shape[1]):
             if mat[x, y] != 0:

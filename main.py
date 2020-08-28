@@ -45,6 +45,15 @@ Class to store data
 
 
 """
+
+
+def _to_dense_if_sparse(mat):
+    if sparse.issparse(mat):
+        return mat.todense()
+    else:
+        return mat
+
+
 def _zero_pad_mat(mat, top=False, left=False, bottom=False, right=False):
     """Abstracted since this will get done a fair bit and this is convenient way of doing it but
     perhaps not the fastest"""
@@ -309,10 +318,16 @@ class RecursiveLogitModel(object):
     def _compute_short_term_utility(self):
         print("data dim\n")
         # print_data_struct(self.network_data)
+
         print("beta", self.get_beta_vec())
-        self.short_term_utility = np.sum(self.get_beta_vec() * self.data_array)
+        self.short_term_utility = np.sum(self.get_beta_vec() * self.data_array, axis=0)
+        # note axis=0 means that ndarrays will give a matrix result back, not a scalar
+        # which is what we want
+        print(self.data_array)
         print("vmat",)
-        # print_sparse(self.short_term_utility)
+        print(self.get_beta_vec().shape, self.data_array.shape)
+        print(self.short_term_utility)
+        print_sparse(self.short_term_utility)
         # print(type(self.short_term_utility))
 
     def get_short_term_utility(self):
@@ -333,7 +348,9 @@ class RecursiveLogitModel(object):
         # genuine zero arcs from the absent arcs
         # (since data format has zero arcs for silly reasons)
         nonzero_entries = self.network_data.incidence_matrix.nonzero()
-        m_mat[nonzero_entries] = np.exp(1 / self.mu * m_mat[nonzero_entries].todense())
+
+        m_mat[nonzero_entries] = np.exp(
+            1 / self.mu * _to_dense_if_sparse(m_mat[nonzero_entries]))
         self._exponential_utility_matrix = m_mat
 
     def get_exponential_utility_matrix(self):
