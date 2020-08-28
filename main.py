@@ -454,7 +454,7 @@ class RecursiveLogitModel(object):
         self._path_finish_nodes = path_arc_finish_nodes
         return self._path_start_nodes, self._path_finish_nodes
 
-    def _compute_obs_log_like(self, v_mat, orig_utility, mu):
+    def _compute_current_obs_mu_log_like(self, v_mat, orig_utility):
         """# LogLikeFn in Code Doc
         Compute the log likelihood function for the currently observed path.
         "Current" in this sense stipulates that compute_obs_path_indices has been called prior
@@ -463,11 +463,10 @@ class RecursiveLogitModel(object):
         arc_finish_nodes = self._path_finish_nodes
 
         sum_inst_util = v_mat[arc_start_nodes, arc_finish_nodes].sum()
-        log_like_orig = -1 * (1 / mu) * orig_utility  # log probability from origin
-        log_like_obs = 1 / mu * sum_inst_util + log_like_orig  # LogLikeFn in Code Doc
+        log_like_obs = sum_inst_util -orig_utility  # LogLikeFn in Code Doc
         return log_like_obs
 
-    def _compute_obs_log_like_grad(self, grad_orig):
+    def _compute_current_obs_mu_ll_grad(self, grad_orig):
         """# LogLikeGrad in Code doc
         Compute the log likelihood function gradient for the currently observed path.
         "Current" in this sense stipulates that compute_obs_path_indices has been called prior
@@ -475,7 +474,7 @@ class RecursiveLogitModel(object):
         # subtract 1 to get 0 based indexes
         arc_start_nodes = self._path_start_nodes
         arc_finish_nodes = self._path_finish_nodes
-
+        # recall n_dims is number of network attributes
         sum_current_attr = np.zeros(self.n_dims)  # sum of observed attributes
         for attr in range(self.n_dims):  # small number of dims so inexpensive
             sum_current_attr[attr] = self.network_data.data_array[attr][
@@ -501,7 +500,7 @@ class RecursiveLogitModel(object):
                 & =\frac{1}{\bm{z}}\circ
                 (I - \bm{M})^{-1}\paren{\bm{M}\circ \chi^q}  \bm{z}
 
-                without the leading 1/z term as a matrix for all q.
+                without the leading 1/z term as a matrix for all q and k.
                 We compute this quantity
                 since in order to evaluate the gradient at the orig,
                 we need to compute the mvp term, but not the elementwise product
@@ -528,6 +527,7 @@ class RecursiveLogitModel(object):
             # Have experienced numerical instability with spsolve, but believe this is
             # due to matrices with terrible condition numbers in the examples
             # spsolve(A,b) == inv(A)*b
+            # Note: A.multiply(B) is A .* B for sparse matrices
             grad_v[q, :] = splinalg.spsolve(I - m_tilde, m_tilde.multiply(chi) * z)
             # print(np.linalg.norm((I- m_tilde)*grad_v[q, :] - m_tilde.multiply(chi) * z))
 
@@ -651,8 +651,8 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         v_mat = self.get_short_term_utility()  # capital u in tien mai's code
         m_mat = self.get_exponential_utility_matrix()
 
-        log_like_cumulative = 0.0  # weighting of all observations
-        grad_cumulative = np.zeros(n_dims)  # gradient combined across all observations
+        mu_log_like_cumulative = 0.0  # weighting of all observations
+        mu_ll_grad_cumulative = np.zeros(n_dims)  # gradient combined across all observations
 
         # iterate through observation number
         for n in range(num_obs):
@@ -686,19 +686,19 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
 
             self._compute_obs_path_indices(obs_record[n, :])  # required to compute LL & grad
             # LogLikeGrad in Code doc
-            gradient_current_obs = self._compute_obs_log_like_grad(grad_orig)
+            mu_gradient_current_obs = self._compute_current_obs_mu_ll_grad(grad_orig)
             # LogLikeFn in Code Doc - for this n
-            log_like_obs = self._compute_obs_log_like(v_mat, orig_utility, mu)
+            mu_log_like_obs = self._compute_current_obs_mu_log_like(v_mat, orig_utility)
 
             # # Some kind of successive over relaxation/ momentum
-            log_like_cumulative += (log_like_obs - log_like_cumulative) / (n + 1)
-            # log_like_cumulative += log_like_obs
-            # grad_cumulative += gradient_current_obs
-            grad_cumulative += (gradient_current_obs - grad_cumulative) / (n + 1)
-            # print("current grad weighted", grad_cumulative)
-
-        self.log_like_stored = -log_like_cumulative
-        self.grad_stored = -grad_cumulative
+            mu_log_like_cumulative += (mu_log_like_obs - mu_log_like_cumulative) / (n + 1)
+            # mu_log_like_cumulative += mu_log_like_obs
+            # ll_grad_cumulative += mu_gradient_current_obs
+            mu_ll_grad_cumulative += (mu_gradient_current_obs - mu_ll_grad_cumulative) / (n + 1)
+            # print("current grad weighted", ll_grad_cumulative)
+        # only apply this rescaling once rather than on all terms inside loops
+        self.log_like_stored = -1/mu * mu_log_like_cumulative
+        self.grad_stored = -1/mu * mu_ll_grad_cumulative
 
         self.optim_function_state.value = self.log_like_stored
         self.optim_function_state.grad = self.grad_stored
