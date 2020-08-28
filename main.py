@@ -745,52 +745,40 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
         output_path_list = []
 
         local_short_term_util = self.get_short_term_utility().copy()
-        # this is never updated beyond initial padding (just need the zero col for dest util
-        local_short_term_util = _zero_pad_mat(local_short_term_util, right=True)
-
 
         local_exp_util_mat =self.get_exponential_utility_matrix()
         local_incidence_mat =self.network_data.incidence_matrix
         m_tilde = local_exp_util_mat.copy()
         i_tilde = local_incidence_mat.copy()
 
-        first_iter = True
         m, n = m_tilde.shape
         assert m == n  # paranoia
 
-        dest_dummy_arc_index = m  # zero based equivalent of m+1 cols
+        # destination dummy arc is the final column (which was zero until filled)
+        dest_dummy_arc_index = m-1
 
-        m_tilde = _zero_pad_mat(m_tilde, bottom=True, right=True)
-        incidence_tilde = _zero_pad_mat(i_tilde, bottom=True, right=True)
+        # print("shapes", m_tilde.shape, i_tilde.shape, local_short_term_util.shape,
+        #       local_exp_util_mat.shape)
+        # print(m_tilde.toarray())
 
         for dest in dest_indices:
             # print("dest = ", dest, "augmented dest col =", m)
-
-            # reset to default vals
-            if not first_iter:
-                m_tilde[:-1, :-1] = local_exp_util_mat
-                m_tilde[-1, :] = 0
-                m_tilde[:, -1] = 0
-
-                incidence_tilde[:-1, :-1] = local_incidence_mat
-                incidence_tilde[-1, :] = 0
-                incidence_tilde[:, -1] = 0
-
-            first_iter = False
-
             # Destination enforcing # TODO review these assumptions and nonzero dest util
             #                               note that dest util updates would need to update
             #                               short term util locally as well (just final col).
+            #                               Reivew needs to change the inverse ops at end of loop
             m_tilde[dest, :] = 0.0
             m_tilde[dest, -1] = 1  # exp(v(a|k)) = 1 when v(a|k) = 0 # try 0.2
-            incidence_tilde[dest, :] = 0
-            incidence_tilde[dest, -1] = 1
+            i_tilde[dest, :] = 0
+            i_tilde[dest, -1] = 1
+            # print("modif m", m_tilde.toarray())
 
             z_vec = self._compute_exp_value_function(m_tilde)
+            # print(z_vec)
             value_funcs = np.log(z_vec)
             if np.any(value_funcs > 0):
                 warnings.warn(f"WARNING: Positive value functions: {value_funcs[value_funcs > 0]}",
-                              category='error')
+                              )
 
             # loop through path starts, with same base value functions
             for orig in origin_indices:
@@ -815,6 +803,7 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
                             raise ValueError(f"Max iterations reached. No path from {orig} to "
                                              f"{dest} was found within cap.")
                         current_incidence_col = incidence_tilde[current_arc, :]
+                        current_incidence_col = i_tilde[current_arc, :]
                         # all arcs current arc connects to (index converts from 2d to 1d)
                         if sparse.issparse(current_incidence_col):
                             # we get a matrix return type for 1 row * n cols
@@ -853,6 +842,10 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
                         continue  # this is worthless information saying we got from O to D in one
                         # step
                     output_path_list.append(current_path)
+
+            # Fix the columns we changed for this dest (cheaper than refreshing whole matrix)
+            m_tilde[dest, :] = local_exp_util_mat[dest, :]
+            i_tilde[dest, :] = local_incidence_mat[dest, :]
 
         return output_path_list
 
