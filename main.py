@@ -245,14 +245,14 @@ class RecursiveLogitModel(object):
 
     """
 
-    def __init__(self, data_struct: RecursiveLogitDataStruct, user_obs_mat,
+    def __init__(self, data_struct: RecursiveLogitDataStruct,
                  initial_beta=-1.5, mu=1, ):
         self.network_data = data_struct  # all network attributes
         # TODO this probably shouldn't know about the optimiser
         #    on the basis that if it doesn't then we can use the same base class here fro
         #    estimation. It might be easier for now to make a base class and have a
         #    subclass which gets an optimiser
-        self.user_obs_mat = user_obs_mat  # matrix of observed trips
+        # self.user_obs_mat = user_obs_mat  # matrix of observed trips
         self.data_array = data_struct.data_array
         self.n_dims = len(self.data_array)
         self.mu = mu
@@ -406,83 +406,8 @@ class RecursiveLogitModel(object):
             self._exp_value_functions = z_vec  # TODO should this be saved onto OptimStruct?
         return error_flag
 
-    def eval_log_like_at_new_beta(self, beta_vec):
-        """update beta vec and compute log likelihood in one step - used for lambdas
-        Effectively a bad functools.partial"""
-        self.update_beta_vec(beta_vec)
-        return self.get_log_likelihood()
 
-    def get_log_likelihood(self, n_obs_override=None):
-        """Compute the log likelihood of the data with the current beta vec
-                n_obs override is for debug purposes to artificially lower the number of observations"""
-        # tODO should this only be on the subclass since it requires obs? probably yes
-        self.n_log_like_calls += 1
-        # TODO reinstate caching, currently have problems because beta can update externally
-        # if self.flag_log_like_stored:
-        #     return self.log_like_stored, self.grad_stored
-        self.n_log_like_calls_non_redundant += 1
 
-        obs_mat = self.user_obs_mat
-        num_obs, path_max_len = np.shape(obs_mat)
-        if n_obs_override is not None:
-            num_obs = n_obs_override
-        # local references with idomatic names
-        n_dims = self.n_dims  # number of attributes in data
-        mu = self.mu
-        v_mat = self.get_short_term_utility()  # capital u in tien mai's code
-        m_mat = self.get_exponential_utility_matrix()
-
-        log_like_cumulative = 0.0  # weighting of all observations
-        grad_cumulative = np.zeros(n_dims)  # gradient combined across all observations
-
-        # iterate through observation number
-        for n in range(num_obs):
-            dest_index = obs_mat[n, 0] - 1  # subtract 1 for zero based python
-            orig_index = obs_mat[n, 1] - 1
-
-            # TODO review this, still not sure it makes mathematical sense
-            # Compute modified matrices for current dest
-            old_row_shape = m_mat.shape[0]
-            last_index_in_rows = old_row_shape - 1
-
-            m_tilde = m_mat[0:last_index_in_rows + 1,
-                            0:last_index_in_rows + 1]  # plus 1 for inclusive
-            m_tilde[:, last_index_in_rows, ] = m_mat[:, dest_index]
-
-            # Now get exponentiated value funcs
-            error_flag = self.compute_value_function(m_tilde)
-            # If we had numerical issues in computing value functions
-            if error_flag:  # terminate early with error vals
-                self.log_like_stored = Optimiser.LL_ERROR_VALUE
-                self.grad_stored = np.ones(n_dims)
-                self.flag_log_like_stored = True
-                print("Parameters are infeasible.")
-                return self.log_like_stored, self.grad_stored
-
-            value_funcs, exp_val_funcs = self._value_functions, self._exp_value_functions
-            # Gradient and log like depend on origin values
-            orig_utility = value_funcs[orig_index]  # TODO should these be nested inside
-            # respective sub function? probably yes
-            grad_orig = self.get_value_func_grad_orig(orig_index, m_tilde, exp_val_funcs)
-
-            self._compute_obs_path_indices(obs_mat[n, :])  # required to compute LL & grad
-            # LogLikeGrad in Code doc
-            gradient_current_obs = self._compute_obs_log_like_grad(grad_orig)
-            # LogLikeFn in Code Doc - for this n
-            log_like_obs = self._compute_obs_log_like(v_mat, orig_utility, mu)
-
-            # # Some kind of successive over relaxation/ momentum
-            log_like_cumulative += (log_like_obs - log_like_cumulative) / (n + 1)
-            # log_like_cumulative += log_like_obs
-            # grad_cumulative += gradient_current_obs
-            grad_cumulative += (gradient_current_obs - grad_cumulative) / (n + 1)
-            # print("current grad weighted", grad_cumulative)
-
-        self.log_like_stored = -log_like_cumulative
-        self.grad_stored = -grad_cumulative
-
-        self.flag_log_like_stored = True
-        return self.log_like_stored, self.grad_stored
 
     def _compute_obs_path_indices(self, obs_row:scipy.sparse.dok_matrix):
         """Takes in the current iterate row of the observation matrix.
@@ -612,15 +537,13 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
     def __init__(self, data_struct: RecursiveLogitDataStruct, optimiser: Optimiser, user_obs_mat,
                  initial_beta=-1.5, mu=1):
 
-        if user_obs_mat is None:
-            raise ValueError("user_obs_mat cannot be 'None' for estimation code")
-
-        super().__init__(data_struct, user_obs_mat, initial_beta, mu)
+        super().__init__(data_struct, initial_beta, mu)
         self.optimiser = optimiser  # optimisation alg wrapper class
         # TODO this probably shouldn't know about the optimiser
         #    on the basis that if it doesn't then we can use the same base class here fro
         #    estimation. It might be easier for now to make a base class and have a
         #    subclass which gets an optimiser
+        self.user_obs_mat = user_obs_mat  # matrix of observed trips
 
         beta_vec = super().get_beta_vec() # orig without optim tie in
         # setup optimiser initialisation
@@ -691,20 +614,90 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
     def get_log_likelihood(self, n_obs_override=None):
         """Compute the log likelihood of the data with the current beta vec
                 n_obs override is for debug purposes to artificially lower the number of observations"""
-        super().get_log_likelihood(n_obs_override)
+        self.n_log_like_calls += 1
+        # TODO reinstate caching, currently have problems because beta can update externally
+        # if self.flag_log_like_stored:
+        #     return self.log_like_stored, self.grad_stored
+        self.n_log_like_calls_non_redundant += 1
+
+        obs_mat = self.user_obs_mat
+        num_obs, path_max_len = np.shape(obs_mat)
+        if n_obs_override is not None:
+            num_obs = n_obs_override
+        # local references with idomatic names
+        n_dims = self.n_dims  # number of attributes in data
+        mu = self.mu
+        v_mat = self.get_short_term_utility()  # capital u in tien mai's code
+        m_mat = self.get_exponential_utility_matrix()
+
+        log_like_cumulative = 0.0  # weighting of all observations
+        grad_cumulative = np.zeros(n_dims)  # gradient combined across all observations
+
+        # iterate through observation number
+        for n in range(num_obs):
+            dest_index = obs_mat[n, 0] - 1  # subtract 1 for zero based python
+            orig_index = obs_mat[n, 1] - 1
+
+            # TODO review this, still not sure it makes mathematical sense
+            # Compute modified matrices for current dest
+            old_row_shape = m_mat.shape[0]
+            last_index_in_rows = old_row_shape - 1
+
+            m_tilde = m_mat[0:last_index_in_rows + 1,
+                      0:last_index_in_rows + 1]  # plus 1 for inclusive
+            m_tilde[:, last_index_in_rows, ] = m_mat[:, dest_index]
+
+            # Now get exponentiated value funcs
+            error_flag = self.compute_value_function(m_tilde)
+            # If we had numerical issues in computing value functions
+            if error_flag:  # terminate early with error vals
+                self.log_like_stored = Optimiser.LL_ERROR_VALUE
+                self.grad_stored = np.ones(n_dims)
+                self.flag_log_like_stored = True
+                print("Parameters are infeasible.")
+                return self.log_like_stored, self.grad_stored
+
+            value_funcs, exp_val_funcs = self._value_functions, self._exp_value_functions
+            # Gradient and log like depend on origin values
+            orig_utility = value_funcs[orig_index]  # TODO should these be nested inside
+            # respective sub function? probably yes
+            grad_orig = self.get_value_func_grad_orig(orig_index, m_tilde, exp_val_funcs)
+
+            self._compute_obs_path_indices(obs_mat[n, :])  # required to compute LL & grad
+            # LogLikeGrad in Code doc
+            gradient_current_obs = self._compute_obs_log_like_grad(grad_orig)
+            # LogLikeFn in Code Doc - for this n
+            log_like_obs = self._compute_obs_log_like(v_mat, orig_utility, mu)
+
+            # # Some kind of successive over relaxation/ momentum
+            log_like_cumulative += (log_like_obs - log_like_cumulative) / (n + 1)
+            # log_like_cumulative += log_like_obs
+            # grad_cumulative += gradient_current_obs
+            grad_cumulative += (gradient_current_obs - grad_cumulative) / (n + 1)
+            # print("current grad weighted", grad_cumulative)
+
+        self.log_like_stored = -log_like_cumulative
+        self.grad_stored = -grad_cumulative
+
         self.optim_function_state.value = self.log_like_stored
         self.optim_function_state.grad = self.grad_stored
 
         return self.log_like_stored, self.grad_stored
+
+    def eval_log_like_at_new_beta(self, beta_vec):
+        """update beta vec and compute log likelihood in one step - used for lambdas
+        Effectively a bad functools.partial"""
+        self.update_beta_vec(beta_vec)
+        return self.get_log_likelihood()
 
 
 class RecursiveLogitModelPrediction(RecursiveLogitModel):
     """Subclass which generates simulated observations based upon the supplied beta vector.
     Uses same structure as estimator in the hopes I can unify these such that one can use the
     estimator for prediction as well (probably have estimator inherit from this)"""
-    def __init__(self, data_struct: RecursiveLogitDataStruct, user_obs_mat, initial_beta=-1.5,
+    def __init__(self, data_struct: RecursiveLogitDataStruct, initial_beta=-1.5,
                  mu=1):
-        super().__init__(data_struct, user_obs_mat, initial_beta, mu)
+        super().__init__(data_struct, initial_beta, mu)
         self._compute_short_term_utility()
         self._compute_exponential_utility_matrix()
 

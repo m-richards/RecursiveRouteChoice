@@ -212,7 +212,7 @@ class TestSimulation(object):
         beta_vec = np.array([-1])
 
 
-        model = RecursiveLogitModelPrediction(network_struct, user_obs_mat=None,
+        model = RecursiveLogitModelPrediction(network_struct,
                                               initial_beta=beta_vec, mu=1)
 
         obs = model.generate_observations(origin_indices=[0, 1, 2, 7], dest_indices=[1, 6, 3],
