@@ -7,6 +7,8 @@ from scipy.sparse import coo_matrix, csr_matrix, identity
 from scipy.sparse import linalg as splinalg
 from scipy import sparse
 
+import awkward1 as ak
+
 from data_loading import load_csv_to_sparse, resize_to_dims, load_standard_path_format_csv
 from data_processing import AngleProcessor
 from debug_helpers import print_sparse, print_data_struct
@@ -406,10 +408,7 @@ class RecursiveLogitModel(object):
             self._exp_value_functions = z_vec  # TODO should this be saved onto OptimStruct?
         return error_flag
 
-
-
-
-    def _compute_obs_path_indices(self, obs_row:scipy.sparse.dok_matrix):
+    def _compute_obs_path_indices(self, obs_row: scipy.sparse.dok_matrix):
         """Takes in the current iterate row of the observation matrix.
         Returns the vectors of start positions and end positions in the provided observation.
         This is used in computation of the particular observations log likelihood and its
@@ -420,23 +419,34 @@ class RecursiveLogitModel(object):
         # obs_row note this is a shape (1,m) array not (m,)
         # know all zeros are at the end since row is of the form:
         #   [dest, orig, ... , dest, 0 padding since sparse]
-        path_len = obs_row.count_nonzero()
-        # Note that this is now dense, so cast isn't so bad (required since subtract not
-        # defined for sparse matrices)
-        # start at 1 to omit the leading dest node marking
-        path = obs_row[0, 1:path_len].toarray().squeeze()
+
+        if sparse.issparse(obs_row):
+            path_len = obs_row.count_nonzero()
+            # Note that this is now dense, so cast isn't so bad (required since subtract not
+            # defined for sparse matrices)
+            # start at 1 to omit the leading dest node marking
+            path = obs_row[0, 1:path_len].toarray().squeeze()
+
+        elif isinstance(obs_row, ak.highlevel.Array):
+            path_len = len(obs_row)
+            path = obs_row[1:]
+            path = ak.to_numpy(path)
+
+        else:
+            raise ValueError("obs record has unsupported type")
 
         # if np.any(path != self._prev_path): # infer I was planning caching, unused though
             # subtract 1 to get 0 based indexes
         path_arc_start_nodes = path[:-1] - 1  # all nodes i in (i ->j) transitions
-        path_arc_finish_nodes_tmp = path[1:] - 1  # all nodes j
+        path_arc_finish_nodes = path[1:] - 1  # all nodes j
 
         final_index_in_data = np.shape(self.network_data.incidence_matrix)[0]
-        path_arc_finish_nodes = np.minimum(path_arc_finish_nodes_tmp, final_index_in_data)
-        if np.any(path_arc_finish_nodes != path_arc_finish_nodes_tmp):
-            # I can't see when this would happen
-            print("WARN, dodgy bounds indexing hack occur in path tracing,"
-                  " changed a node to not exceed maximum")
+
+        if np.any(path_arc_finish_nodes > final_index_in_data):
+            path_arc_finish_nodes = np.minimum(path_arc_finish_nodes, final_index_in_data)
+            warnings.warn("WARN, dodgy bounds indexing hack occur in path tracing,"
+                  " changed a node to not exceed maximum", category='error')
+
         self._path_start_nodes = path_arc_start_nodes
         self._path_finish_nodes = path_arc_finish_nodes
         return self._path_start_nodes, self._path_finish_nodes
@@ -534,7 +544,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
 
     """
 
-    def __init__(self, data_struct: RecursiveLogitDataStruct, optimiser: Optimiser, user_obs_mat,
+    def __init__(self, data_struct: RecursiveLogitDataStruct, optimiser: Optimiser, observations_record,
                  initial_beta=-1.5, mu=1):
 
         super().__init__(data_struct, initial_beta, mu)
@@ -543,7 +553,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         #    on the basis that if it doesn't then we can use the same base class here fro
         #    estimation. It might be easier for now to make a base class and have a
         #    subclass which gets an optimiser
-        self.user_obs_mat = user_obs_mat  # matrix of observed trips
+        self.obs_record = observations_record  # matrix of observed trips
 
         beta_vec = super().get_beta_vec() # orig without optim tie in
         # setup optimiser initialisation
@@ -610,7 +620,6 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         # self._compute_value_function_matrix()
         # TODO make sure new stuff gets added here
 
-
     def get_log_likelihood(self, n_obs_override=None):
         """Compute the log likelihood of the data with the current beta vec
                 n_obs override is for debug purposes to artificially lower the number of observations"""
@@ -620,8 +629,12 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         #     return self.log_like_stored, self.grad_stored
         self.n_log_like_calls_non_redundant += 1
 
-        obs_mat = self.user_obs_mat
-        num_obs, path_max_len = np.shape(obs_mat)
+        obs_record = self.obs_record
+        if sparse.issparse(obs_record): # TODO redact this compatibility
+            num_obs, _ = obs_record.shape
+        else:
+            # num_obs = len(obs_record) # equivalent but clearer this is ak array
+            num_obs = ak.num(obs_record, axis=0)
         if n_obs_override is not None:
             num_obs = n_obs_override
         # local references with idomatic names
@@ -635,8 +648,8 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
 
         # iterate through observation number
         for n in range(num_obs):
-            dest_index = obs_mat[n, 0] - 1  # subtract 1 for zero based python
-            orig_index = obs_mat[n, 1] - 1
+            dest_index = obs_record[n, 0] - 1  # subtract 1 for zero based python
+            orig_index = obs_record[n, 1] - 1
 
             # TODO review this, still not sure it makes mathematical sense
             # Compute modified matrices for current dest
@@ -663,7 +676,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             # respective sub function? probably yes
             grad_orig = self.get_value_func_grad_orig(orig_index, m_tilde, exp_val_funcs)
 
-            self._compute_obs_path_indices(obs_mat[n, :])  # required to compute LL & grad
+            self._compute_obs_path_indices(obs_record[n, :])  # required to compute LL & grad
             # LogLikeGrad in Code doc
             gradient_current_obs = self._compute_obs_log_like_grad(grad_orig)
             # LogLikeFn in Code Doc - for this n

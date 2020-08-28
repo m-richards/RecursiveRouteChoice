@@ -31,7 +31,7 @@ network_data_struct = RecursiveLogitDataStruct(data_list, incidence_mat)
 
 optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
 
-model = RecursiveLogitModelEstimation(network_data_struct, optimiser, user_obs_mat=obs_mat)
+model = RecursiveLogitModelEstimation(network_data_struct, optimiser, observations_record=obs_mat)
 
 model.solve_for_optimal_beta()
 

@@ -42,7 +42,7 @@ time_io_end = time.time()
 
 optimiser = LineSearchOptimiser(OptimHessianType.BFGS, max_iter=4)
 
-model = RecursiveLogitModelEstimation(network_data_struct, optimiser, user_obs_mat=obs_mat)
+model = RecursiveLogitModelEstimation(network_data_struct, optimiser, observations_record=obs_mat)
 model.solve_for_optimal_beta()
 time_finish = time.time()
 print(f"IO time - {round(time_io_end - time_io_start, 3)}s")

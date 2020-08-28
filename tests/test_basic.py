@@ -46,7 +46,7 @@ class TestSimpleCases(object):
         # network_data_struct.add_second_travel_time_for_testing()
         optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)  # TODO check these parameters & defaults
 
-        model = RecursiveLogitModelEstimation(network_data_struct, optimiser, user_obs_mat=obs_mat)
+        model = RecursiveLogitModelEstimation(network_data_struct, optimiser, observations_record=obs_mat)
 
         log_like_out, grad_out = model.get_log_likelihood()
         eps = 1e-6
@@ -92,7 +92,7 @@ class TestSimpleCases(object):
 
         optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
 
-        model = RecursiveLogitModelEstimation(network_data_struct, optimiser, user_obs_mat=obs_mat)
+        model = RecursiveLogitModelEstimation(network_data_struct, optimiser, observations_record=obs_mat)
 
         log_like_out, grad_out = model.get_log_likelihood()
         eps = 1e-6
@@ -121,7 +121,55 @@ class TestSimpleCases(object):
         # network_data_struct.add_second_travel_time_for_testing()
         optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
 
-        model = RecursiveLogitModelEstimation(network_data_struct, optimiser, user_obs_mat=obs_mat)
+        model = RecursiveLogitModelEstimation(network_data_struct, optimiser, observations_record=obs_mat)
+
+        log_like_out, grad_out = model.get_log_likelihood()
+        eps = 1e-6
+
+        print(optimiser.get_iteration_log(model.optim_function_state)) # Note this is currently required to
+        # set the gradient so that compute relative gradient works, really bad
+        # model.hessian = np.identity(network_data_struct.n_dims)
+        ll, line_search_step, grad_norm, rel_grad_norm = (0.519860, 0.0, 0.467707, 0.375000)
+        assert np.abs(log_like_out - ll) < eps
+        assert np.abs(model.optimiser.step - line_search_step) < eps
+        assert np.abs(linalg.norm(grad_out) - grad_norm) < eps
+        assert np.abs(model.optimiser.compute_relative_gradient() - rel_grad_norm) < eps
+
+        targets = [
+            (0.366296, 2.338536, 0.367698, 0.268965),
+            (0.346582, 7.671693, 0.353559, 1.613793),
+            (0.346582, 0.000000, 0.353559, 1.613793)
+        ]
+        for t in targets:
+            ll, line_search_step, grad_norm, rel_grad_norm = t
+            out_flag, hessian, log = optimiser.iterate_step(model.optim_function_state, verbose=False)
+            log_like_out, grad_out = model.get_log_likelihood()
+            assert np.abs(log_like_out - ll) < eps
+            assert np.abs(linalg.norm(model.optimiser.step) - line_search_step) < eps
+            assert np.abs(linalg.norm(grad_out) - grad_norm) < eps
+            assert np.abs(model.optimiser.compute_relative_gradient() - rel_grad_norm) < eps
+
+    def test_example_tiny_modified_awkward_array(self):
+        subfolder = "ExampleTinyModifiedObs"  # big data from classical v2
+        folder = join("../Datasets", subfolder)
+
+        obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=True)
+        import awkward1 as ak
+        obs_mat = obs_mat.toarray()
+        obs_record = ak.from_numpy(obs_mat)
+        incidence_mat, travel_times_mat, angle_cts_mat = attrs
+        left, _, _, u_turn = AngleProcessor.get_turn_categorical_matrices(angle_cts_mat,
+                                                                          incidence_mat)
+        # incidence matrix which only has nonzero travel times - rather than what is specified in file
+        t_time_incidence = (travel_times_mat > 0).astype('int').todok()
+        data_list = [travel_times_mat, left, u_turn, t_time_incidence]
+        network_data_struct = RecursiveLogitDataStruct(data_list, incidence_mat)
+
+        # network_data_struct.add_second_travel_time_for_testing()
+        optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
+
+        model = RecursiveLogitModelEstimation(network_data_struct, optimiser,
+                                              observations_record=obs_record)
 
         log_like_out, grad_out = model.get_log_likelihood()
         eps = 1e-6

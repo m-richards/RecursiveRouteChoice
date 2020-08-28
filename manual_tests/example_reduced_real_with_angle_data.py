@@ -38,7 +38,7 @@ time_io_end = time.time()
 optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS,
 
                                    max_iter=4)
-model = RecursiveLogitModelEstimation(network_data_struct, optimiser, user_obs_mat=obs_mat)
+model = RecursiveLogitModelEstimation(network_data_struct, optimiser, observations_record=obs_mat)
 
 log_like_out, grad_out = model.get_log_likelihood(n_obs_override=1)
 
