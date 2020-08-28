@@ -287,9 +287,8 @@ class RecursiveLogitModel(object):
             beta_vec = initial_beta
         # setup optimiser initialisation
         self._beta_vec = beta_vec
-        # TODO these should be in init, but aren't because of bad coupling in estimation subclass
-        # self._compute_short_term_utility()
-        # self._compute_exponential_utility_matrix()
+        self._compute_short_term_utility()
+        self._compute_exponential_utility_matrix()
         #
         # self.get_log_likelihood()  # need to compute starting LL for optimiser
 
@@ -544,6 +543,8 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
      be a subclass. Makes sense for the Model not to be an arg to optimiser because optimiser should
      be able to take in any function and optimise.
 
+     # TODO this should subclass prediction so that we can optimise into prediction
+
 
 
     """
@@ -612,9 +613,10 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
     def update_beta_vec(self, new_beta_vec):
         """Change the current parameter vector beta and update intermediate results which depend
         on this"""
-        # If beta has changed we need to refresh values
-        if (new_beta_vec != self._beta_vec).any():
-            self.flag_log_like_stored = False
+        # Prevent redundant computation
+        if (new_beta_vec == self._beta_vec).all():
+            return
+        self.flag_log_like_stored = False
         self.optim_function_state.beta_vec = new_beta_vec
         self._beta_vec = new_beta_vec
 
@@ -714,11 +716,6 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
     """Subclass which generates simulated observations based upon the supplied beta vector.
     Uses same structure as estimator in the hopes I can unify these such that one can use the
     estimator for prediction as well (probably have estimator inherit from this)"""
-    def __init__(self, data_struct: RecursiveLogitDataStruct, initial_beta=-1.5,
-                 mu=1):
-        super().__init__(data_struct, initial_beta, mu)
-        self._compute_short_term_utility()
-        self._compute_exponential_utility_matrix()
 
     def generate_observations(self, origin_indices, dest_indices, num_obs_per_pair, iter_cap=1000,
                               rng_seed=None,
