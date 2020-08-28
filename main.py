@@ -108,12 +108,32 @@ def _zero_pad_mat(mat, top=False, left=False, bottom=False, right=False):
 
 class RecursiveLogitDataStruct(object):
     """Generic struct which stores all the arc attributes together in a convenient manner.
-    Also provides convenience constructors.
-    generic
+    Additionally, if it hasn't already been done, the input data is padded with an additional
+    row/ col to bottom right which will have the destination dummy arc mapped to.
+    This is perhaps not particularly, clear but it is done here to avoid having to
+    resize all the dependent quantities later
     """
 
     def __init__(self, data_matrix_list: List[scipy.sparse.dok_matrix],
-                 incidence_matrix: scipy.sparse.dok_matrix, data_array_names_debug=None):
+                 incidence_matrix: scipy.sparse.dok_matrix, data_array_names_debug=None,
+                 resize=True):
+
+        # check if the bottom row and right col are empty, if so, we can store the dest in them,
+        # if not, we need to append
+        if sparse.issparse(incidence_matrix):
+            nnz = (incidence_matrix[-1, :].count_nonzero()
+                   + incidence_matrix[:, -1].count_nonzero())
+        else:
+            nnz = (np.count_nonzero(incidence_matrix[-1, :])
+                   + np.count_nonzero(incidence_matrix[:, -1]))
+
+        if nnz > 0 and resize:
+            print("resizing to include zero pad")
+            incidence_matrix = _zero_pad_mat(incidence_matrix, bottom=True, right=True)
+            data_matrix_list_new =[]
+            for i in data_matrix_list:
+                data_matrix_list_new.append(_zero_pad_mat(i, bottom=True, right=True))
+            data_matrix_list = data_matrix_list_new
 
         self.incidence_matrix = incidence_matrix
 
