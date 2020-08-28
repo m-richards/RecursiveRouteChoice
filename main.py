@@ -813,11 +813,17 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
                         next_arc_index = np.argmax(value_functions_observed)
                         next_arc = neighbour_arcs[next_arc_index]
                         # print(np.max(value_functions_observed), next_arc)
-                        path_string += f" -> {next_arc}"
+                        # path_string += f" -> {next_arc}"
                         current_arc = next_arc
-                        current_path.append(current_arc)
+                        # TODO Note the int conversion here is purely for json serialisation compat
+                        #   if this is no longer used then we can keep numpy types
+                        current_path.append(int(current_arc))
+                        # offset stops arc number being recorded as zero
 
-                    print(path_string + ": Fin")
+                    # print(path_string + ": Fin")
+                    if len(current_path) <= 2:
+                        continue  # this is worthless information saying we got from O to D in one
+                        # step
                     output_path_list.append(current_path)
 
         return output_path_list
