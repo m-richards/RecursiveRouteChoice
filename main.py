@@ -301,19 +301,6 @@ class RecursiveLogitModel(object):
         """Getter is purely to imply that beta vec is not a fixed field"""
         return self._beta_vec
 
-    def update_beta_vec(self, new_beta_vec):
-        """Change the current parameter vector beta and update intermediate results which depend
-        on this"""
-        # If beta has changed we need to refresh values
-        if (new_beta_vec != self._beta_vec).any():
-            self.flag_log_like_stored = False
-
-        # TODO delay this from happening until the update is needed - use flag
-
-        self._compute_short_term_utility()
-        self._compute_exponential_utility_matrix()
-        # self._compute_value_function_matrix()
-        # TODO make sure new stuff gets added here
 
     def _compute_short_term_utility(self):
         print("data dim\n")
@@ -617,17 +604,19 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
                 return
         print("Infinite loop happened somehow, shouldn't have happened")
 
-    def get_beta_vec(self):
-        """Getter is purely to imply that beta vec is not a fixed field"""
-        return self.optim_function_state.beta_vec
+    # def get_beta_vec(self):
+    #     """Getter is purely to imply that beta vec is not a fixed field"""
+    #     return self._beta_vec
+    #     # return self.optim_function_state.beta_vec
 
     def update_beta_vec(self, new_beta_vec):
         """Change the current parameter vector beta and update intermediate results which depend
         on this"""
         # If beta has changed we need to refresh values
-        if (new_beta_vec != self.optim_function_state.beta_vec).any():
+        if (new_beta_vec != self._beta_vec).any():
             self.flag_log_like_stored = False
         self.optim_function_state.beta_vec = new_beta_vec
+        self._beta_vec = new_beta_vec
 
         # self._beta_changed = True
         # TODO delay this from happening until the update is needed - use flag
@@ -642,8 +631,8 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
                 n_obs override is for debug purposes to artificially lower the number of observations"""
         self.n_log_like_calls += 1
         # TODO reinstate caching, currently have problems because beta can update externally
-        # if self.flag_log_like_stored:
-        #     return self.log_like_stored, self.grad_stored
+        if self.flag_log_like_stored:
+            return self.log_like_stored, self.grad_stored
         self.n_log_like_calls_non_redundant += 1
 
         obs_record = self.obs_record
@@ -711,7 +700,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
 
         self.optim_function_state.value = self.log_like_stored
         self.optim_function_state.grad = self.grad_stored
-
+        self.flag_log_like_stored = True
         return self.log_like_stored, self.grad_stored
 
     def eval_log_like_at_new_beta(self, beta_vec):
