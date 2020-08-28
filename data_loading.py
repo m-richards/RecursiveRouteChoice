@@ -4,8 +4,10 @@ import os
 
 import numpy as np
 import scipy
+import pandas as pd
 
-from scipy.sparse import coo_matrix
+from scipy import sparse
+from scipy.sparse import coo_matrix, dok_matrix
 
 INCIDENCE = "incidence.txt"
 TRAVEL_TIME = 'travelTime.txt'
@@ -111,6 +113,72 @@ def resize_to_dims(matrix: scipy.sparse.dok_matrix, expected_max_shape, matrix_n
     matrix.resize(*expected_max_shape)
 
 
+def load_tnpm_to_sparse(net_fpath, columns_to_extract=None, use_file_order_for_arc_numbers=True):
+    """
+    :param net_fpath path to network file
+    :param columns_to_extract list of columns to keep. init_node and term_node are always kept
+    # and form the basis of the arc-arc matrix.
+    Currently only length is supported since the conversion from node to arc is not clear in
+    this case.
+    # Legal columns to extract are:
+    #  capacity, length, free_flow_time, b, power, speed_limit, toll, link_type
+    # Note that some of these will be constant across arcs and are redundant to include.
+
+    :return
+    :rtype [bidict, scipy.sparse.coo_matrix, ...]
+
+
+    """
+    if columns_to_extract is None:
+        columns_to_extract = ["length"]
+    columns_to_extract = [i.lower() for i in columns_to_extract]
+    if columns_to_extract[0] != "length":
+        raise NotImplementedError("only support length, since other fields don't have natural "
+                                  "averages.")
+    net = pd.read_csv(net_fpath, skiprows=8, sep='\t')
+    trimmed = [s.strip().lower() for s in net.columns]
+    net.columns = trimmed
+
+    # And drop the silly first and last columns
+    net.drop(['~', ';'], axis=1, inplace=True)
+
+    net2 = net[['init_node', 'term_node'] + columns_to_extract]
+    node_set = set(net2['init_node'].unique()).union(set(net2['term_node'].unique()))
+    nrows = net2.shape[0]
+    arc_matrix = dok_matrix(coo_matrix((nrows, nrows)))
+
+    arc_to_index_map = {}
+    if use_file_order_for_arc_numbers: # for consistency with any visuals
+        for n, s, f in net2[['init_node', 'term_node']].itertuples():
+            print(n,s,f)
+            arc_to_index_map[(s, f)] = n
+
+    print(arc_to_index_map)
+
+    n = 0
+    for first_arc_start in node_set:
+        start_df = net2[net2['init_node'] == first_arc_start][['term_node', 'length']]
+        for k in start_df.itertuples():
+            first_arc_end = k.term_node
+            start_len = k.length
+            first_arc = first_arc_start, first_arc_end
+
+            if first_arc not in arc_to_index_map:
+                arc_to_index_map[first_arc] = n
+                n += 1
+            end_df = net2[net2['init_node'] == first_arc_end][['term_node', 'length']]
+            for j in end_df.itertuples(index=False):
+                end_arc_end = j.term_node
+                end_len = j.length
+                end_arc = (first_arc_end, end_arc_end)
+
+                if end_arc not in arc_to_index_map:
+                    arc_to_index_map[end_arc] = n
+                    n += 1
+                arc_matrix[arc_to_index_map[first_arc],
+                           arc_to_index_map[end_arc]] = (start_len + end_len) / 2
+    print(arc_to_index_map)
+    return arc_to_index_map, arc_matrix
 
 
 
