@@ -776,7 +776,7 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
                 incidence_tilde[-1, :] = 0
                 incidence_tilde[:, -1] = 0
 
-                first_iter = False
+            first_iter = False
 
             # Destination enforcing # TODO review these assumptions and nonzero dest util
             #                               note that dest util updates would need to update
