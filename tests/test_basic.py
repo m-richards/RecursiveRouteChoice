@@ -133,7 +133,7 @@ class TestSimpleCases(object):
         assert np.abs(log_like_out - ll) < eps
         assert np.abs(model.optimiser.step - line_search_step) < eps
         assert np.abs(linalg.norm(grad_out) - grad_norm) < eps
-        assert np.abs(model.optimiser.compute_relative_gradient() - rel_grad_norm) < eps
+        assert np.abs(model.optimiser.compute_relative_gradient_non_static() - rel_grad_norm) < eps
 
         targets = [
             (0.366296, 2.338536, 0.367698, 0.268965),
@@ -147,7 +147,7 @@ class TestSimpleCases(object):
             assert np.abs(log_like_out - ll) < eps
             assert np.abs(linalg.norm(model.optimiser.step) - line_search_step) < eps
             assert np.abs(linalg.norm(grad_out) - grad_norm) < eps
-            assert np.abs(model.optimiser.compute_relative_gradient() - rel_grad_norm) < eps
+            assert np.abs(model.optimiser.compute_relative_gradient_non_static() - rel_grad_norm) < eps
 
     def test_example_tiny_modified_awkward_array(self):
         subfolder = "ExampleTinyModifiedObs"  # big data from classical v2
@@ -181,7 +181,7 @@ class TestSimpleCases(object):
         assert np.abs(log_like_out - ll) < eps
         assert np.abs(model.optimiser.step - line_search_step) < eps
         assert np.abs(linalg.norm(grad_out) - grad_norm) < eps
-        assert np.abs(model.optimiser.compute_relative_gradient() - rel_grad_norm) < eps
+        assert np.abs(model.optimiser.compute_relative_gradient_non_static() - rel_grad_norm) < eps
 
         targets = [
             (0.366296, 2.338536, 0.367698, 0.268965),
@@ -195,7 +195,7 @@ class TestSimpleCases(object):
             assert np.abs(log_like_out - ll) < eps
             assert np.abs(linalg.norm(model.optimiser.step) - line_search_step) < eps
             assert np.abs(linalg.norm(grad_out) - grad_norm) < eps
-            assert np.abs(model.optimiser.compute_relative_gradient() - rel_grad_norm) < eps
+            assert np.abs(model.optimiser.compute_relative_gradient_non_static() - rel_grad_norm) < eps
 
     def test_turn_angle_matrices(self):
         """ Note the problem of generating these kind of matrices is ignored"""
@@ -277,4 +277,54 @@ class TestSimulation(object):
                     [7, 3, 8]]
 
         assert obs ==expected
+
+class TestOptimAlgs(object):
+
+    def test_compare_optim_methods(self):
+        subfolder = "ExampleTinyModifiedObs"  # big data from classical v2
+        folder = join("../Datasets", subfolder)
+
+        obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=True)
+        import awkward1 as ak
+        obs_mat = obs_mat.toarray()
+        obs_record = ak.from_numpy(obs_mat)
+        incidence_mat, travel_times_mat, angle_cts_mat = attrs
+        left, _, _, u_turn = AngleProcessor.get_turn_categorical_matrices(angle_cts_mat,
+                                                                          incidence_mat)
+        # incidence matrix which only has nonzero travel times - rather than what is specified in file
+        t_time_incidence = (travel_times_mat > 0).astype('int').todok()
+        data_list = [travel_times_mat, left, u_turn]
+        network_data_struct = RecursiveLogitDataStruct(data_list, incidence_mat)
+
+        # network_data_struct.add_second_travel_time_for_testing()
+        optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
+
+        model = RecursiveLogitModelEstimation(network_data_struct, optimiser,
+                                              observations_record=obs_record,
+                                              initial_beta=-15)
+
+        m1_ll_out, m1_grad_out = model.get_log_likelihood()
+
+        optimiser2 = op.ScipyOptimiser(method='newton-cg')
+
+        model2 = RecursiveLogitModelEstimation(network_data_struct, optimiser2,
+                                              observations_record=obs_record,
+                                               initial_beta=-15)
+        m2_ll_out, m2_grad_out = model2.get_log_likelihood()
+        eps = 1e-6
+
+        assert np.allclose(m2_ll_out, m1_ll_out)
+        assert np.allclose(m2_grad_out, m1_grad_out)
+
+        beta1 = model.solve_for_optimal_beta()
+
+        beta2 = model2.solve_for_optimal_beta(verbose=True)
+        m1_ll_out, m1_grad_out = model.get_log_likelihood()
+        m2_ll_out, m2_grad_out = model2.get_log_likelihood()
+        print(m1_ll_out, m2_ll_out)
+        print(m1_grad_out, m2_grad_out)
+
+        assert np.allclose(beta1, beta2)
+
+
 

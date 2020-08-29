@@ -13,7 +13,7 @@ from data_loading import load_csv_to_sparse, resize_to_dims, load_standard_path_
 from data_processing import AngleProcessor
 from debug_helpers import print_sparse, print_data_struct
 from optimisers.extra_optim import OptimFunctionState
-from optimisers.optimisers_file import Optimiser, OptimType
+from optimisers.optimisers_file import CustomOptimiserBase, OptimType, ScipyOptimiser, OptimiserBase
 import numpy as np
 
 """
@@ -325,15 +325,15 @@ class RecursiveLogitModel(object):
         print("data dim\n")
         # print_data_struct(self.network_data)
 
-        print("beta", self.get_beta_vec())
+        # print("beta", self.get_beta_vec())
         self.short_term_utility = np.sum(self.get_beta_vec() * self.data_array, axis=0)
         # note axis=0 means that ndarrays will give a matrix result back, not a scalar
         # which is what we want
-        print(self.data_array)
-        print("vmat",)
-        print(self.get_beta_vec().shape, self.data_array.shape)
-        print(self.short_term_utility)
-        print_sparse(self.short_term_utility)
+        # print(self.data_array)
+        # print("vmat",)
+        # print(self.get_beta_vec().shape, self.data_array.shape)
+        # print(self.short_term_utility)
+        # print_sparse(self.short_term_utility)
         # print(type(self.short_term_utility))
 
     def get_short_term_utility(self):
@@ -391,7 +391,7 @@ class RecursiveLogitModel(object):
         # if we have non near zero negative, we have a problem and parameters are infeasible
         # since log will be complex
         # print("z_pre", z_vec)
-        if z_vec.min() <= min(-1e-10, Optimiser.NUMERICAL_ERROR_THRESH):
+        if z_vec.min() <= min(-1e-10, OptimiserBase.NUMERICAL_ERROR_THRESH):
             # thresh on this?
             error_flag = True # TODO abs and stuff once i fix tests
             return error_flag
@@ -406,7 +406,7 @@ class RecursiveLogitModel(object):
         # residual - i.e. ill conditioned solution
         # note that z_vec is dense so this should be dense without explicit cast
         elif linalg.norm(
-                np.array(a_mat @ z_vec - rhs)) > Optimiser.RESIDUAL:
+                np.array(a_mat @ z_vec - rhs)) > OptimiserBase.RESIDUAL:
             self.flag_exp_val_funcs_error = True
             print("W: Value function solution is not exact, has residual.")
             # TODO convert from soft warning to legitimate warning. Soft since it happens
@@ -569,7 +569,8 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
 
     """
 
-    def __init__(self, data_struct: RecursiveLogitDataStruct, optimiser: Optimiser, observations_record,
+    def __init__(self, data_struct: RecursiveLogitDataStruct,
+                 optimiser: OptimiserBase, observations_record,
                  initial_beta=-1.5, mu=1):
 
         super().__init__(data_struct, initial_beta, mu)
@@ -589,8 +590,9 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
                                         self._get_n_func_evals)
         self.update_beta_vec(beta_vec)  # to this to refresh dependent matrix quantitites
         self.get_log_likelihood()  # need to compute starting LL for optimiser
-        optimiser.set_beta_vec(beta_vec)
-        optimiser.set_current_value(self.log_like_stored)
+        if isinstance(optimiser, CustomOptimiserBase):
+            optimiser.set_beta_vec(beta_vec)
+            optimiser.set_current_value(self.log_like_stored)
 
         self._path_start_nodes = None
         self._path_finish_nodes = None
@@ -598,12 +600,24 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
     def _get_n_func_evals(self):
         return self.n_log_like_calls_non_redundant
 
-    def solve_for_optimal_beta(self, output_file=None):
+    def solve_for_optimal_beta(self, verbose=True, extra_verbose=False, output_file=None):
         """Runs the line search optimisation algorithm until a termination condition is reached.
         Print output"""
         # print out iteration 0 information
+
+        # if a scipy method then it is self contained and we don't need to query inbetween loops
+        if isinstance(self.optimiser, ScipyOptimiser):
+            optim_res = self.optimiser.solve(self.optim_function_state, verbose=verbose,
+                                        output_file=output_file
+                                        )
+            print(optim_res)
+            if optim_res.success is False:
+                raise ValueError("Scipy alg error flag was raised. Process failed.")
+            return optim_res.x
+        # otherwise we have Optimiser is a Custom type
         print(self.optimiser.get_iteration_log(self.optim_function_state), file=None)
         n = 0
+
         while n <= 1000:
             n += 1
             if self.optimiser.METHOD_FLAG == OptimType.LINE_SEARCH:
@@ -622,8 +636,9 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
 
             if is_stopping:
                 print(f"The algorithm stopped due to condition: {stop_type}")
-                return
+                return self.optim_function_state.beta_vec
         print("Infinite loop happened somehow, shouldn't have happened")
+
 
     # def get_beta_vec(self):
     #     """Getter is purely to imply that beta vec is not a fixed field"""
@@ -634,7 +649,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         """Change the current parameter vector beta and update intermediate results which depend
         on this"""
         # Prevent redundant computation
-        if (new_beta_vec == self._beta_vec).all():
+        if np.all(new_beta_vec == self._beta_vec):
             return
         self.flag_log_like_stored = False
         self.optim_function_state.beta_vec = new_beta_vec
