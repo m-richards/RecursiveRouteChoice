@@ -322,7 +322,7 @@ class RecursiveLogitModel(object):
 
 
     def _compute_short_term_utility(self):
-        print("data dim\n")
+        # print("data dim\n")
         # print_data_struct(self.network_data)
 
         # print("beta", self.get_beta_vec())
@@ -424,6 +424,8 @@ class RecursiveLogitModel(object):
                 # with np.errstate(invalid='ignore'):
                 # At the moment I would prefer this crashes
                 self._value_functions = np.log(val_funcs_tmp)
+                # error_flag = True # TODO not from tien mai
+
                     # in the cases where nans occur we might not actually need to deal with the numbers
                     # that are nan so we don't just end here (this is not good justification TODO)
             else:
@@ -685,29 +687,48 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         mu = self.mu
         v_mat = self.get_short_term_utility()  # capital u in tien mai's code
         m_mat = self.get_exponential_utility_matrix()
+        local_incidence_mat = self.network_data.incidence_matrix
+        # reuse augmented matrices for each
+        m_tilde = m_mat.copy()
+        i_tilde = local_incidence_mat.copy()
+
+        m, n = m_tilde.shape
+        assert m == n  # paranoia
 
         mu_log_like_cumulative = 0.0  # weighting of all observations
         mu_ll_grad_cumulative = np.zeros(n_dims)  # gradient combined across all observations
 
         # iterate through observation number
         for n in range(num_obs):
+            # TODO we should be sorting by dest index to avoid recomputation
+            #   if dests are the same we don't need to recompute value functions
+            #a[ak.argsort(a[:,0]) or a[np.argsort(a[:,0])
             dest_index = obs_record[n, 0] - 1  # subtract 1 for zero based python
             orig_index = obs_record[n, 1] - 1
 
-            # TODO review this, still not sure it makes mathematical sense
-            # Compute modified matrices for current dest
-            old_row_shape = m_mat.shape[0]
-            last_index_in_rows = old_row_shape - 1
+            # Destination enforcing # TODO review these assumptions and nonzero dest util
+            #                               note that dest util updates would need to update
+            #                               short term util locally as well (just final col).
+            m_tilde[dest_index, :] = 0.0
+            m_tilde[dest_index, -1] = 1  # exp(v(a|k)) = 1 when v(a|k) = 0 # try 0.2
+            i_tilde[dest_index, :] = 0
+            i_tilde[dest_index, -1] = 1  # enforce going to destination, remove other choices
 
-            m_tilde = m_mat[0:last_index_in_rows + 1,
-                      0:last_index_in_rows + 1]  # plus 1 for inclusive
-            m_tilde[:, last_index_in_rows, ] = m_mat[:, dest_index]
+            # # TODO review this, still not sure it makes mathematical sense
+            # # Compute modified matrices for current dest
+            # old_row_shape = m_mat.shape[0]
+            # last_index_in_rows = old_row_shape - 1
+            #
+            # m_tilde = m_mat[0:last_index_in_rows + 1,
+            #           0:last_index_in_rows + 1]  # plus 1 for inclusive
+            # m_tilde[:, last_index_in_rows, ] = m_mat[:, dest_index]
+            # print("shape check", m_mat.shape, m_tilde.shape, last_index_in_rows+1)
 
             # Now get exponentiated value funcs
             error_flag = self.compute_value_function(m_tilde)
             # If we had numerical issues in computing value functions
             if error_flag:  # terminate early with error vals
-                self.log_like_stored = Optimiser.LL_ERROR_VALUE
+                self.log_like_stored = OptimiserBase.LL_ERROR_VALUE
                 self.grad_stored = np.ones(n_dims)
                 self.flag_log_like_stored = True
                 print("Parameters are infeasible.")
@@ -731,6 +752,11 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             # ll_grad_cumulative += mu_gradient_current_obs
             mu_ll_grad_cumulative += (mu_gradient_current_obs - mu_ll_grad_cumulative) / (n + 1)
             # print("current grad weighted", ll_grad_cumulative)
+
+            # Put our matrices back untouched:
+            m_tilde[dest_index, :] = m_mat[dest_index, :]
+            i_tilde[dest_index, :] = i_tilde[dest_index, :]
+
         # only apply this rescaling once rather than on all terms inside loops
         self.log_like_stored = -1/mu * mu_log_like_cumulative
         self.grad_stored = -1/mu * mu_ll_grad_cumulative
