@@ -37,8 +37,6 @@ distances = np.array(
 
 distances = dok_matrix(distances)
 
-
-
 incidence_mat = (distances > 0).astype(int)
 
 
@@ -46,8 +44,8 @@ data_list = [distances]
 network_struct = RecursiveLogitDataStruct(data_list, incidence_mat,
                                           data_array_names_debug=("distances",))
 
-beta_vec = np.array([-1])
-optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
+beta_vec = np.array([-4.96]) # 4.96 diverges
+optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=40)
 
 model = RecursiveLogitModelEstimation(network_struct, observations_record=obs_ak,
                                       initial_beta=beta_vec, mu=1,

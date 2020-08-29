@@ -151,7 +151,7 @@ def load_tnpm_to_sparse(net_fpath, columns_to_extract=None, use_file_order_for_a
     arc_to_index_map = {}
     if use_file_order_for_arc_numbers: # for consistency with any visuals
         for n, s, f in net2[['init_node', 'term_node']].itertuples():
-            print(n,s,f)
+            # print(n,s,f)
             arc_to_index_map[(s, f)] = n
 
     print(arc_to_index_map)
@@ -178,13 +178,14 @@ def load_tnpm_to_sparse(net_fpath, columns_to_extract=None, use_file_order_for_a
                     n += 1
                 arc_matrix[arc_to_index_map[first_arc],
                            arc_to_index_map[end_arc]] = (start_len + end_len) / 2
-    print(arc_to_index_map)
+    # print(arc_to_index_map)
     return arc_to_index_map, arc_matrix
 
 
 def load_obs_from_json(filename):
     with open(filename, 'r') as f:
         return json.load(f)
+
 
 
 def write_obs_to_json(filename, obs, allow_rewrite=False):

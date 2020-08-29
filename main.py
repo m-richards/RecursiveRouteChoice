@@ -863,7 +863,6 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
 
                             raise ValueError(f"Max iterations reached. No path from {orig} to "
                                              f"{dest} was found within cap.")
-                        current_incidence_col = incidence_tilde[current_arc, :]
                         current_incidence_col = i_tilde[current_arc, :]
                         # all arcs current arc connects to (index converts from 2d to 1d)
                         if sparse.issparse(current_incidence_col):
