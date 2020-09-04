@@ -314,7 +314,7 @@ def line_search_asrch(fcn, x, f, g, arc, stp, maxfev,
                       ftol=SUFFICIENT_DECREASE_PARAMETER,
                       gtol=CURVATURE_CONDITION_PARAMETER,
                       xtol=X_TOLERENT, stpmin=MINIMUM_STEP_LENGTH,
-                      stpmax=MAXIMUM_STEP_LENGTH, print_flag=True, fname=None,
+                      stpmax=MAXIMUM_STEP_LENGTH, print_flag=False, fname=None,
                       bisect=0.0,
                       debug_counter=None):
     """outputs [x f g stp info_out_flag nfev] =
@@ -395,7 +395,6 @@ def line_search_asrch(fcn, x, f, g, arc, stp, maxfev,
                                    file=fname), end="")
     n = 0
     while True:
-        print(f"count: {debug_counter}:{n}")
         n += 1
         if is_bracketed:
             stmin = min(stx, sty)
