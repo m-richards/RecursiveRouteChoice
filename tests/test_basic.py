@@ -9,7 +9,7 @@ import pytest
 
 import numpy as np
 from scipy import linalg
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, dok_matrix
 
 from data_loading import load_csv_to_sparse, load_standard_path_format_csv
 from data_processing import AngleProcessor
@@ -19,6 +19,28 @@ from main import RecursiveLogitModelEstimation, RecursiveLogitDataStruct, \
 import os
 from os.path import join
 import optimisers as op
+
+hand_net_dists = np.array(
+            [[4, 3.5, 4.5, 3, 3, 0, 0, 0],
+             [3.5, 3, 4, 0, 2.5, 3, 3, 0],
+             [4.5, 4, 5, 0, 0, 0, 4, 3.5],
+             [3, 0, 0, 2, 2, 2.5, 0, 2],
+             [3, 2.5, 0, 2, 2, 2.5, 2.5, 0],
+             [0, 3, 0, 2.5, 2.5, 3, 3, 2.5],
+             [0, 3, 4, 0, 2.5, 3, 3, 2.5],
+             [0, 0, 3.5, 2, 0, 2.5, 2.5, 2]])
+
+hand_net_angles = np.array(
+            [[180, -90, -45, 360, 90, 0, 0, 0],
+             [90, 180, -135, 0, -90, -45, 360, 0],
+             [45, 135, 180, 0, 0, 0, -90, 360],
+             [360, 0, 0, 180, -90, 135, 0, 90],
+             [-90, 90, 0, 90, 180, -135, -90, 0],
+             [0, 45, 0, -135, 135, 180, -135, 135],
+             [0, 360, 90, 0, 90, 135, 180, -90],
+             [0, 0, 360, -90, 0, -135, 90, 180]])
+hand_net_incidence = (hand_net_dists > 0).astype(int)
+hand_net_angles_rad = AngleProcessor.to_radians(hand_net_angles)
 
 
 class TestSimpleCases(object):
@@ -230,43 +252,16 @@ class TestSimpleCases(object):
 class TestSimulation(object):
 
     def test_basic_consistency(self):
-        Distances = np.array(
-            [[4, 3.5, 4.5, 3, 3, 0, 0, 0],
-             [3.5, 3, 4, 0, 2.5, 3, 3, 0],
-             [4.5, 4, 5, 0, 0, 0, 4, 3.5],
-             [3, 0, 0, 2, 2, 2.5, 0, 2],
-             [3, 2.5, 0, 2, 2, 2.5, 2.5, 0],
-             [0, 3, 0, 2.5, 2.5, 3, 3, 2.5],
-             [0, 3, 4, 0, 2.5, 3, 3, 2.5],
-             [0, 0, 3.5, 2, 0, 2.5, 2.5, 2]])
-
-        Angles = np.array(
-            [[180, -90, -45, 360, 90, 0, 0, 0],
-             [90, 180, -135, 0, -90, -45, 360, 0],
-             [45, 135, 180, 0, 0, 0, -90, 360],
-             [360, 0, 0, 180, -90, 135, 0, 90],
-             [-90, 90, 0, 90, 180, -135, -90, 0],
-             [0, 45, 0, -135, 135, 180, -135, 135],
-             [0, 360, 90, 0, 90, 135, 180, -90],
-             [0, 0, 360, -90, 0, -135, 90, 180]])
-
-        from scipy.sparse import dok_matrix
-
-        incidence_mat = (Distances > 0).astype(int)
-
-        angles_rad = AngleProcessor.to_radians(Angles)
-
         left, right, neutral, u_turn = AngleProcessor.get_turn_categorical_matrices(dok_matrix(
-            angles_rad), dok_matrix(incidence_mat))
+            hand_net_angles_rad), dok_matrix(hand_net_incidence))
 
-        distances = dok_matrix(Distances)
+        distances = dok_matrix(hand_net_dists)
 
         data_list = [distances]
-        network_struct = RecursiveLogitDataStruct(data_list, incidence_mat,
+        network_struct = RecursiveLogitDataStruct(data_list, hand_net_incidence,
                                                   data_array_names_debug=("distances", "u_turn"))
 
         beta_vec = np.array([-1])
-
 
         model = RecursiveLogitModelPrediction(network_struct,
                                               initial_beta=beta_vec, mu=1)
@@ -285,6 +280,23 @@ class TestSimulation(object):
                     [7, 3, 8]]
 
         assert obs ==expected
+
+    def test_invalid_beta_throws(self):
+        distances = dok_matrix(hand_net_dists)
+
+        data_list = [distances]
+        network_struct = RecursiveLogitDataStruct(data_list, hand_net_incidence,
+                                                  data_array_names_debug=("distances", "u_turn"))
+
+        beta_vec = np.array([-100])
+
+        model = RecursiveLogitModelPrediction(network_struct,
+                                              initial_beta=beta_vec, mu=1)
+        try:
+            model.generate_observations(origin_indices=[0, 1, 2, 7], dest_indices=[1, 6, 3],
+                                          num_obs_per_pair=4, iter_cap=15, rng_seed=1)
+        except ValueError as e:
+            print(str(e))
 
 class TestOptimAlgs(object):
 
@@ -333,6 +345,3 @@ class TestOptimAlgs(object):
         print(m1_grad_out, m2_grad_out)
 
         assert np.allclose(beta1, beta2)
-
-
-

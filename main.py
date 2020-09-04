@@ -836,8 +836,13 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
 
             z_vec = self._compute_exp_value_function(m_tilde)
             # print(z_vec)
-            value_funcs = np.log(z_vec)
-            if np.any(value_funcs > 0):
+            with np.errstate(divide='ignore', invalid='ignore'):
+                value_funcs = np.log(z_vec)
+            # catch errors manually
+            if np.any(~np.isfinite(value_funcs)): #any infinite (nan/ -inf)
+                raise ValueError("Parameter Beta is incorrectly determined, value function has "
+                                 "no solution in this case.")
+            elif np.any(value_funcs > 0):
                 warnings.warn(f"WARNING: Positive value functions: {value_funcs[value_funcs > 0]}",
                               )
 
