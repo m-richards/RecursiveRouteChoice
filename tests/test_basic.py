@@ -86,6 +86,7 @@ class TestSimpleCases:
         assert (hessian == np.identity(2)).all()
         assert optimiser.n_func_evals == 1
 
+
     def test_turn_angle_matrices(self):
         """ Note the problem of generating these kind of matrices is ignored"""
         a = np.array([[0, -0.1, 180, ],

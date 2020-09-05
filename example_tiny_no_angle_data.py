@@ -28,7 +28,6 @@ folder = join("Datasets", subfolder)
 
 time_io_end = time.time()
 network_data_struct, obs_mat = RecursiveLogitDataStruct.from_directory(folder, add_angles=False)
-network_data_struct.add_second_travel_time_for_no_turn_angles()
 optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS,
                                    vec_length=1,
                                    max_iter=4)  # TODO check these parameters & defaults

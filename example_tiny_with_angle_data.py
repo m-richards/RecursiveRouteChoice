@@ -68,3 +68,5 @@ time_finish = time.time()
 # tODO covariance
 print(f"IO time - {round(time_io_end - time_io_start, 3)}s")
 print(f"Algorithm time - {round(time_finish - time_io_end, 3)}")
+
+print(incidence_mat.toarray())
