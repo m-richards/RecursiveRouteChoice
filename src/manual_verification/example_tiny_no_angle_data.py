@@ -20,7 +20,7 @@ warnings.simplefilter("error")
 
 time_io_start = time.time()
 subfolder = "ExampleTiny"  # big data from classical v2
-folder = join("../../Datasets", subfolder)
+folder = join("Datasets", subfolder)
 
 time_io_end = time.time()
 obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=False)

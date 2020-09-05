@@ -8,7 +8,7 @@ from data_loading import load_standard_path_format_csv
 from data_processing import AngleProcessor
 from main import RecursiveLogitModelEstimation, RecursiveLogitDataStruct
 from optimisers import LineSearchOptimiser, OptimHessianType
-
+import os
 # np.seterr(all='raise')  # all='print')
 np.set_printoptions(precision=12, suppress=True)
 np.set_printoptions(edgeitems=10, linewidth=180)
@@ -20,7 +20,8 @@ time_io_start = time.time()
 # subfolder ="ExampleTutorial"# "ExampleTutorial" from classical logicv2
 # subfolder = "ExampleTiny"
 subfolder = "ExampleTinyModifiedObs"
-folder = os.path.join("../../Datasets", subfolder)
+print(os.getcwd())
+folder = os.path.join("Datasets", subfolder)
 
 obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=True)
 incidence_mat, travel_times_mat, angle_cts_mat = attrs
