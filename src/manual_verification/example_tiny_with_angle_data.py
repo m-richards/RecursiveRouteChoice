@@ -20,7 +20,7 @@ time_io_start = time.time()
 # subfolder ="ExampleTutorial"# "ExampleTutorial" from classical logicv2
 # subfolder = "ExampleTiny"
 subfolder = "ExampleTinyModifiedObs"
-folder = os.path.join("../Datasets", subfolder)
+folder = os.path.join("../../Datasets", subfolder)
 
 obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=True)
 incidence_mat, travel_times_mat, angle_cts_mat = attrs
