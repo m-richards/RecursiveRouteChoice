@@ -36,7 +36,7 @@ data_list = [distances]
 network_struct = RecursiveLogitDataStruct(data_list, incidence_mat,
                                           data_array_names_debug=("distances"))
 
-beta_vec = np.array([-160])
+beta_vec = np.array([-16])
 model = RecursiveLogitModelPrediction(network_struct,
                                       initial_beta=beta_vec, mu=1)
 # obs_indices = [i for i in range(8)]
