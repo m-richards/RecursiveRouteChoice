@@ -583,8 +583,27 @@ class RecursiveLogitModel(object):
 
         # m_tilde[dest_index, -1] = 0
         # i_tilde[dest_index, -1] = 0
-        m_tilde[dest_index, :] = local_exp_util_mat[dest_index, :]
-        i_tilde[dest_index, :] = local_incidence_mat[dest_index, :]
+        # m_tilde[dest_index, :] = local_exp_util_mat[dest_index, :]
+        # i_tilde[dest_index, :] = local_incidence_mat[dest_index, :]
+        # m_tilde[dest_index, -1] = orig_val
+        # print(m_tilde[dest_index, -1],",", local_exp_util_mat[dest_index, -1])
+
+        # TODO the conditional to dense casts here are to avoid a bug in scipy with slice indexing
+        # a zero sparse matrix
+        if (sparse.issparse(local_exp_util_mat)
+                and local_exp_util_mat[dest_index, :].count_nonzero() == 0):
+            m_tilde[dest_index, :] = 0
+        else:  # if this only has zeros in rhs, assignment does nothing
+            m_tilde[dest_index, :] = local_exp_util_mat[dest_index, :]
+        if (sparse.issparse(local_incidence_mat)
+                and local_incidence_mat[dest_index, :].count_nonzero() == 0):
+            i_tilde[dest_index, :] = 0
+        else:
+            i_tilde[dest_index, :] = local_incidence_mat[dest_index, :]
+        # TODO remove this - being extra paranoid since this is a bug with scipy and not my code
+        assert np.all(
+            _to_dense_if_sparse(m_tilde[dest_index, :])
+            == _to_dense_if_sparse(local_exp_util_mat[dest_index, :]))
 
         return m_tilde, i_tilde
 

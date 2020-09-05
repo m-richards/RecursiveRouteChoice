@@ -127,7 +127,7 @@ class TestSimpleCases(object):
         assert (hessian == np.identity(2)).all()
         assert optimiser.n_func_evals == 1
 
-    def test_example_tiny_modified(self):
+    def test_example_tiny_modified(self): # TODO shouldn't be using this data
         subfolder = "ExampleTinyModifiedObs"  # big data from classical v2
         folder = join("../Datasets", subfolder)
 
@@ -151,7 +151,7 @@ class TestSimpleCases(object):
         print(optimiser.get_iteration_log(model.optim_function_state)) # Note this is currently required to
         # set the gradient so that compute relative gradient works, really bad
         # model.hessian = np.identity(network_data_struct.n_dims)
-        ll, line_search_step, grad_norm, rel_grad_norm = (0.693147, 0.0, 0.176776,
+        ll, line_search_step, grad_norm, rel_grad_norm = (0.519860, 0.0, 0.176776,
                                                           0.125)
         assert np.abs(log_like_out - ll) < eps
         assert np.abs(model.optimiser.step - line_search_step) < eps
@@ -160,9 +160,9 @@ class TestSimpleCases(object):
         assert np.abs(model.optimiser.compute_relative_gradient_non_static() - rel_grad_norm) < eps
 
         targets = [
-            (0.6638452, 0.1767767, 0.154794, 0.1094559),
-            (0.5512837, 1.244795, 0.04175985, 0.02952867),
-            (0.5367502, 0.4598828, 0.02309686, 0.01633195)
+            (0.4905584, 0.1767767, 0.154794, 0.1094559),
+            (0.3779969, 1.244795, 0.04175985, 0.02952867),
+            (0.3634634, 0.4598828, 0.02309686, 0.01633195)
         ]
         for t in targets:
             ll, line_search_step, grad_norm, rel_grad_norm = t
@@ -206,7 +206,7 @@ class TestSimpleCases(object):
         print(optimiser.get_iteration_log(model.optim_function_state)) # Note this is currently required to
         # set the gradient so that compute relative gradient works, really bad
         # model.hessian = np.identity(network_data_struct.n_dims)
-        ll, line_search_step, grad_norm, rel_grad_norm = (0.693147, 0.0, 0.176776,
+        ll, line_search_step, grad_norm, rel_grad_norm = (0.519860, 0.0, 0.176776,
                                                           0.125)
         assert np.abs(log_like_out - ll) < eps
         assert np.abs(model.optimiser.step - line_search_step) < eps
@@ -214,9 +214,9 @@ class TestSimpleCases(object):
         assert np.abs(model.optimiser.compute_relative_gradient_non_static() - rel_grad_norm) < eps
 
         targets = [
-            (0.6638452, 0.1767767, 0.154794, 0.1094559),
-            (0.5512837, 1.244795, 0.04175985, 0.02952867),
-            (0.5367502, 0.4598828, 0.02309686, 0.01633195)
+            (0.4905584, 0.1767767, 0.154794, 0.1094559),
+            (0.3779969, 1.244795, 0.04175985, 0.02952867),
+            (0.3634634, 0.4598828, 0.02309686, 0.01633195)
         ]
         for t in targets:
             ll, line_search_step, grad_norm, rel_grad_norm = t
