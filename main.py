@@ -353,6 +353,7 @@ class RecursiveLogitModel(object):
 
         # explicitly do need this copy since we modify m_mat
         m_mat = self.get_short_term_utility().copy()
+        print(type(m_mat))
         # note we currently use incidence matrix here, since this distinguishes the
         # genuine zero arcs from the absent arcs
         # (since data format has zero arcs for silly reasons)
