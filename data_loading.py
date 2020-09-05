@@ -66,7 +66,6 @@ def load_csv_to_sparse(fname, dtype=None, delim=None, square_matrix=True, shape=
     # note we need this for float inputs since row cols still need to be ints to index
     rows_integer = row.astype(int)
     cols_integer = col.astype(int)
-    # print(fname, np.max(row), np.max(col))
     if 0 not in rows_integer and 0 not in cols_integer:
         rows_integer = rows_integer - 1  # convert to zero based indexing if needed
         cols_integer = cols_integer - 1

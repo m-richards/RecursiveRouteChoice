@@ -105,7 +105,6 @@ def line_search_astep(stx, fx, dx, sty, fy, dy, stp, fp, dp, brackt, stpmin, stp
     :return: 
     :rtype: 
     """
-    # print("\tInput astep:", stx, fx, dx, sty, fy, dy, stp, fp, dp, brackt, stpmin, stpmax)
     # parameter
     p66 = 0.66  # TODO why a magic constant
 
@@ -315,8 +314,7 @@ def line_search_asrch(fcn, x, f, g, arc, stp, maxfev,
                       gtol=CURVATURE_CONDITION_PARAMETER,
                       xtol=X_TOLERENT, stpmin=MINIMUM_STEP_LENGTH,
                       stpmax=MAXIMUM_STEP_LENGTH, print_flag=False, fname=None,
-                      bisect=0.0,
-                      debug_counter=None):
+                      bisect=0.0):
     """outputs [x f g stp info_out_flag nfev] =
     % list of variables and parameters
     % extrap = parameter for extrapolations
@@ -393,9 +391,8 @@ def line_search_asrch(fcn, x, f, g, arc, stp, maxfev,
         data_format_2 = "|{:4}\n"
         print(header_format.format("nfev", "b", "stx", "sty", "stp", "fp", "dp", "case",
                                    file=fname), end="")
-    n = 0
+
     while True:
-        n += 1
         if is_bracketed:
             stmin = min(stx, sty)
             stmax = max(stx, sty)
@@ -406,7 +403,6 @@ def line_search_asrch(fcn, x, f, g, arc, stp, maxfev,
         # safeguard the trial step size (make sure step passed in is in legal bounds
         stp = max(stp, stpmin)
         stp = min(stp, stpmax)
-        # print("stp = ", stp)
 
         # If an unusual termination is to occur then let
         # stp be the lowest point obtained so far.
@@ -418,7 +414,6 @@ def line_search_asrch(fcn, x, f, g, arc, stp, maxfev,
         # print("(s, ds) = ", s, ds)
         # Likelihood at new beta
         f, g = fcn(x + s)
-        # print("\t g= ", np.all(g==g_start), g, g_start)
 
         fp = float(f)
         dp = np.dot(g, ds)
@@ -519,7 +514,6 @@ def line_search_asrch(fcn, x, f, g, arc, stp, maxfev,
             stp = line_search_astep(
                 mstx, mfx, mdx, msty, mfy, mdy, stp, mfp,
                 mdp, is_bracketed, stmin, stmax)
-            # print("interp step", stp)
             # safeguard the step and update the interval width tracker
         if is_bracketed:
             if (abs(sty - stx) >= p66 * width1):

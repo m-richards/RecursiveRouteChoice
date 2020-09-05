@@ -203,6 +203,7 @@ class RecursiveLogitDataStructDeprecated(object):
         self.has_nz_incidence_mat = True
         self.data_fields.extend(("left_turn_dummy", "nonzero_arc_incidence", "u_turn_dummy"))
 
+
     def add_turn_categorical_variables(self, left_turn_thresh=None, u_turn_thresh=None):
         """Uses the turn matrix in the constructor and splits out into categorical matrices
         for uturns and left uturns.

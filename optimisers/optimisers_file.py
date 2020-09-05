@@ -247,7 +247,7 @@ class LineSearchOptimiser(CustomOptimiserBase):
         optim_func = compute_log_like_callback
         x, val_new, grad_new, stp, info, n_func_evals = line_search_asrch(
             optim_func, x, value_old, grad, arc, stp,
-            maxfev=OPTIMIZE_CONSTANT_MAX_FEV, debug_counter=debug_counter)
+            maxfev=OPTIMIZE_CONSTANT_MAX_FEV)
 
         if val_new <= value_old:
             # TODO need to collect these things into a struct?
