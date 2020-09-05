@@ -1,17 +1,16 @@
-import os
 import warnings
 from typing import List
 import scipy
 from scipy import linalg
-from scipy.sparse import coo_matrix, csr_matrix, identity
+# from scipy.sparse import coo_matrix
 from scipy.sparse import linalg as splinalg
 from scipy import sparse
 
 import awkward1 as ak
 
-from data_loading import load_csv_to_sparse, resize_to_dims, load_standard_path_format_csv
+from data_loading import load_standard_path_format_csv
 from data_processing import AngleProcessor
-from debug_helpers import print_sparse, print_data_struct
+# from debug_helpers import print_sparse, print_data_struct
 from optimisers.extra_optim import OptimFunctionState
 from optimisers.optimisers_file import CustomOptimiserBase, OptimType, ScipyOptimiser, OptimiserBase
 import numpy as np
@@ -79,7 +78,7 @@ def _zero_pad_mat(mat, top=False, left=False, bottom=False, right=False):
         if top:
             m, n = mat.shape
             mat = sparse.vstack([sparse.dok_matrix((1, n), mat, )])
-        return mat.todok() # don't want to stay as coo # TODO do explicit casts where we need them
+        return mat.todok()  # don't want to stay as coo # TODO do explicit casts where we need them
     else:
         if right:
             m, n = mat.shape
@@ -98,7 +97,6 @@ def _zero_pad_mat(mat, top=False, left=False, bottom=False, right=False):
             m, n = mat.shape
             mat = np.r_[np.zeros((1, n)), mat]
         return mat
-
 
 
 # TODO think perhaps no specific labels should be here, that these should be done by some
@@ -132,7 +130,7 @@ class RecursiveLogitDataStruct(object):
         if nnz > 0 and resize:
             print("resizing to include zero pad")
             incidence_matrix = _zero_pad_mat(incidence_matrix, bottom=True, right=True)
-            data_matrix_list_new =[]
+            data_matrix_list_new = []
             for i in data_matrix_list:
                 data_matrix_list_new.append(_zero_pad_mat(i, bottom=True, right=True))
             data_matrix_list = data_matrix_list_new
@@ -203,7 +201,6 @@ class RecursiveLogitDataStructDeprecated(object):
         self.has_nz_incidence_mat = True
         self.data_fields.extend(("left_turn_dummy", "nonzero_arc_incidence", "u_turn_dummy"))
 
-
     def add_turn_categorical_variables(self, left_turn_thresh=None, u_turn_thresh=None):
         """Uses the turn matrix in the constructor and splits out into categorical matrices
         for uturns and left uturns.
@@ -253,7 +250,8 @@ class RecursiveLogitDataStructDeprecated(object):
                                                                    angles_included=add_angles)
         if add_angles:
             incidence_mat, travel_times_mat, turn_angle_mat = network_attribs
-            out = RecursiveLogitDataStructDeprecated(travel_times_mat, incidence_mat, turn_angle_mat)
+            out = RecursiveLogitDataStructDeprecated(travel_times_mat, incidence_mat,
+                                                     turn_angle_mat)
             if angle_type == 'correct':
                 out.add_turn_categorical_variables()
             else:
@@ -266,7 +264,8 @@ class RecursiveLogitDataStructDeprecated(object):
                     out.add_nonzero_arc_incidence()  # swap f
         else:
             incidence_mat, travel_times_mat = network_attribs
-            out = RecursiveLogitDataStructDeprecated(travel_times_mat, incidence_mat, turn_angle_mat=None)
+            out = RecursiveLogitDataStructDeprecated(travel_times_mat, incidence_mat,
+                                                     turn_angle_mat=None)
         return out, obs_mat
 
 
@@ -315,14 +314,12 @@ class RecursiveLogitModel(object):
         #
         # self.get_log_likelihood()  # need to compute starting LL for optimiser
 
-
         self._path_start_nodes = None
         self._path_finish_nodes = None
 
     def get_beta_vec(self):
         """Getter is purely to imply that beta vec is not a fixed field"""
         return self._beta_vec
-
 
     def _compute_short_term_utility(self):
         # print("data dim\n")
@@ -377,7 +374,7 @@ class RecursiveLogitModel(object):
         rhs = scipy.sparse.lil_matrix((ncols, 1))  # suppressing needless sparsity warning
         rhs[-1, 0] = 1
         # (I-M)z =b
-        a_mat = identity(ncols) - m_tilde
+        a_mat = sparse.identity(ncols) - m_tilde
         z_vec = splinalg.spsolve(a_mat, rhs)  # rhs has to be (n,1) not (1,n)
         z_vec = np.atleast_2d(z_vec).T  # Transpose to have appropriate dims
         if return_pieces:
@@ -397,7 +394,7 @@ class RecursiveLogitModel(object):
         # print("z_pre", z_vec)
         if z_vec.min() <= min(-1e-10, OptimiserBase.NUMERICAL_ERROR_THRESH):
             # thresh on this?
-            error_flag = True # TODO abs and stuff once i fix tests
+            error_flag = True  # TODO abs and stuff once i fix tests
             return error_flag
             # handling via flag rather than exceptions for efficiency
             # raise ValueError("value function has too small entries")
@@ -430,8 +427,8 @@ class RecursiveLogitModel(object):
                 self._value_functions = np.log(val_funcs_tmp)
                 # error_flag = True # TODO not from tien mai
 
-                    # in the cases where nans occur we might not actually need to deal with the numbers
-                    # that are nan so we don't just end here (this is not good justification TODO)
+                # in the cases where nans occur we might not actually need to deal with the numbers
+                # that are nan so we don't just end here (this is not good justification TODO)
             else:
                 self._value_functions = np.log(z_vec)
             self._exp_value_functions = z_vec  # TODO should this be saved onto OptimStruct?
@@ -474,7 +471,7 @@ class RecursiveLogitModel(object):
         if np.any(path_arc_finish_nodes > final_index_in_data):
             path_arc_finish_nodes = np.minimum(path_arc_finish_nodes, final_index_in_data)
             warnings.warn("WARN, dodgy bounds indexing hack occur in path tracing,"
-                  " changed a node to not exceed maximum", category='error')
+                          " changed a node to not exceed maximum", category='error')
 
         self._path_start_nodes = path_arc_start_nodes
         self._path_finish_nodes = path_arc_finish_nodes
@@ -489,7 +486,7 @@ class RecursiveLogitModel(object):
         arc_finish_nodes = self._path_finish_nodes
 
         sum_inst_util = v_mat[arc_start_nodes, arc_finish_nodes].sum()
-        log_like_obs = sum_inst_util -orig_utility  # LogLikeFn in Code Doc
+        log_like_obs = sum_inst_util - orig_utility  # LogLikeFn in Code Doc
         return log_like_obs
 
     def _compute_current_obs_mu_ll_grad(self, grad_orig):
@@ -518,9 +515,8 @@ class RecursiveLogitModel(object):
         # with np.errstate(divide='ignore', invalid='ignore'):
         return partial_grad[:, orig_index] / exp_val_funcs[orig_index]
 
-
     def _get_value_func_incomplete_grad(self, m_tilde, exp_val_funcs):
-        """
+        r"""
         Function to compute GradValFn2 from algorithm chapter
         \pderiv{\bm{V}}{\beta_q}
                 & =\frac{1}{\bm{z}}\circ
@@ -543,7 +539,7 @@ class RecursiveLogitModel(object):
         # TODO check if dimensions should be transposed
         # print("incomplete grad func recieved for expV\n", exp_val_funcs)
         grad_v = np.zeros((self.n_dims, np.shape(m_tilde)[0]))
-        I = identity(np.shape(m_tilde)[0])
+        identity = sparse.identity(np.shape(m_tilde)[0])
         z = exp_val_funcs  # consistency with maths doc
 
         # low number of dims -> not vectorised for convenience
@@ -554,7 +550,7 @@ class RecursiveLogitModel(object):
             # due to matrices with terrible condition numbers in the examples
             # spsolve(A,b) == inv(A)*b
             # Note: A.multiply(B) is A .* B for sparse matrices
-            grad_v[q, :] = splinalg.spsolve(I - m_tilde, m_tilde.multiply(chi) * z)
+            grad_v[q, :] = splinalg.spsolve(identity - m_tilde, m_tilde.multiply(chi) * z)
             # print(np.linalg.norm((I- m_tilde)*grad_v[q, :] - m_tilde.multiply(chi) * z))
 
         return grad_v
@@ -645,13 +641,13 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         #    subclass which gets an optimiser
         self.obs_record = observations_record  # matrix of observed trips
 
-        beta_vec = super().get_beta_vec() # orig without optim tie in
+        beta_vec = super().get_beta_vec()  # orig without optim tie in
         # setup optimiser initialisation
         self.optim_function_state = OptimFunctionState(None, None, np.identity(data_struct.n_dims),
-                                        self.optimiser.hessian_type,
-                                        self.eval_log_like_at_new_beta,
-                                        beta_vec,
-                                        self._get_n_func_evals)
+                                                       self.optimiser.hessian_type,
+                                                       self.eval_log_like_at_new_beta,
+                                                       beta_vec,
+                                                       self._get_n_func_evals)
         self.update_beta_vec(beta_vec)  # to this to refresh dependent matrix quantitites
         self.get_log_likelihood()  # need to compute starting LL for optimiser
         if isinstance(optimiser, CustomOptimiserBase):
@@ -672,8 +668,8 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         # if a scipy method then it is self contained and we don't need to query inbetween loops
         if isinstance(self.optimiser, ScipyOptimiser):
             optim_res = self.optimiser.solve(self.optim_function_state, verbose=verbose,
-                                        output_file=output_file
-                                        )
+                                             output_file=output_file
+                                             )
             print(optim_res)
             if optim_res.success is False:
                 raise ValueError("Scipy alg error flag was raised. Process failed.")
@@ -703,12 +699,6 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
                 return self.optim_function_state.beta_vec
         print("Infinite loop happened somehow, shouldn't have happened")
 
-
-    # def get_beta_vec(self):
-    #     """Getter is purely to imply that beta vec is not a fixed field"""
-    #     return self._beta_vec
-    #     # return self.optim_function_state.beta_vec
-
     def update_beta_vec(self, new_beta_vec):
         """Change the current parameter vector beta and update intermediate results which depend
         on this"""
@@ -729,7 +719,8 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
 
     def get_log_likelihood(self, n_obs_override=None):
         """Compute the log likelihood of the data with the current beta vec
-                n_obs override is for debug purposes to artificially lower the number of observations"""
+                n_obs override is for debug purposes to artificially lower the
+                 number of observations"""
         self.n_log_like_calls += 1
         # TODO reinstate caching, currently have problems because beta can update externally
         if self.flag_log_like_stored:
@@ -737,7 +728,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         self.n_log_like_calls_non_redundant += 1
 
         obs_record = self.obs_record
-        if sparse.issparse(obs_record): # TODO redact this compatibility
+        if sparse.issparse(obs_record):  # TODO redact this compatibility
             num_obs, _ = obs_record.shape
         else:
             # num_obs = len(obs_record) # equivalent but clearer this is ak array
@@ -764,7 +755,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         for n in range(num_obs):
             # TODO we should be sorting by dest index to avoid recomputation
             #   if dests are the same we don't need to recompute value functions
-            #a[ak.argsort(a[:,0]) or a[np.argsort(a[:,0])
+            # a[ak.argsort(a[:,0]) or a[np.argsort(a[:,0])
             dest_index = obs_record[n, 0] - 1  # subtract 1 for zero based python
             orig_index = obs_record[n, 1] - 1
 
@@ -865,8 +856,8 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
 
         local_short_term_util = self.get_short_term_utility().copy()
 
-        local_exp_util_mat =self.get_exponential_utility_matrix()
-        local_incidence_mat =self.network_data.incidence_matrix
+        local_exp_util_mat = self.get_exponential_utility_matrix()
+        local_incidence_mat = self.network_data.incidence_matrix
         m_tilde = local_exp_util_mat.copy()
         i_tilde = local_incidence_mat.copy()
 
@@ -888,12 +879,13 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
             with np.errstate(divide='ignore', invalid='ignore'):
                 value_funcs = np.log(z_vec)
             # catch errors manually
-            if np.any(~np.isfinite(value_funcs)): #any infinite (nan/ -inf)
+            if np.any(~np.isfinite(value_funcs)):  # any infinite (nan/ -inf)
                 raise ValueError("Parameter Beta is incorrectly determined, value function has "
                                  "no solution in this case.")
-            # elif np.any(value_funcs > 0):
-            #     warnings.warn(f"WARNING: Positive value functions: {value_funcs[value_funcs > 0]}",
-            #                   )
+
+            elif ALLOW_POSITIVE_VALUE_FUNCTIONS is False and np.any(value_funcs > 0):
+                warnings.warn("WARNING: Positive value functions:"
+                              f"{value_funcs[value_funcs > 0]}")
 
             # loop through path starts, with same base value functions
             for orig in origin_indices:
@@ -962,8 +954,3 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
                                      local_exp_util_mat, local_incidence_mat)
 
         return output_path_list
-
-
-
-
-

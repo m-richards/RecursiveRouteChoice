@@ -1,14 +1,11 @@
-import scipy
 import numpy as np
 import awkward1 as ak
 from scipy.sparse import dok_matrix
 
-from data_loading import write_obs_to_json, load_obs_from_json
+from data_loading import load_obs_from_json
 import optimisers as op
-from data_loading import load_tnpm_to_sparse
 
-from main import RecursiveLogitDataStruct, RecursiveLogitModelPrediction, \
-    RecursiveLogitModelEstimation
+from main import RecursiveLogitDataStruct, RecursiveLogitModelEstimation
 
 np.set_printoptions(edgeitems=10, linewidth=300)
 # np.core.arrayprint._line_width = 500
@@ -39,12 +36,11 @@ distances = dok_matrix(distances)
 
 incidence_mat = (distances > 0).astype(int)
 
-
 data_list = [distances]
 network_struct = RecursiveLogitDataStruct(data_list, incidence_mat,
                                           data_array_names_debug=("distances",))
 
-beta_vec = np.array([-4.96]) # 4.96 diverges
+beta_vec = np.array([-4.96])  # 4.96 diverges
 optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=40)
 
 model = RecursiveLogitModelEstimation(network_struct, observations_record=obs_ak,
@@ -53,5 +49,3 @@ model = RecursiveLogitModelEstimation(network_struct, observations_record=obs_ak
 # log_like_out, grad_out = model.get_log_likelihood()
 
 model.solve_for_optimal_beta()
-
-

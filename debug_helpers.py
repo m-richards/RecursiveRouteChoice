@@ -1,5 +1,3 @@
-
-import numpy as np
 # np.get_printoptions()['precision']
 def print_sparse(mat, round_=16):
     # zzz

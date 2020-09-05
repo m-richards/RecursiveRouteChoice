@@ -7,7 +7,6 @@ import numpy as np
 import scipy
 import pandas as pd
 
-from scipy import sparse
 from scipy.sparse import coo_matrix, dok_matrix
 
 INCIDENCE = "incidence.txt"
@@ -53,7 +52,6 @@ def load_standard_path_format_csv(directory_path, delim=None, match_tt_shape=Fal
     return obs_mat, to_return_data
 
 
-
 def load_csv_to_sparse(fname, dtype=None, delim=None, square_matrix=True, shape=None) -> coo_matrix:
     """IO function to load row, col, val CSV and return a sparse scipy matrix.
     :square_matix <bool> means that the input should be square and we will try to square it by
@@ -80,7 +78,7 @@ def load_csv_to_sparse(fname, dtype=None, delim=None, square_matrix=True, shape=
         mat = coo_matrix((data, (rows_integer, cols_integer)),
                          dtype=dtype)
         # print(mat.shape)
-        mat.resize(shape) # trim cols
+        mat.resize(shape)  # trim cols
 
     # if mat.shape[0] == mat.shape[1] - 1 and square_matrix:
     #     # this means we have 1 less row than columns from our input data
@@ -91,8 +89,8 @@ def load_csv_to_sparse(fname, dtype=None, delim=None, square_matrix=True, shape=
     return mat
 
 
-def resize_to_dims(matrix: scipy.sparse.dok_matrix, expected_max_shape, matrix_name_debug="(Name not "
-                                                                                    "provided)"):
+def resize_to_dims(matrix: scipy.sparse.dok_matrix, expected_max_shape,
+                   matrix_name_debug="(Name not provided)"):
     """Resizes matrix to specified dims, issues warning if this is losing data from the matrix.
     Application is more general than the current error message suggests.
     Note the fact that the matrix is sparse is essential, numpy resize behaves differently to
@@ -148,7 +146,7 @@ def load_tnpm_to_sparse(net_fpath, columns_to_extract=None, use_file_order_for_a
     arc_matrix = dok_matrix(coo_matrix((nrows, nrows)))
 
     arc_to_index_map = {}
-    if use_file_order_for_arc_numbers: # for consistency with any visuals
+    if use_file_order_for_arc_numbers:  # for consistency with any visuals
         for n, s, f in net2[['init_node', 'term_node']].itertuples():
             # print(n,s,f)
             arc_to_index_map[(s, f)] = n
@@ -186,7 +184,6 @@ def load_obs_from_json(filename):
         return json.load(f)
 
 
-
 def write_obs_to_json(filename, obs, allow_rewrite=False):
     if os.path.exists(filename) and allow_rewrite is False:
         raise IOError("File already exists. Specify 'force_override=True' to enable re-writing.")
@@ -200,6 +197,3 @@ def write_obs_to_json(filename, obs, allow_rewrite=False):
     #         for arc in obs:
     #             print(arc, end=", ", file=filename)
     #         print(file=filename)
-
-
-

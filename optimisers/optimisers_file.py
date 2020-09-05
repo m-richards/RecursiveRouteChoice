@@ -89,9 +89,7 @@ class ScipyOptimiser(OptimiserBase):
         self.options = options
         self.fd_options = options
 
-
-
-        self.hessian_type = None # TODO fix this, here because optimStateFunc expects it
+        self.hessian_type = None  # TODO fix this, here because optimStateFunc expects it
 
     def solve(self, optim_function_state: OptimFunctionState, verbose=True,
               output_file=None):
@@ -129,7 +127,7 @@ class ScipyOptimiser(OptimiserBase):
 
             def cb(x):
                 print(self.get_iteration_log(optim_function_state), file=output_file)
-                self.iter_count +=1
+                self.iter_count += 1
         else:
             cb = None
         # print("options are", options)
@@ -219,7 +217,7 @@ class LineSearchOptimiser(CustomOptimiserBase):
         super().__init__(hessian_type, max_iter)
 
     # TODO what if optimvals is part of state on both, rather than an argument
-    def iterate_step(self, optim_vals:OptimFunctionState, verbose=True, output_file=None,
+    def iterate_step(self, optim_vals: OptimFunctionState, verbose=True, output_file=None,
                      debug_counter=None):
         """ Performs a single step of the line search iteration,
             evaluating the value function and taking a step based upon the gradient"""

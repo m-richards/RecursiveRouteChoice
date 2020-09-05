@@ -4,7 +4,6 @@ or generate by hand/ other means.
 Currently just for processing angles"""
 import numpy as np
 import scipy
-from scipy import sparse
 PI = 3.1415926535
 LEFT_TURN_THRESH = -30 * PI/180  # 30 degrees
 U_TURN_THRESH = 177 * PI/180  # radians # TODO this is very tight
@@ -51,7 +50,6 @@ class AngleProcessor(object):
 
         return u_turn_mat.todok()
 
-
         # return ((np.abs(turn_angles_cts) > u_turn_thresh)
         #         & (np.abs(turn_angles_cts) < 2 * PI * NEAR_2PI_MULTIPLIER)
         #         ).astype(int).todok()
@@ -65,7 +63,8 @@ class AngleProcessor(object):
         if u_turn_thresh is None:
             u_turn_thresh = U_TURN_THRESH
         # Note this is done strangely since scipy doesn't support & conditions on
-        # sparse matrices. Also is more efficient to only do comparison on nonzero (since this is dense)
+        # sparse matrices. Also is more efficient to only
+        # do comparison on nonzero (since this is dense)
         nz_rows, nz_cols = turn_angle_mat.nonzero()
 
         nz_left_turns_mask = np.array(
@@ -89,7 +88,8 @@ class AngleProcessor(object):
         if u_turn_thresh is None:
             u_turn_thresh = U_TURN_THRESH
         # Note this is done strangely since scipy doesn't support & conditions on
-        # sparse matrices. Also is more efficient to only do comparison on nonzero (since this is dense)
+        # sparse matrices. Also is more efficient to only do comparison on nonzero
+        # (since this is dense)
         nz_rows, nz_cols = turn_angle_mat.nonzero()
 
         nz_right_turns_mask = np.array(
@@ -107,7 +107,7 @@ class AngleProcessor(object):
 
     @classmethod
     def get_neutral_turn_categorical_matrix(cls, turn_angle_mat,
-                                        side_turn_thresh=None):
+                                            side_turn_thresh=None):
         """
         We assume that all zero angles are absent arcs, genuine zero angles should be encoded
         as near zero nonzero - i.e. 0.01 or as 2* Pi =  6.28 = 0
@@ -135,16 +135,17 @@ class AngleProcessor(object):
         # genuine_zeros = turn_angle_mat[incidence_mat]
 
         # print(turn_angle_mat.toarray())
-            # Note this is done strangely since scipy doesn't support & conditions on
-            # sparse matrices. Also is more efficient to only do comparison on nonzero (since this is dense)
+        # Note this is done strangely since scipy doesn't support & conditions on
+        # sparse matrices. Also is more efficient to only do comparison on
+        # nonzero (since this is dense)
         nz_rows, nz_cols = turn_angle_mat.nonzero()
         # print("side", side_turn_thresh)
         # print("mat\n", turn_angle_mat.toarray())
         nz_left_turns_mask = np.array(
             # not a left turn
             (turn_angle_mat[nz_rows, nz_cols].toarray() > -side_turn_thresh) &
-            # not a right turn
-            (turn_angle_mat[nz_rows, nz_cols].toarray() < side_turn_thresh))[0]  # turn is not a uturn
+            # not a right turn   # turn is not a uturn
+            (turn_angle_mat[nz_rows, nz_cols].toarray() < side_turn_thresh))[0]
         # note testing todense suggests faster or at least not worse, supresses error
         masked_rows = nz_rows[nz_left_turns_mask]
         masked_cols = nz_cols[nz_left_turns_mask]
@@ -155,7 +156,6 @@ class AngleProcessor(object):
         # print("neutral \n", neutral_turn_mat.toarray())
         # print(neutral_turn_mat.shape, incidence_mat.shape)
         return neutral_turn_mat.todok()
-
 
     @classmethod
     def to_radians(cls, angle_turn_mat):

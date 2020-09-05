@@ -1,24 +1,17 @@
 # TODO check np.dot usage since numpy is not aware of sparse properly, should use A.dot(v)
-import os
-
+from scipy import linalg
 import numpy as np
-import time
+
 import scipy
 from scipy.sparse import linalg as splinalg
-from data_loading import load_standard_path_format_csv
+import optimisers as op
 from data_processing import AngleProcessor
-from main import RecursiveLogitModelEstimation, RecursiveLogitDataStruct, RecursiveLogitModel
-from optimisers import LineSearchOptimiser, OptimHessianType
+from main import RecursiveLogitDataStruct, RecursiveLogitModel
+from scipy.sparse import dok_matrix, identity
 
 # np.seterr(all='raise')  # all='print')
 
-# np.set_printoptions(precision=12, suppress=True)
 np.set_printoptions(edgeitems=10, linewidth=300)
-# np.core.arrayprint._line_width = 500
-
-
-# import warnings
-# warnings.simplefilter("error")
 
 # DATA
 
@@ -46,18 +39,15 @@ np.set_printoptions(edgeitems=10, linewidth=300)
 # REduced - taking arcs 1, 2 and 5 of full eg
 x = 0.12
 Distances = np.array(
-    [[x, x/2+2],
-     [x/2+2, 2],
+    [[x, x / 2 + 2],
+     [x / 2 + 2, 2],
      ])
-
-
-
 
 # TODO note angles need to be mixed with incidence to determine 0 angle from missing arc
 # or we could encode 0 as 360 - > probably better
 Angles = np.array(
-    [[180, 360,],
-     [360, 180,]])
+    [[180, 360, ],
+     [360, 180, ]])
 
 # TODO ban u-turns:
 # Distances = Distances - np.diag(Distances)
@@ -85,9 +75,6 @@ print(Distances)
 print("angles")
 print(Angles)
 
-
-from scipy.sparse import dok_matrix, identity
-
 incidence_mat = (Distances > 0).astype(int)
 
 angles_rad = AngleProcessor.to_radians(Angles)
@@ -102,7 +89,7 @@ angles_rad = AngleProcessor.to_radians(Angles)
 # obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=True)
 # incidence_mat, travel_times_mat, angle_cts_mat = attrs
 left, right, neutral, u_turn = AngleProcessor.get_turn_categorical_matrices(dok_matrix(
- angles_rad), dok_matrix(incidence_mat))
+    angles_rad), dok_matrix(incidence_mat))
 # incidence matrix which only has nonzero travel times - rather than what is specified in file
 distances = dok_matrix(Distances)
 # data_list = np.array([distances, left])
@@ -112,10 +99,10 @@ network_struct = RecursiveLogitDataStruct(data_list, incidence_mat,
 m = -1
 # beta_vec = np.array([-1, -1])
 beta_vec = np.array([-1])
-import optimisers as op
+
 optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
-model = RecursiveLogitModel(network_struct,  user_obs_mat=None,
-                                      initial_beta=beta_vec, mu=1)
+model = RecursiveLogitModel(network_struct, user_obs_mat=None,
+                            initial_beta=beta_vec, mu=1)
 
 # To generate obs we want to actually simulate and draw errors
 # first we need to have all the deterministic utility
@@ -128,13 +115,13 @@ print("short util\n", model.get_short_term_utility().toarray())
 exp_utility_matrix = model.get_exponential_utility_matrix()
 print("m_orig = ", exp_utility_matrix.toarray())
 obs_per_pair = 1
-O = range(distances.shape[0])
+O = range(distances.shape[0])  # noqa:  E741
 D = range(distances.shape[1])
 # start at an arc, end at a node, fix ending at a node by appending an arc
 # assume for simplicity that the nodes are the nodes at the centre of my arcs
 
 rng = np.random.default_rng()
-from scipy import linalg
+
 
 m, n = exp_utility_matrix.shape
 assert m == n
@@ -150,8 +137,8 @@ for dest in [1]:  # D: # (0,2) specifies a node via an adjacency list
     m_tilde.resize(len_with_aug_dest, len_with_aug_dest)
     # m_tilde is always going to have same dims, this additional 1 is non destructive,
     # we would just need to reset this column back to zeros and we could reuse matrix
-    m_tilde[dest, :] = 0.0 # TODO do we do this? # enforces going to dest
-    m_tilde[dest, -1] = 1 # exp(v(a|k)) = 1 when v(a|k) = 0 # try 0.2
+    m_tilde[dest, :] = 0.0  # TODO do we do this? # enforces going to dest
+    m_tilde[dest, -1] = 1  # exp(v(a|k)) = 1 when v(a|k) = 0 # try 0.2
     # m_tilde[dest, -1] = 0.2  # exp(v(a|k)) = 1 when v(a|k) = 0 # try 0.2
     # Things to observe with x = 0.12 - can get value function which are positive and optimal at
     # the origin! really bad
@@ -165,7 +152,7 @@ for dest in [1]:  # D: # (0,2) specifies a node via an adjacency list
     # implicitly we also get m+1th row being all zeros which is what we want since no succesors
     rhs = scipy.sparse.lil_matrix((len_with_aug_dest, 1))  # suppressing needless sparsity warning
     rhs[-1, 0] = 1
-#
+    #
     z_vec = splinalg.spsolve(a_mat, rhs)  # rhs has to be (n,1)
     # print("a mat = \n", a_mat.toarray())
     # print("rhs = \n", rhs.toarray())
@@ -177,9 +164,9 @@ for dest in [1]:  # D: # (0,2) specifies a node via an adjacency list
     # short_term_utility
     # print("stu")
     # print(short_term_utility)
-    v_op=  short_term_utility[0,1]
-    v_pp = short_term_utility[0,0]
-    print("theory V(p) with dest correction", np.log(np.exp(v_op)/ (1- np.exp(v_pp))))
+    v_op = short_term_utility[0, 1]
+    v_pp = short_term_utility[0, 0]
+    print("theory V(p) with dest correction", np.log(np.exp(v_op) / (1 - np.exp(v_pp))))
     print("cond", np.linalg.cond(a_mat.toarray()))
     # continue
 #     for orig in [1]:  # O:

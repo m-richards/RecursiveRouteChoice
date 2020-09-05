@@ -1,0 +1,10 @@
+[flake8]
+# Temp files that are allowed to violate
+# note manual tests should conform if it is committed, but there are lots of non committed files
+exclude = temp_demo_code/, reference/ manual_tests/ versioneer.py
+
+max-line-length = 100
+
+per-file-ignores =
+    # Stuff is exported in the __init__ files so ignore unused imports
+    */__init__.py:F401
