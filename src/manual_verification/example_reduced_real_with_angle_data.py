@@ -18,7 +18,7 @@ time_io_start = time.time()
 # file ="ExampleTutorial"# "ExampleTutorial" from classical logicv2
 # file = "ExampleTiny"  # "ExampleNested" from classical logit v2, even smaller network
 subfolder = "TienMaiRealDataCut"  # big data from classical v2
-folder = os.path.join("../Datasets", subfolder)
+folder = os.path.join("../../Datasets", subfolder)
 
 
 # TODO needs work to work - don't have current code for comparison angle types
