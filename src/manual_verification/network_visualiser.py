@@ -4,7 +4,7 @@ from os.path import join
 # file ="ExampleTutorial"# "ExampleTutorial" from classical logicv2
 # file = "ExampleTiny"  # "ExampleNested" from classical logit v2, even smaller network
 file = "Input" # big data from classical v2
-folder = join("../Datasets", file)
+folder = join("../../Datasets", file)
 rows_to_keep = None  # currently am keeping all rows, but are hacking row length 0 to row length 1
 INCIDENCE = "incidence.txt"
 TRAVEL_TIME = 'travelTime.txt'
@@ -58,7 +58,7 @@ import matplotlib.pyplot as plt
 layout = nx.drawing.kamada_kawai_layout(G, weight='travel_time')
 nx.drawing.draw_networkx(G, pos=layout) # unweighted - for
 # structure
-plt.savefig(join("../figures", f"{file} - network_dists - no dists.pdf"))
+plt.savefig(join("../../figures", f"{file} - network_dists - no dists.pdf"))
 nx.drawing.draw_networkx_edge_labels(G, pos=layout,
                                      edge_labels={(i,j):round(k,1) for (i,j,k) in dist_data})
 # networkx.drawing.draw_spectral(G)
@@ -67,5 +67,5 @@ nx.drawing.draw_networkx_edge_labels(G, pos=layout,
 from pprint import pprint
 pprint({(i,j):round(k,1) for (i,j,k) in dist_data})
 plt.gca().set_aspect('equal', adjustable='box')
-plt.savefig(join("../figures", f"{file} - network_dists.pdf"))
+plt.savefig(join("../../figures", f"{file} - network_dists.pdf"))
 plt.show()
