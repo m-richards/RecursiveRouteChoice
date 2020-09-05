@@ -555,6 +555,39 @@ class RecursiveLogitModel(object):
 
         return grad_v
 
+    @staticmethod
+    def _apply_dest_column(dest_index, m_tilde, i_tilde):
+        """Takes in a exponential short term utility matrix and incidence matrix
+        with zero padding  bottom right columns and updates them to include
+        the correct encoding for the destination column. This is a small task, but is
+        used in both prediction and estimation so convenient to have in one spot. It is also
+        something where alternative schemes are possible."""
+
+        # Destination enforcing # TODO review these assumptions and nonzero dest util
+        #                               note that dest util updates would need to update
+        #                               short term util locally as well (just final col).
+        #                               Reivew needs to change the inverse ops at end of loop
+        # Current commented out allows positive value functions
+        m_tilde[dest_index, :] = 0.0
+        i_tilde[dest_index, :] = 0
+        m_tilde[dest_index, -1] = 1  # exp(v(a|k)) = 1 when v(a|k) = 0 # try 0.2
+        i_tilde[dest_index, -1] = 1
+        return m_tilde, i_tilde
+        # TODO check if this can occur inplace without returns
+
+    # TODO review signature after tests are updated
+    @staticmethod
+    def _revert_dest_column(dest_index, m_tilde, i_tilde, local_exp_util_mat, local_incidence_mat):
+        """Inverse method to apply dest col - so that we can undo changes without resetting the
+        matrix. Should be such that applying apply then revert is an identity operation."""
+
+        # m_tilde[dest_index, -1] = 0
+        # i_tilde[dest_index, -1] = 0
+        m_tilde[dest_index, :] = local_exp_util_mat[dest_index, :]
+        i_tilde[dest_index, :] = local_incidence_mat[dest_index, :]
+
+        return m_tilde, i_tilde
+
 
 class RecursiveLogitModelEstimation(RecursiveLogitModel):
     """Abstraction of the linear algebra type relations on the recursive logit model to solve
@@ -706,13 +739,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             dest_index = obs_record[n, 0] - 1  # subtract 1 for zero based python
             orig_index = obs_record[n, 1] - 1
 
-            # Destination enforcing # TODO review these assumptions and nonzero dest util
-            #                               note that dest util updates would need to update
-            #                               short term util locally as well (just final col).
-            m_tilde[dest_index, :] = 0.0
-            m_tilde[dest_index, -1] = 1  # exp(v(a|k)) = 1 when v(a|k) = 0 # try 0.2
-            i_tilde[dest_index, :] = 0
-            i_tilde[dest_index, -1] = 1  # enforce going to destination, remove other choices
+            m_tilde, i_tilde = self._apply_dest_column(dest_index, m_tilde, i_tilde)
 
             # # TODO review this, still not sure it makes mathematical sense
             # # Compute modified matrices for current dest
@@ -754,8 +781,10 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             # print("current grad weighted", ll_grad_cumulative)
 
             # Put our matrices back untouched:
-            m_tilde[dest_index, :] = m_mat[dest_index, :]
-            i_tilde[dest_index, :] = i_tilde[dest_index, :]
+            m_tilde, i_tilde = self._revert_dest_column(dest_index, m_tilde, i_tilde,
+                                                        m_mat, local_incidence_mat)
+            # m_tilde[dest_index, :] = m_mat[dest_index, :]
+            # i_tilde[dest_index, :] = local_incidence_mat[dest_index, :]
 
         # only apply this rescaling once rather than on all terms inside loops
         self.log_like_stored = -1/mu * mu_log_like_cumulative
@@ -823,16 +852,7 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
         # print(m_tilde.toarray())
 
         for dest in dest_indices:
-            # print("dest = ", dest, "augmented dest col =", m)
-            # Destination enforcing # TODO review these assumptions and nonzero dest util
-            #                               note that dest util updates would need to update
-            #                               short term util locally as well (just final col).
-            #                               Reivew needs to change the inverse ops at end of loop
-            m_tilde[dest, :] = 0.0
-            m_tilde[dest, -1] = 1  # exp(v(a|k)) = 1 when v(a|k) = 0 # try 0.2
-            i_tilde[dest, :] = 0
-            i_tilde[dest, -1] = 1
-            # print("modif m", m_tilde.toarray())
+            self._apply_dest_column(dest, m_tilde, i_tilde)
 
             z_vec = self._compute_exp_value_function(m_tilde)
             # print(z_vec)
@@ -909,8 +929,8 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
                     output_path_list.append(current_path)
 
             # Fix the columns we changed for this dest (cheaper than refreshing whole matrix)
-            m_tilde[dest, :] = local_exp_util_mat[dest, :]
-            i_tilde[dest, :] = local_incidence_mat[dest, :]
+            self._revert_dest_column(dest, m_tilde, i_tilde,
+                                     local_exp_util_mat, local_incidence_mat)
 
         return output_path_list
 
