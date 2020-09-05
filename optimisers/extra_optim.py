@@ -31,11 +31,12 @@ class OptimFunctionState(object):
         self.beta_vec = beta_vec
         self.hessian_approx_type = hessian_approx_type
         if function_evals_stat is None:
-            function_evals_stat = lambda: None
+            def null_func():
+                return None
+            function_evals_stat = null_func
         self.function_evals_count = function_evals_stat
 
     def val_grad_function(self, beta_vec=None):
         if beta_vec is not None:
-
             self.beta_vec = beta_vec
         return self._val_grad_function(self.beta_vec)

@@ -102,8 +102,8 @@ def line_search_astep(stx, fx, dx, sty, fy, dy, stp, fp, dp, brackt, stpmin, stp
     % MINPACK-2 Project. November 1993.
     % Argonne National Laboratory and University of Minnesota.
     % Brett M. Averick and Jorge J. More'.
-    :return: 
-    :rtype: 
+    :return:
+    :rtype:
     """
     # parameter
     p66 = 0.66  # TODO why a magic constant
@@ -246,7 +246,7 @@ def line_search_astep(stx, fx, dx, sty, fy, dy, stp, fp, dp, brackt, stpmin, stp
 
 """
 % More and Thuente Arc Search
-% This is a port of Tien Mai's  matlab code which is 
+% This is a port of Tien Mai's  matlab code which is
 a modified implementation of the algorithm documented in:
 %
 % J. J. More and D. J. Thuente. Line Search Algorithms with Guaranteed
@@ -351,7 +351,6 @@ def line_search_asrch(fcn, x, f, g, arc, stp, maxfev,
     % amax = maximum step size
     % ucase = arc search update case
     """
-    g_start = g
     # parameters
     xtrapu = 4
     p66 = 0.66
@@ -388,7 +387,7 @@ def line_search_asrch(fcn, x, f, g, arc, stp, maxfev,
         print_flag = True
         header_format = "{:4} {:6}" + 5 * " {:14.14}" + "|{:4.4}\n"
         data_format_1 = "{:4} {:6}" + 5 * " {:14.8g}"
-        data_format_2 = "|{:4}\n"
+        # data_format_2 = "|{:4}\n"
         print(header_format.format("nfev", "b", "stx", "sty", "stp", "fp", "dp", "case",
                                    file=fname), end="")
 

@@ -5,7 +5,7 @@ existing code.
 
 """
 
-import pytest
+# import pytest
 
 import numpy as np
 from scipy import linalg
@@ -21,24 +21,24 @@ from os.path import join
 import optimisers as op
 
 hand_net_dists = np.array(
-            [[4, 3.5, 4.5, 3, 3, 0, 0, 0],
-             [3.5, 3, 4, 0, 2.5, 3, 3, 0],
-             [4.5, 4, 5, 0, 0, 0, 4, 3.5],
-             [3, 0, 0, 2, 2, 2.5, 0, 2],
-             [3, 2.5, 0, 2, 2, 2.5, 2.5, 0],
-             [0, 3, 0, 2.5, 2.5, 3, 3, 2.5],
-             [0, 3, 4, 0, 2.5, 3, 3, 2.5],
-             [0, 0, 3.5, 2, 0, 2.5, 2.5, 2]])
+    [[4, 3.5, 4.5, 3, 3, 0, 0, 0],
+     [3.5, 3, 4, 0, 2.5, 3, 3, 0],
+     [4.5, 4, 5, 0, 0, 0, 4, 3.5],
+     [3, 0, 0, 2, 2, 2.5, 0, 2],
+     [3, 2.5, 0, 2, 2, 2.5, 2.5, 0],
+     [0, 3, 0, 2.5, 2.5, 3, 3, 2.5],
+     [0, 3, 4, 0, 2.5, 3, 3, 2.5],
+     [0, 0, 3.5, 2, 0, 2.5, 2.5, 2]])
 
 hand_net_angles = np.array(
-            [[180, -90, -45, 360, 90, 0, 0, 0],
-             [90, 180, -135, 0, -90, -45, 360, 0],
-             [45, 135, 180, 0, 0, 0, -90, 360],
-             [360, 0, 0, 180, -90, 135, 0, 90],
-             [-90, 90, 0, 90, 180, -135, -90, 0],
-             [0, 45, 0, -135, 135, 180, -135, 135],
-             [0, 360, 90, 0, 90, 135, 180, -90],
-             [0, 0, 360, -90, 0, -135, 90, 180]])
+    [[180, -90, -45, 360, 90, 0, 0, 0],
+     [90, 180, -135, 0, -90, -45, 360, 0],
+     [45, 135, 180, 0, 0, 0, -90, 360],
+     [360, 0, 0, 180, -90, 135, 0, 90],
+     [-90, 90, 0, 90, 180, -135, -90, 0],
+     [0, 45, 0, -135, 135, 180, -135, 135],
+     [0, 360, 90, 0, 90, 135, 180, -90],
+     [0, 0, 360, -90, 0, -135, 90, 180]])
 hand_net_incidence = (hand_net_dists > 0).astype(int)
 hand_net_angles_rad = AngleProcessor.to_radians(hand_net_angles)
 
@@ -51,10 +51,10 @@ class TestSimpleCases(object):
         INCIDENCE = "incidence.txt"
         TRAVEL_TIME = 'travelTime.txt'
         OBSERVATIONS = "observations.txt"
-        TURN_ANGLE = "turnAngle.txt"
+        # TURN_ANGLE = "turnAngle.txt"
         file_incidence = os.path.join(folder, INCIDENCE)
         file_travel_time = os.path.join(folder, TRAVEL_TIME)
-        file_turn_angle = os.path.join(folder, TURN_ANGLE)
+        # file_turn_angle = os.path.join(folder, TURN_ANGLE)
         file_obs = os.path.join(folder, OBSERVATIONS)
 
         travel_times_mat = load_csv_to_sparse(file_travel_time).todok()
@@ -66,9 +66,11 @@ class TestSimpleCases(object):
         network_data_struct = RecursiveLogitDataStruct(data_list,
                                                        incidence_matrix=incidence_mat)
         # network_data_struct.add_second_travel_time_for_testing()
-        optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)  # TODO check these parameters & defaults
+        optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS,
+                                           max_iter=4)
 
-        model = RecursiveLogitModelEstimation(network_data_struct, optimiser, observations_record=obs_mat)
+        model = RecursiveLogitModelEstimation(network_data_struct, optimiser,
+                                              observations_record=obs_mat)
 
         log_like_out, grad_out = model.get_log_likelihood()
         eps = 1e-6
@@ -109,12 +111,13 @@ class TestSimpleCases(object):
         obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=False)
         incidence_mat, travel_times_mat = attrs
         # left, right, _, u_turn = AngleProcessor.get_turn_categorical_matrices()
-        data_list =[travel_times_mat, travel_times_mat]
+        data_list = [travel_times_mat, travel_times_mat]
         network_data_struct = RecursiveLogitDataStruct(data_list, incidence_mat)
 
         optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
 
-        model = RecursiveLogitModelEstimation(network_data_struct, optimiser, observations_record=obs_mat)
+        model = RecursiveLogitModelEstimation(network_data_struct, optimiser,
+                                              observations_record=obs_mat)
 
         log_like_out, grad_out = model.get_log_likelihood()
         eps = 1e-6
@@ -123,11 +126,11 @@ class TestSimpleCases(object):
 
         # model.hessian = np.identity(network_data_struct.n_dims)
         out_flag, hessian, log = optimiser.iterate_step(model.optim_function_state, verbose=False)
-        assert out_flag == True
+        assert out_flag is True
         assert (hessian == np.identity(2)).all()
         assert optimiser.n_func_evals == 1
 
-    def test_example_tiny_modified(self): # TODO shouldn't be using this data
+    def test_example_tiny_modified(self):  # TODO shouldn't be using this data
         subfolder = "ExampleTinyModifiedObs"  # big data from classical v2
         folder = join("../Datasets", subfolder)
 
@@ -135,7 +138,8 @@ class TestSimpleCases(object):
         incidence_mat, travel_times_mat, angle_cts_mat = attrs
         left, _, _, u_turn = AngleProcessor.get_turn_categorical_matrices(angle_cts_mat,
                                                                           incidence_mat)
-        # incidence matrix which only has nonzero travel times - rather than what is specified in file
+        # incidence matrix which only has nonzero travel times
+        # - rather than what is specified in file
         t_time_incidence = (travel_times_mat > 0).astype('int').todok()
         data_list = [travel_times_mat, left, u_turn, t_time_incidence]
         network_data_struct = RecursiveLogitDataStruct(data_list, incidence_mat)
@@ -143,12 +147,14 @@ class TestSimpleCases(object):
         # network_data_struct.add_second_travel_time_for_testing()
         optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
 
-        model = RecursiveLogitModelEstimation(network_data_struct, optimiser, observations_record=obs_mat)
+        model = RecursiveLogitModelEstimation(network_data_struct, optimiser,
+                                              observations_record=obs_mat)
 
         log_like_out, grad_out = model.get_log_likelihood()
         eps = 1e-6
 
-        print(optimiser.get_iteration_log(model.optim_function_state)) # Note this is currently required to
+        print(optimiser.get_iteration_log(
+            model.optim_function_state))  # Note this is currently required to
         # set the gradient so that compute relative gradient works, really bad
         # model.hessian = np.identity(network_data_struct.n_dims)
         ll, line_search_step, grad_norm, rel_grad_norm = (0.519860, 0.0, 0.176776,
@@ -166,7 +172,8 @@ class TestSimpleCases(object):
         ]
         for t in targets:
             ll, line_search_step, grad_norm, rel_grad_norm = t
-            out_flag, hessian, log = optimiser.iterate_step(model.optim_function_state, verbose=False)
+            out_flag, hessian, log = optimiser.iterate_step(model.optim_function_state,
+                                                            verbose=False)
             log_like_out, grad_out = model.get_log_likelihood()
 
             print(f"({log_like_out:.7}, "
@@ -176,7 +183,8 @@ class TestSimpleCases(object):
             assert np.abs(log_like_out - ll) < eps
             assert np.abs(linalg.norm(model.optimiser.step) - line_search_step) < eps
             assert np.abs(linalg.norm(grad_out) - grad_norm) < eps
-            assert np.abs(model.optimiser.compute_relative_gradient_non_static() - rel_grad_norm) < eps
+            assert np.abs(
+                model.optimiser.compute_relative_gradient_non_static() - rel_grad_norm) < eps
 
     def test_example_tiny_modified_awkward_array(self):
         subfolder = "ExampleTinyModifiedObs"  # big data from classical v2
@@ -189,7 +197,8 @@ class TestSimpleCases(object):
         incidence_mat, travel_times_mat, angle_cts_mat = attrs
         left, _, _, u_turn = AngleProcessor.get_turn_categorical_matrices(angle_cts_mat,
                                                                           incidence_mat)
-        # incidence matrix which only has nonzero travel times - rather than what is specified in file
+        # incidence matrix which only has nonzero travel times
+        # - rather than what is specified in file
         t_time_incidence = (travel_times_mat > 0).astype('int').todok()
         data_list = [travel_times_mat, left, u_turn, t_time_incidence]
         network_data_struct = RecursiveLogitDataStruct(data_list, incidence_mat)
@@ -203,7 +212,8 @@ class TestSimpleCases(object):
         log_like_out, grad_out = model.get_log_likelihood()
         eps = 1e-6
 
-        print(optimiser.get_iteration_log(model.optim_function_state)) # Note this is currently required to
+        print(optimiser.get_iteration_log(model.optim_function_state))
+        # Note this is currently required to
         # set the gradient so that compute relative gradient works, really bad
         # model.hessian = np.identity(network_data_struct.n_dims)
         ll, line_search_step, grad_norm, rel_grad_norm = (0.519860, 0.0, 0.176776,
@@ -220,12 +230,14 @@ class TestSimpleCases(object):
         ]
         for t in targets:
             ll, line_search_step, grad_norm, rel_grad_norm = t
-            out_flag, hessian, log = optimiser.iterate_step(model.optim_function_state, verbose=False)
+            out_flag, hessian, log = optimiser.iterate_step(model.optim_function_state,
+                                                            verbose=False)
             log_like_out, grad_out = model.get_log_likelihood()
             assert np.abs(log_like_out - ll) < eps
             assert np.abs(linalg.norm(model.optimiser.step) - line_search_step) < eps
             assert np.abs(linalg.norm(grad_out) - grad_norm) < eps
-            assert np.abs(model.optimiser.compute_relative_gradient_non_static() - rel_grad_norm) < eps
+            assert np.abs(
+                model.optimiser.compute_relative_gradient_non_static() - rel_grad_norm) < eps
 
     def test_turn_angle_matrices(self):
         """ Note the problem of generating these kind of matrices is ignored"""
@@ -243,17 +255,17 @@ class TestSimpleCases(object):
         assert (expected_left_turn == actual_left_turn).all()
         assert (expected_u_turn == actual_u_turn).all()
 
-
     def test_manual_tests_dont_throw(self):
-        """Just checking these scripts don't crash due to changes in api"""
-        from manual_tests import (example_tiny_with_angle_data, example_tiny_no_angle_data)
+        """Just checking these scripts don't crash due to changes in api.
+        This is a hacky way of testing more cases without doing proper testing,
+        better than nothing but not my much"""
+        from manual_tests import (example_tiny_with_angle_data,  # noqa: F401
+                                  example_tiny_no_angle_data)  # noqa: F401
 
 
 class TestSimulation(object):
 
     def test_basic_consistency(self):
-        left, right, neutral, u_turn = AngleProcessor.get_turn_categorical_matrices(dok_matrix(
-            hand_net_angles_rad), dok_matrix(hand_net_incidence))
 
         distances = dok_matrix(hand_net_dists)
 
@@ -270,7 +282,8 @@ class TestSimulation(object):
                                           num_obs_per_pair=4, iter_cap=15, rng_seed=1)
         # allow positive value_funcs
         # expected = [[0, 4, 5, 1, 8], [0, 4, 1, 1, 8], [0, 1, 8], [0, 0, 4, 5, 1, 8], [2, 6, 1, 8],
-        #             [2, 1, 8], [2, 1, 8], [2, 1, 8], [7, 5, 1, 8], [7, 6, 1, 8], [7, 7, 5, 6, 1, 8],
+        #             [2, 1, 8], [2, 1, 8], [2, 1, 8], [7, 5, 1, 8], [7, 6, 1, 8],
+        #             [7, 7, 5, 6, 1, 8],
         #             [7, 3, 4, 1, 8], [0, 4, 6, 8], [0, 1, 1, 6, 8], [0, 4, 6, 8], [0, 4, 6, 8],
         #             [1, 4, 6, 8], [1, 6, 8], [1, 6, 8], [1, 5, 1, 6, 8], [2, 7, 6, 8], [2, 6, 8],
         #             [2, 7, 6, 8], [2, 6, 8], [7, 6, 8], [7, 6, 5, 4, 6, 8], [7, 5, 1, 6, 8],
@@ -302,9 +315,10 @@ class TestSimulation(object):
                                               initial_beta=beta_vec, mu=1)
         try:
             model.generate_observations(origin_indices=[0, 1, 2, 7], dest_indices=[1, 6, 3],
-                                          num_obs_per_pair=4, iter_cap=15, rng_seed=1)
+                                        num_obs_per_pair=4, iter_cap=15, rng_seed=1)
         except ValueError as e:
             print(str(e))
+
 
 class TestOptimAlgs(object):
 
@@ -319,8 +333,6 @@ class TestOptimAlgs(object):
         incidence_mat, travel_times_mat, angle_cts_mat = attrs
         left, _, _, u_turn = AngleProcessor.get_turn_categorical_matrices(angle_cts_mat,
                                                                           incidence_mat)
-        # incidence matrix which only has nonzero travel times - rather than what is specified in file
-        t_time_incidence = (travel_times_mat > 0).astype('int').todok()
         data_list = [travel_times_mat, left, u_turn]
         network_data_struct = RecursiveLogitDataStruct(data_list, incidence_mat)
 
@@ -336,10 +348,9 @@ class TestOptimAlgs(object):
         optimiser2 = op.ScipyOptimiser(method='newton-cg')
 
         model2 = RecursiveLogitModelEstimation(network_data_struct, optimiser2,
-                                              observations_record=obs_record,
+                                               observations_record=obs_record,
                                                initial_beta=-15)
         m2_ll_out, m2_grad_out = model2.get_log_likelihood()
-        eps = 1e-6
 
         assert np.allclose(m2_ll_out, m1_ll_out)
         assert np.allclose(m2_grad_out, m1_grad_out)
