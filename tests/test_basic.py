@@ -47,7 +47,7 @@ class TestSimpleCases(object):
 
     def test_first_example(self):
         subfolder = "ExampleTiny"  # big data from classical v2
-        folder = join("../Datasets", subfolder)
+        folder = join("Datasets", subfolder)
         INCIDENCE = "incidence.txt"
         TRAVEL_TIME = 'travelTime.txt'
         OBSERVATIONS = "observations.txt"
@@ -85,7 +85,7 @@ class TestSimpleCases(object):
 
     # def test_basic_new_syntax(self):
     #     subfolder = "ExampleTiny"  # big data from classical v2
-    #     folder = join("../Datasets", subfolder)
+    #     folder = join("Datasets", subfolder)
     #     network_data_struct, obs_mat = RecursiveLogitDataStruct.from_directory(folder,
     #                                                                            add_angles=False,
     #                                                                            delim=" ")
@@ -107,7 +107,7 @@ class TestSimpleCases(object):
     #
     def test_basic_new_new_syntax(self):
         subfolder = "ExampleTiny"  # big data from classical v2
-        folder = join("../Datasets", subfolder)
+        folder = join("Datasets", subfolder)
         obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=False)
         incidence_mat, travel_times_mat = attrs
         # left, right, _, u_turn = AngleProcessor.get_turn_categorical_matrices()
@@ -132,7 +132,7 @@ class TestSimpleCases(object):
 
     def test_example_tiny_modified(self):  # TODO shouldn't be using this data
         subfolder = "ExampleTinyModifiedObs"  # big data from classical v2
-        folder = join("../Datasets", subfolder)
+        folder = join("Datasets", subfolder)
 
         obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=True)
         incidence_mat, travel_times_mat, angle_cts_mat = attrs
@@ -188,7 +188,7 @@ class TestSimpleCases(object):
 
     def test_example_tiny_modified_awkward_array(self):
         subfolder = "ExampleTinyModifiedObs"  # big data from classical v2
-        folder = join("../Datasets", subfolder)
+        folder = join("Datasets", subfolder)
 
         obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=True)
         import awkward1 as ak
@@ -259,8 +259,8 @@ class TestSimpleCases(object):
         """Just checking these scripts don't crash due to changes in api.
         This is a hacky way of testing more cases without doing proper testing,
         better than nothing but not my much"""
-        from manual_tests import (example_tiny_with_angle_data,  # noqa: F401
-                                  example_tiny_no_angle_data)  # noqa: F401
+        from manual_verification import (example_tiny_with_angle_data,  # noqa: F401
+                                         example_tiny_no_angle_data)  # noqa: F401
 
 
 class TestSimulation(object):
@@ -324,7 +324,7 @@ class TestOptimAlgs(object):
 
     def test_compare_optim_methods(self):
         subfolder = "ExampleTinyModifiedObs"  # big data from classical v2
-        folder = join("../Datasets", subfolder)
+        folder = join("Datasets", subfolder)
 
         obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=True)
         import awkward1 as ak
