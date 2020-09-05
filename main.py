@@ -16,6 +16,8 @@ from optimisers.extra_optim import OptimFunctionState
 from optimisers.optimisers_file import CustomOptimiserBase, OptimType, ScipyOptimiser, OptimiserBase
 import numpy as np
 
+ALLOW_POSITIVE_VALUE_FUNCTIONS = False
+
 """
 Sketch of what we need
 
@@ -567,11 +569,17 @@ class RecursiveLogitModel(object):
         #                               note that dest util updates would need to update
         #                               short term util locally as well (just final col).
         #                               Reivew needs to change the inverse ops at end of loop
-        # Current commented out allows positive value functions
-        # m_tilde[dest_index, :] = 0.0
-        # i_tilde[dest_index, :] = 0
-        m_tilde[dest_index, -1] = 1  # exp(v(a|k)) = 1 when v(a|k) = 0 # try 0.2
-        i_tilde[dest_index, -1] = 1
+
+        # Allow positive value functions:
+        if ALLOW_POSITIVE_VALUE_FUNCTIONS:
+            m_tilde[dest_index, -1] = 1  # exp(v(a|k)) = 1 when v(a|k) = 0 # try 0.2
+            i_tilde[dest_index, -1] = 1
+        else:
+            # ban positive value funtions
+            m_tilde[dest_index, :] = 0.0
+            i_tilde[dest_index, :] = 0
+            m_tilde[dest_index, -1] = 1  # exp(v(a|k)) = 1 when v(a|k) = 0 # try 0.2
+            i_tilde[dest_index, -1] = 1
         return m_tilde, i_tilde
         # TODO check if this can occur inplace without returns
 
@@ -581,30 +589,29 @@ class RecursiveLogitModel(object):
         """Inverse method to apply dest col - so that we can undo changes without resetting the
         matrix. Should be such that applying apply then revert is an identity operation."""
 
-        m_tilde[dest_index, -1] = 0
-        i_tilde[dest_index, -1] = 0
-        # m_tilde[dest_index, :] = local_exp_util_mat[dest_index, :]
-        # i_tilde[dest_index, :] = local_incidence_mat[dest_index, :]
-        # m_tilde[dest_index, -1] = orig_val
-        # print(m_tilde[dest_index, -1],",", local_exp_util_mat[dest_index, -1])
-
-        # legacy for old understanding which required negative value functions
-        # # TODO the conditional to dense casts here are to avoid a bug in scipy with slice indexing
-        # # a zero sparse matrix
-        # if (sparse.issparse(local_exp_util_mat)
-        #         and local_exp_util_mat[dest_index, :].count_nonzero() == 0):
-        #     m_tilde[dest_index, :] = 0
-        # else:  # if this only has zeros in rhs, assignment does nothing
-        #     m_tilde[dest_index, :] = local_exp_util_mat[dest_index, :]
-        # if (sparse.issparse(local_incidence_mat)
-        #         and local_incidence_mat[dest_index, :].count_nonzero() == 0):
-        #     i_tilde[dest_index, :] = 0
-        # else:
-        #     i_tilde[dest_index, :] = local_incidence_mat[dest_index, :]
-        # # TODO remove this - being extra paranoid since this is a bug with scipy and not my code
-        # assert np.all(
-        #     _to_dense_if_sparse(m_tilde[dest_index, :])
-        #     == _to_dense_if_sparse(local_exp_util_mat[dest_index, :]))
+        if ALLOW_POSITIVE_VALUE_FUNCTIONS:
+            # Allow positive value functions
+            m_tilde[dest_index, -1] = 0
+            i_tilde[dest_index, -1] = 0
+        else:
+            # Ban positive value functions code:
+            # legacy for old understanding which required negative value functions
+            # TODO the conditional to dense casts here are to avoid a bug in scipy with slice
+            #  indexing a zero sparse matrix
+            if (sparse.issparse(local_exp_util_mat)
+                    and local_exp_util_mat[dest_index, :].count_nonzero() == 0):
+                m_tilde[dest_index, :] = 0
+            else:  # if this only has zeros in rhs, assignment does nothing
+                m_tilde[dest_index, :] = local_exp_util_mat[dest_index, :]
+            if (sparse.issparse(local_incidence_mat)
+                    and local_incidence_mat[dest_index, :].count_nonzero() == 0):
+                i_tilde[dest_index, :] = 0
+            else:
+                i_tilde[dest_index, :] = local_incidence_mat[dest_index, :]
+            # TODO remove this - being extra paranoid since this is a bug with scipy, not my code
+            assert np.all(
+                _to_dense_if_sparse(m_tilde[dest_index, :])
+                == _to_dense_if_sparse(local_exp_util_mat[dest_index, :]))
 
         return m_tilde, i_tilde
 
