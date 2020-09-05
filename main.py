@@ -568,8 +568,8 @@ class RecursiveLogitModel(object):
         #                               short term util locally as well (just final col).
         #                               Reivew needs to change the inverse ops at end of loop
         # Current commented out allows positive value functions
-        m_tilde[dest_index, :] = 0.0
-        i_tilde[dest_index, :] = 0
+        # m_tilde[dest_index, :] = 0.0
+        # i_tilde[dest_index, :] = 0
         m_tilde[dest_index, -1] = 1  # exp(v(a|k)) = 1 when v(a|k) = 0 # try 0.2
         i_tilde[dest_index, -1] = 1
         return m_tilde, i_tilde
@@ -581,29 +581,30 @@ class RecursiveLogitModel(object):
         """Inverse method to apply dest col - so that we can undo changes without resetting the
         matrix. Should be such that applying apply then revert is an identity operation."""
 
-        # m_tilde[dest_index, -1] = 0
-        # i_tilde[dest_index, -1] = 0
+        m_tilde[dest_index, -1] = 0
+        i_tilde[dest_index, -1] = 0
         # m_tilde[dest_index, :] = local_exp_util_mat[dest_index, :]
         # i_tilde[dest_index, :] = local_incidence_mat[dest_index, :]
         # m_tilde[dest_index, -1] = orig_val
         # print(m_tilde[dest_index, -1],",", local_exp_util_mat[dest_index, -1])
 
-        # TODO the conditional to dense casts here are to avoid a bug in scipy with slice indexing
-        # a zero sparse matrix
-        if (sparse.issparse(local_exp_util_mat)
-                and local_exp_util_mat[dest_index, :].count_nonzero() == 0):
-            m_tilde[dest_index, :] = 0
-        else:  # if this only has zeros in rhs, assignment does nothing
-            m_tilde[dest_index, :] = local_exp_util_mat[dest_index, :]
-        if (sparse.issparse(local_incidence_mat)
-                and local_incidence_mat[dest_index, :].count_nonzero() == 0):
-            i_tilde[dest_index, :] = 0
-        else:
-            i_tilde[dest_index, :] = local_incidence_mat[dest_index, :]
-        # TODO remove this - being extra paranoid since this is a bug with scipy and not my code
-        assert np.all(
-            _to_dense_if_sparse(m_tilde[dest_index, :])
-            == _to_dense_if_sparse(local_exp_util_mat[dest_index, :]))
+        # legacy for old understanding which required negative value functions
+        # # TODO the conditional to dense casts here are to avoid a bug in scipy with slice indexing
+        # # a zero sparse matrix
+        # if (sparse.issparse(local_exp_util_mat)
+        #         and local_exp_util_mat[dest_index, :].count_nonzero() == 0):
+        #     m_tilde[dest_index, :] = 0
+        # else:  # if this only has zeros in rhs, assignment does nothing
+        #     m_tilde[dest_index, :] = local_exp_util_mat[dest_index, :]
+        # if (sparse.issparse(local_incidence_mat)
+        #         and local_incidence_mat[dest_index, :].count_nonzero() == 0):
+        #     i_tilde[dest_index, :] = 0
+        # else:
+        #     i_tilde[dest_index, :] = local_incidence_mat[dest_index, :]
+        # # TODO remove this - being extra paranoid since this is a bug with scipy and not my code
+        # assert np.all(
+        #     _to_dense_if_sparse(m_tilde[dest_index, :])
+        #     == _to_dense_if_sparse(local_exp_util_mat[dest_index, :]))
 
         return m_tilde, i_tilde
 
@@ -881,9 +882,9 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
             if np.any(~np.isfinite(value_funcs)): #any infinite (nan/ -inf)
                 raise ValueError("Parameter Beta is incorrectly determined, value function has "
                                  "no solution in this case.")
-            elif np.any(value_funcs > 0):
-                warnings.warn(f"WARNING: Positive value functions: {value_funcs[value_funcs > 0]}",
-                              )
+            # elif np.any(value_funcs > 0):
+            #     warnings.warn(f"WARNING: Positive value functions: {value_funcs[value_funcs > 0]}",
+            #                   )
 
             # loop through path starts, with same base value functions
             for orig in origin_indices:
