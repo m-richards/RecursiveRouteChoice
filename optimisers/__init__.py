@@ -1,4 +1,5 @@
-from .optimisers_file import Optimiser, LineSearchOptimiser, TrustRegionOptimiser, OptimType, \
+from .optimisers_file import OptimiserBase, LineSearchOptimiser, \
+    TrustRegionOptimiser, OptimType, ScipyOptimiser, \
     OptimHessianType
 #OptimHessianType, OptimType,
 # LineSearchOptimiser

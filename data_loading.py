@@ -1,15 +1,60 @@
 """File containing IO data loading and standard preprocessing steps to construct
 data matrices from input files"""
+import json
+import os
 
 import numpy as np
 import scipy
-from scipy.sparse import coo_matrix, csr_matrix
+import pandas as pd
 
-LEFT_TURN_THRESH = -0.5236  # 30 degrees
-U_TURN_THRESH = 3.1  # radians
+from scipy import sparse
+from scipy.sparse import coo_matrix, dok_matrix
+
+INCIDENCE = "incidence.txt"
+TRAVEL_TIME = 'travelTime.txt'
+OBSERVATIONS = "observations.txt"
+TURN_ANGLE = "turnAngle.txt"
 
 
-def load_csv_to_sparse(fname, dtype=None, delim=" ", square_matrix=True) -> coo_matrix:
+def load_standard_path_format_csv(directory_path, delim=None, match_tt_shape=False,
+                                  angles_included=True):
+    """Expects standardised filenames in directory direction_name.
+    Delim is csv delimiter, match tt_shape is for rescaling incidence and angle matrices
+    so that dimensions are consistent"""
+    file_incidence = os.path.join(directory_path, INCIDENCE)
+    file_travel_time = os.path.join(directory_path, TRAVEL_TIME)
+    file_turn_angle = os.path.join(directory_path, TURN_ANGLE)
+    file_obs = os.path.join(directory_path, OBSERVATIONS)
+
+    travel_times_mat = load_csv_to_sparse(file_travel_time, delim=delim,
+                                          ).todok()
+    if match_tt_shape:
+        fixed_dims = travel_times_mat.shape
+    else:
+        fixed_dims = None
+
+    incidence_mat = load_csv_to_sparse(
+        file_incidence, dtype='int', delim=delim).todok()
+    if fixed_dims is not None:
+        resize_to_dims(incidence_mat, fixed_dims, matrix_name_debug="Incidence Mat")
+    # Get observations matrix - note: observation matrix is in sparse format, but is of the form
+    #   each row == [dest node, orig node, node 2, node 3, ... dest node, 0 padding ....]
+    obs_mat = load_csv_to_sparse(
+        file_obs, dtype='int', square_matrix=False, delim=delim).todok()
+
+    to_return_data = [incidence_mat, travel_times_mat]
+
+    if angles_included:
+        turn_angle_mat = load_csv_to_sparse(file_turn_angle, delim=delim).todok()
+        if fixed_dims is not None:
+            resize_to_dims(turn_angle_mat, fixed_dims, matrix_name_debug="Turn Angles")
+        to_return_data.append(turn_angle_mat)
+
+    return obs_mat, to_return_data
+
+
+
+def load_csv_to_sparse(fname, dtype=None, delim=None, square_matrix=True, shape=None) -> coo_matrix:
     """IO function to load row, col, val CSV and return a sparse scipy matrix.
     :square_matix <bool> means that the input should be square and we will try to square it by
         adding a row (this is commonly required in data)
@@ -24,73 +69,137 @@ def load_csv_to_sparse(fname, dtype=None, delim=" ", square_matrix=True) -> coo_
     if 0 not in rows_integer and 0 not in cols_integer:
         rows_integer = rows_integer - 1  # convert to zero based indexing if needed
         cols_integer = cols_integer - 1
+    if not square_matrix:
+        mat = coo_matrix((data, (rows_integer, cols_integer)), dtype=dtype)
+    else:
+        if shape is None:
+            # note we add one to counteract minus one above
+            max_dim = max(np.max(rows_integer), np.max(cols_integer))+1
+            # print(max_dim)
+            shape = (max_dim, max_dim)
+        mat = coo_matrix((data, (rows_integer, cols_integer)),
+                         dtype=dtype)
+        # print(mat.shape)
+        mat.resize(shape) # trim cols
 
-    mat = coo_matrix((data, (rows_integer, cols_integer)), dtype=dtype)
-    if mat.shape[0] == mat.shape[1] - 1 and square_matrix:
-        # this means we have 1 less row than columns from our input data
-        # i.e. missing the final k==d row with no successors
-        ncols = np.shape(mat)[1]
-        sparse_zeros = csr_matrix((1, ncols))
-        mat = scipy.sparse.vstack((mat, sparse_zeros))
+    # if mat.shape[0] == mat.shape[1] - 1 and square_matrix:
+    #     # this means we have 1 less row than columns from our input data
+    #     # i.e. missing the final k==d row with no successors
+    #     ncols = np.shape(mat)[1]
+    #     sparse_zeros = csr_matrix((1, ncols))
+    #     mat = scipy.sparse.vstack((mat, sparse_zeros))
     return mat
 
 
-# TODO run some tests on this to sanity check
+def resize_to_dims(matrix: scipy.sparse.dok_matrix, expected_max_shape, matrix_name_debug="(Name not "
+                                                                                    "provided)"):
+    """Resizes matrix to specified dims, issues warning if this is losing data from the matrix.
+    Application is more general than the current error message suggests.
+    Note the fact that the matrix is sparse is essential, numpy resize behaves differently to
+    scipy.
+    Note also, this upcasts dimensions if too small
 
-def get_uturn_categorical_matrix(turn_angle_mat, u_turn_thresh=None):
-    """Assumes that angles are between -pi and pi"""
-    u_turn_thresh = u_turn_thresh if u_turn_thresh is not None else U_TURN_THRESH
-    return (np.abs(turn_angle_mat) > u_turn_thresh).astype(int).todok()
-
-
-def get_left_turn_categorical_matrix(turn_angle_mat, left_turn_thresh=None,
-                                     u_turn_thresh=None):
-    """Assumes that angles are between -pi and pi"""
-    if left_turn_thresh is None:
-        left_turn_thresh = LEFT_TURN_THRESH
-    if u_turn_thresh is None:
-        u_turn_thresh = U_TURN_THRESH
-    # Note this is done strangely since scipy doesn't support & conditions on
-    # sparse matrices. Also is more efficient to only do comparison on nonzero (since this is dense)
-    nz_rows, nz_cols = turn_angle_mat.nonzero()
-
-    nz_left_turns_mask = np.array(
-        (turn_angle_mat[nz_rows, nz_cols].toarray() < left_turn_thresh) &  # turn is to the left
-        (turn_angle_mat[nz_rows, nz_cols].toarray() > -u_turn_thresh))[0]  # turn is not a uturn
-    # note testing todense suggests faster or at least not worse, supresses error
-    masked_rows = nz_rows[nz_left_turns_mask]
-    masked_cols = nz_cols[nz_left_turns_mask]
-    vals = np.ones(len(masked_cols), dtype='int')
-    left_turn_mat = scipy.sparse.coo_matrix(
-        (vals, (masked_rows, masked_cols)), shape=turn_angle_mat.shape, dtype='int')
-
-    return left_turn_mat.todok()
+    Note we use this since it is easier to read in a too large or small matrix from file and
+    correct than limit the size from IO - exceptions get thrown
+    """
+    if (matrix.shape[0] > expected_max_shape[0]) or (matrix.shape[1] > expected_max_shape[1]):
+        # warnings.warn( note note using warnings since I'm trying to catch all warnings
+        # but this is an expected warning (but issued so that I don't forget at a later date)
+        print(f"Warning: '{matrix_name_debug}' Matrix has dimensions {matrix.shape} which exceeds "
+              f"expected size "
+              f"{expected_max_shape}. Matrix has been shrunk (default size inferred from "
+              f"travel time matrix)", )
+    # resize in any case
+    matrix.resize(*expected_max_shape)
 
 
-def get_incorrect_tien_turn_matrices(turn_angle_mat, left_turn_thresh=LEFT_TURN_THRESH,
-                                     u_turn_thresh=U_TURN_THRESH):
-    """A function to generate the turn matrices equivalently tien mai code for comparison
-    purposes, note that this is logically incorrect though.
-    Deliberately copies confusing logic since it is trying to be consistent.
-    Computes turn angles correctly in a convoluted way.
-    Skips computing leftTurn since this is overridden to be an incidence matrix"""
-    # Angles between -pi and pi
-    u_turn_mat = (np.abs(turn_angle_mat) > u_turn_thresh).astype(int)
+def load_tnpm_to_sparse(net_fpath, columns_to_extract=None, use_file_order_for_arc_numbers=True):
+    """
+    :param net_fpath path to network file
+    :param columns_to_extract list of columns to keep. init_node and term_node are always kept
+    # and form the basis of the arc-arc matrix.
+    Currently only length is supported since the conversion from node to arc is not clear in
+    this case.
+    # Legal columns to extract are:
+    #  capacity, length, free_flow_time, b, power, speed_limit, toll, link_type
+    # Note that some of these will be constant across arcs and are redundant to include.
 
-    new_turn_angles = turn_angle_mat.copy()
-    nonzero_turn_angles = np.nonzero(turn_angle_mat)
-    for x, y in zip(*nonzero_turn_angles):
-        i = (x, y)
-        current_turn_angle = turn_angle_mat[i]
-        if abs(current_turn_angle) < u_turn_thresh:  # not a uturn
-            if current_turn_angle >= 0:  # turn to the right
-                new_turn_angles[i] = 0  # remove right turns from matrix (not sure why)
-            else:  # straight or to the left
-                if current_turn_angle < left_turn_thresh:
-                    new_turn_angles[i] = 1
-                else:
-                    new_turn_angles[i] = 0
-        else:
-            new_turn_angles[i] = 0
+    :return
+    :rtype [bidict, scipy.sparse.coo_matrix, ...]
 
-    return new_turn_angles, u_turn_mat
+
+    """
+    if columns_to_extract is None:
+        columns_to_extract = ["length"]
+    columns_to_extract = [i.lower() for i in columns_to_extract]
+    if columns_to_extract[0] != "length":
+        raise NotImplementedError("only support length, since other fields don't have natural "
+                                  "averages.")
+    net = pd.read_csv(net_fpath, skiprows=8, sep='\t')
+    trimmed = [s.strip().lower() for s in net.columns]
+    net.columns = trimmed
+
+    # And drop the silly first and last columns
+    net.drop(['~', ';'], axis=1, inplace=True)
+
+    net2 = net[['init_node', 'term_node'] + columns_to_extract]
+    node_set = set(net2['init_node'].unique()).union(set(net2['term_node'].unique()))
+    nrows = net2.shape[0]
+    arc_matrix = dok_matrix(coo_matrix((nrows, nrows)))
+
+    arc_to_index_map = {}
+    if use_file_order_for_arc_numbers: # for consistency with any visuals
+        for n, s, f in net2[['init_node', 'term_node']].itertuples():
+            # print(n,s,f)
+            arc_to_index_map[(s, f)] = n
+
+    print(arc_to_index_map)
+
+    n = 0
+    for first_arc_start in node_set:
+        start_df = net2[net2['init_node'] == first_arc_start][['term_node', 'length']]
+        for k in start_df.itertuples():
+            first_arc_end = k.term_node
+            start_len = k.length
+            first_arc = first_arc_start, first_arc_end
+
+            if first_arc not in arc_to_index_map:
+                arc_to_index_map[first_arc] = n
+                n += 1
+            end_df = net2[net2['init_node'] == first_arc_end][['term_node', 'length']]
+            for j in end_df.itertuples(index=False):
+                end_arc_end = j.term_node
+                end_len = j.length
+                end_arc = (first_arc_end, end_arc_end)
+
+                if end_arc not in arc_to_index_map:
+                    arc_to_index_map[end_arc] = n
+                    n += 1
+                arc_matrix[arc_to_index_map[first_arc],
+                           arc_to_index_map[end_arc]] = (start_len + end_len) / 2
+    # print(arc_to_index_map)
+    return arc_to_index_map, arc_matrix
+
+
+def load_obs_from_json(filename):
+    with open(filename, 'r') as f:
+        return json.load(f)
+
+
+
+def write_obs_to_json(filename, obs, allow_rewrite=False):
+    if os.path.exists(filename) and allow_rewrite is False:
+        raise IOError("File already exists. Specify 'force_override=True' to enable re-writing.")
+    with open(filename, 'w') as f:
+        json.dump(obs, f)
+    # Naive plaintest
+
+    # with open(filename, 'w') as f:
+    #
+    #     for ob in obs:
+    #         for arc in obs:
+    #             print(arc, end=", ", file=filename)
+    #         print(file=filename)
+
+
+

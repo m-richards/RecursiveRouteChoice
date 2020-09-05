@@ -14,3 +14,10 @@ __pycache__
 .#*
 .coverage
 .vscode
+
+
+*.npy
+*.npz
+
+temp_demo_code/
+*.json
