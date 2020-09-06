@@ -6,7 +6,7 @@ import scipy
 from scipy.sparse import linalg as splinalg
 import optimisers as op
 from data_processing import AngleProcessor
-from main import RecursiveLogitDataStruct, RecursiveLogitModel
+from recursive_route_choice import ModelDataStruct, RecursiveLogitModel
 from scipy.sparse import dok_matrix, identity
 
 # np.seterr(all='raise')  # all='print')
@@ -68,7 +68,7 @@ Angles = np.array(
 #      ])
 #
 
-# note dists are symmetric and angles minus main diag are antisymmetric - except for 360s which
+# note dists are symmetric and angles minus recursive_route_choice diag are antisymmetric - except for 360s which
 # are zeros.
 print("dists")
 print(Distances)
@@ -94,7 +94,7 @@ left, right, neutral, u_turn = AngleProcessor.get_turn_categorical_matrices(dok_
 distances = dok_matrix(Distances)
 # data_list = np.array([distances, left])
 data_list = np.array([distances])
-network_struct = RecursiveLogitDataStruct(data_list, incidence_mat,
+network_struct = ModelDataStruct(data_list, incidence_mat,
                                           data_array_names_debug=("distances", "u_turn"))
 m = -1
 # beta_vec = np.array([-1, -1])

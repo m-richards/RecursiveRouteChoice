@@ -4,7 +4,7 @@ import numpy as np
 from data_loading import write_obs_to_json
 from data_loading import load_tnpm_to_sparse
 
-from main import RecursiveLogitDataStruct, RecursiveLogitModelPrediction
+from recursive_route_choice import ModelDataStruct, RecursiveLogitModelPrediction
 
 np.set_printoptions(edgeitems=10, linewidth=300)
 # np.core.arrayprint._line_width = 500
@@ -29,7 +29,7 @@ index_node_pair_map = {v: k for (k, v) in arc_to_index_map.items()}
 incidence_mat = (distances > 0).astype(int)
 
 data_list = [distances]
-network_struct = RecursiveLogitDataStruct(data_list, incidence_mat,
+network_struct = ModelDataStruct(data_list, incidence_mat,
                                           data_array_names_debug=("distances", "u_turn"))
 
 beta_vec = np.array([-1])

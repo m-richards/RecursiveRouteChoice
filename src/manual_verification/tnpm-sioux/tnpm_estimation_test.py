@@ -5,7 +5,7 @@ from data_loading import load_obs_from_json
 import optimisers as op
 from data_loading import load_tnpm_to_sparse
 
-from main import RecursiveLogitDataStruct, RecursiveLogitModelEstimation
+from recursive_route_choice import ModelDataStruct, RecursiveLogitModelEstimation
 
 np.set_printoptions(edgeitems=10, linewidth=300)
 # np.core.arrayprint._line_width = 500
@@ -31,7 +31,7 @@ incidence_mat = (distances > 0).astype(int)
 
 
 data_list = [distances]
-network_struct = RecursiveLogitDataStruct(data_list, incidence_mat,
+network_struct = ModelDataStruct(data_list, incidence_mat,
                                           data_array_names_debug=("distances",))
 
 beta_vec = np.array([-1])

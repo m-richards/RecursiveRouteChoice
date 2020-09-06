@@ -13,7 +13,7 @@ from scipy.sparse import csr_matrix, dok_matrix
 
 from data_loading import load_csv_to_sparse, load_standard_path_format_csv
 from data_processing import AngleProcessor
-from main import RecursiveLogitModelEstimation, RecursiveLogitDataStruct, \
+from recursive_route_choice import RecursiveLogitModelEstimation, ModelDataStruct, \
     RecursiveLogitModelPrediction
 
 import os
@@ -63,8 +63,8 @@ class TestSimpleCases(object):
         obs_mat = load_csv_to_sparse(file_obs, dtype='int', square_matrix=False).todok()
 
         data_list = [travel_times_mat, travel_times_mat]
-        network_data_struct = RecursiveLogitDataStruct(data_list,
-                                                       incidence_matrix=incidence_mat)
+        network_data_struct = ModelDataStruct(data_list,
+                                              incidence_matrix=incidence_mat)
         # network_data_struct.add_second_travel_time_for_testing()
         optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS,
                                            max_iter=4)
@@ -86,7 +86,7 @@ class TestSimpleCases(object):
     # def test_basic_new_syntax(self):
     #     subfolder = "ExampleTiny"  # big data from classical v2
     #     folder = join("Datasets", subfolder)
-    #     network_data_struct, obs_mat = RecursiveLogitDataStruct.from_directory(folder,
+    #     network_data_struct, obs_mat = ModelDataStruct.from_directory(folder,
     #                                                                            add_angles=False,
     #                                                                            delim=" ")
     #     network_data_struct.add_second_travel_time_for_testing()
@@ -112,7 +112,7 @@ class TestSimpleCases(object):
         incidence_mat, travel_times_mat = attrs
         # left, right, _, u_turn = AngleProcessor.get_turn_categorical_matrices()
         data_list = [travel_times_mat, travel_times_mat]
-        network_data_struct = RecursiveLogitDataStruct(data_list, incidence_mat)
+        network_data_struct = ModelDataStruct(data_list, incidence_mat)
 
         optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
 
@@ -142,7 +142,7 @@ class TestSimpleCases(object):
         # - rather than what is specified in file
         t_time_incidence = (travel_times_mat > 0).astype('int').todok()
         data_list = [travel_times_mat, left, u_turn, t_time_incidence]
-        network_data_struct = RecursiveLogitDataStruct(data_list, incidence_mat)
+        network_data_struct = ModelDataStruct(data_list, incidence_mat)
 
         # network_data_struct.add_second_travel_time_for_testing()
         optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
@@ -201,7 +201,7 @@ class TestSimpleCases(object):
         # - rather than what is specified in file
         t_time_incidence = (travel_times_mat > 0).astype('int').todok()
         data_list = [travel_times_mat, left, u_turn, t_time_incidence]
-        network_data_struct = RecursiveLogitDataStruct(data_list, incidence_mat)
+        network_data_struct = ModelDataStruct(data_list, incidence_mat)
 
         # network_data_struct.add_second_travel_time_for_testing()
         optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
@@ -270,8 +270,8 @@ class TestSimulation(object):
         distances = dok_matrix(hand_net_dists)
 
         data_list = [distances]
-        network_struct = RecursiveLogitDataStruct(data_list, hand_net_incidence,
-                                                  data_array_names_debug=("distances", "u_turn"))
+        network_struct = ModelDataStruct(data_list, hand_net_incidence,
+                                         data_array_names_debug=("distances", "u_turn"))
 
         beta_vec = np.array([-1])
 
@@ -306,8 +306,8 @@ class TestSimulation(object):
         distances = dok_matrix(hand_net_dists)
 
         data_list = [distances]
-        network_struct = RecursiveLogitDataStruct(data_list, hand_net_incidence,
-                                                  data_array_names_debug=("distances", "u_turn"))
+        network_struct = ModelDataStruct(data_list, hand_net_incidence,
+                                         data_array_names_debug=("distances", "u_turn"))
 
         beta_vec = np.array([-100])
 
@@ -334,7 +334,7 @@ class TestOptimAlgs(object):
         left, _, _, u_turn = AngleProcessor.get_turn_categorical_matrices(angle_cts_mat,
                                                                           incidence_mat)
         data_list = [travel_times_mat, left, u_turn]
-        network_data_struct = RecursiveLogitDataStruct(data_list, incidence_mat)
+        network_data_struct = ModelDataStruct(data_list, incidence_mat)
 
         # network_data_struct.add_second_travel_time_for_testing()
         optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)

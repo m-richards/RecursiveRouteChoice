@@ -3,7 +3,7 @@ from scipy.sparse import dok_matrix
 import awkward1 as ak
 
 from data_loading import write_obs_to_json, load_obs_from_json
-from main import RecursiveLogitModelPrediction, RecursiveLogitDataStruct, \
+from recursive_route_choice import RecursiveLogitModelPrediction, ModelDataStruct, \
     RecursiveLogitModelEstimation
 
 import optimisers as op
@@ -32,7 +32,7 @@ incidence_mat = (distances > 0).astype(int)
 
 
 data_list = [distances]
-network_struct = RecursiveLogitDataStruct(data_list, incidence_mat,
+network_struct = ModelDataStruct(data_list, incidence_mat,
                                           data_array_names_debug=("distances"))
 beta_known = -16
 beta_vec_generate = np.array([beta_known])
@@ -95,7 +95,7 @@ incidence_mat = (distances > 0).astype(int)
 
 
 data_list = [distances]
-network_struct = RecursiveLogitDataStruct(data_list, incidence_mat,
+network_struct = ModelDataStruct(data_list, incidence_mat,
                                           data_array_names_debug=("distances",))
 
 beta = -5
