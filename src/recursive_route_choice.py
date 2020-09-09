@@ -504,6 +504,12 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         else:  # TODO list of lists support
             # num_obs = len(observations_record) # equivalent but clearer this is ak array
             self.obs_count = ak.num(observations_record, axis=0)
+            # this should be zero, unless the data has been encoded strangely
+            #       i.e. json min index is 1, and hasn't been produced by my code
+            # (it's legal to index from zero since we don't have to reserve that for sparseness)
+            self.obs_min_legal_index = ak.min(observations_record, axis=None)
+            
+        # finish initialising
         self.get_log_likelihood()  # need to compute starting LL for optimiser
         if isinstance(optimiser, CustomOptimiserBase):
             optimiser.set_beta_vec(beta_vec)
@@ -600,12 +606,16 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         for n in range(self.obs_count):
             # TODO we should be sorting by dest index to avoid recomputation
             #   if dests are the same we don't need to recompute value functions
+            # Should also sort on orig index, because then we could reuse this too, but
+            # benefit might not be worth the sort cost
             # a[ak.argsort(a[:,0]) or a[np.argsort(a[:,0])
             # Subtract 1 since we expect dests are 1,2,..., without zero, subtract to align into
             # zero arrays. This is in part left over from sparse array obs format,
             # which should probably be deprecated in favour of more efficient formats only.
-            dest_index = obs_record[n, 0] - 1
-            orig_index = obs_record[n, 1] - 1
+            # print("observation")
+            # print(obs_record[n, :])
+            dest_index = obs_record[n, 0] - self.obs_min_legal_index
+            orig_index = obs_record[n, 1] - self.obs_min_legal_index
 
             # actually need to do this unless I cache M and reset at the top of the function call
             # tODO this would be free minor speed I think
@@ -698,9 +708,16 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             raise ValueError("obs record has unsupported type")
 
         # if np.any(path != self._prev_path): # infer I was planning caching, unused though
-            # subtract 1 to get 0 based indexes
-        path_arc_start_nodes = path[:-1] - 1  # all nodes i in (i ->j) transitions
-        path_arc_finish_nodes = path[1:] - 1  # all nodes j
+
+        min_legal_index = self.obs_min_legal_index
+        # in a sequence of obs [o, 1, 2, 3, 4, 5, 6, 7, 8, 9, d]
+        # we have the transitions
+        #    [(o, 1), (1, 2), (2, 3), (3, 4), ...] or
+        # origins [o, 1, 2, 3, 4, ..., 9] and dests [1, 2, 3, ..., 9, d]
+        # all nodes i in (i ->j) transitions
+        # subtract min_legal to get 0 based indexes if we were read sparse matrices
+        path_arc_start_nodes = path[:-1] - min_legal_index
+        path_arc_finish_nodes = path[1:] - min_legal_index
 
         # Note -1 is because data struct adds a zero column to put the dest into
         # TODO unless user pre-empts this and it doesn't
