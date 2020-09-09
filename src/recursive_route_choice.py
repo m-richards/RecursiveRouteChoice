@@ -643,10 +643,10 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             mu_log_like_obs = self._compute_current_obs_mu_log_like(v_mat, value_funcs[orig_index])
 
             # # Some kind of successive over relaxation/ momentum
-            mu_log_like_cumulative += (mu_log_like_obs - mu_log_like_cumulative) / (n + 1)
-            # mu_log_like_cumulative += mu_log_like_obs
-            # ll_grad_cumulative += mu_gradient_current_obs
-            mu_ll_grad_cumulative += (mu_gradient_current_obs - mu_ll_grad_cumulative) / (n + 1)
+            # mu_log_like_cumulative += (mu_log_like_obs - mu_log_like_cumulative) / (n + 1)
+            mu_log_like_cumulative += mu_log_like_obs
+            mu_ll_grad_cumulative += mu_gradient_current_obs
+            # mu_ll_grad_cumulative += (mu_gradient_current_obs - mu_ll_grad_cumulative) / (n + 1)
             # print("current grad weighted", ll_grad_cumulative)
 
             # Put our matrices back untouched:
