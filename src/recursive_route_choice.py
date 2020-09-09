@@ -508,7 +508,8 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             #       i.e. json min index is 1, and hasn't been produced by my code
             # (it's legal to index from zero since we don't have to reserve that for sparseness)
             self.obs_min_legal_index = ak.min(observations_record, axis=None)
-            
+
+        self.obs_record = observations_record  # matrix of observed trips
         # finish initialising
         self.get_log_likelihood()  # need to compute starting LL for optimiser
         if isinstance(optimiser, CustomOptimiserBase):
@@ -517,6 +518,28 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
 
         self._path_start_nodes = None
         self._path_finish_nodes = None
+
+    @staticmethod
+    def _convert_obs_record_format(observations_record) -> ak.highlevel.Array:
+        if isinstance(observations_record, ak.highlevel.Array):
+            return observations_record
+
+        elif isinstance(observations_record, list):
+            if all(isinstance(i, list) for i in observations_record):
+                try:
+                    return ak.from_iter(observations_record)
+                except Exception as e:  # TODO BAD
+                    raise TypeError("Failed to parse input obs as Awkward Array.") from e
+            else:
+                raise TypeError("List observation format must contain list of lists, "
+                                "not a singleton list")
+
+        # else we blindly try to convert
+        try:
+            return ak.from_iter(observations_record)
+        except Exception as e:  # TODO BAD
+            raise TypeError("Obs format invalid, failed to parse input obs as Awkward Array.") \
+                from e
 
     def _get_n_func_evals(self):
         return self.n_log_like_calls_non_redundant
