@@ -494,7 +494,6 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         #    on the basis that if it doesn't then we can use the same base class here fro
         #    estimation. It might be easier for now to make a base class and have a
         #    subclass which gets an optimiser
-        self.obs_record = observations_record  # matrix of observed trips
 
         beta_vec = super().get_beta_vec()  # orig without optim tie in
         # setup optimiser initialisation
@@ -506,10 +505,12 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         self.update_beta_vec(beta_vec)  # to this to refresh dependent matrix quantitites
 
         # book-keeping on observations record
-        if sparse.issparse(observations_record):  # TODO redact this compatibility
+        #print(observations_record)
+        if sparse.issparse(observations_record):  # TODO perhaps convert to ak format?
             self.obs_count, _ = observations_record.shape
-
-        else:  # TODO list of lists support
+            self.obs_min_legal_index = 1  # can't use zero since it's used for sparsity
+        else:
+            observations_record = self._convert_obs_record_format(observations_record)
             # num_obs = len(observations_record) # equivalent but clearer this is ak array
             self.obs_count = ak.num(observations_record, axis=0)
             # this should be zero, unless the data has been encoded strangely
