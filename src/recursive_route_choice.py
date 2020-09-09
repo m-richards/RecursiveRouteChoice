@@ -562,7 +562,8 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             optim_res = self.optimiser.solve(self.optim_function_state, verbose=verbose,
                                              output_file=output_file
                                              )
-            print(optim_res)
+            if verbose:
+                print(optim_res)
             if optim_res.success is False:
                 raise ValueError("Scipy alg error flag was raised. Process failed.")
             return optim_res.x
