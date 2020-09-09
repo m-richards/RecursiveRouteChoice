@@ -589,7 +589,6 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
 
         # iterate through observation number
         for n in range(num_obs):
-            print(obs_record[n, :])
             # TODO we should be sorting by dest index to avoid recomputation
             #   if dests are the same we don't need to recompute value functions
             # a[ak.argsort(a[:,0]) or a[np.argsort(a[:,0])
