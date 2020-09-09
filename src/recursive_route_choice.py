@@ -711,7 +711,6 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
     def eval_log_like_at_new_beta(self, beta_vec):
         """update beta vec and compute log likelihood in one step - used for lambdas
         Effectively a bad functools.partial"""
-        self.update_beta_vec(beta_vec)
         success_flag = self.update_beta_vec(beta_vec)
         if success_flag is False:
             self.log_like_stored = OptimiserBase.LL_ERROR_VALUE
