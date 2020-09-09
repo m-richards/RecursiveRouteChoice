@@ -285,7 +285,7 @@ class RecursiveLogitModel(abc.ABC):
         """Getter is purely to imply that beta vec is not a fixed field"""
         return self._beta_vec
 
-    def _compute_short_term_utility(self, skip_check=False):  # TODO review
+    def _compute_short_term_utility(self, skip_check=False)->bool:  # TODO review
         self.short_term_utility = np.sum(self.get_beta_vec() * self.data_array, axis=0)
         # note axis=0 means that ndarrays will give a matrix result back, not a scalar
         # which is what we want
@@ -299,6 +299,8 @@ class RecursiveLogitModel(abc.ABC):
                 warnings.warn("Short term utility contains positive terms, which is illegal. "
                                  "Network attributes must be non-negative and beta must be "
                                  "negative.")
+                return False
+        return True
                 # raise ValueError("Short term utility contains positive terms, which is illegal. "
                 #                  "Network attributes must be non-negative and beta must be "
                 #                  "negative.")
@@ -378,6 +380,7 @@ class RecursiveLogitModel(abc.ABC):
             print(f"W: Value function not finite (beta={self._beta_vec})")
             self.flag_exp_val_funcs_error = True
             error_flag = True
+            return error_flag
 
         elif linalg.norm(
                 np.array(a_mat @ z_vec - rhs)) > OptimiserBase.RESIDUAL:
@@ -588,18 +591,21 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
                 return self.optim_function_state.beta_vec
         print("Infinite loop happened somehow, shouldn't have happened")
 
-    def update_beta_vec(self, new_beta_vec):
+    def update_beta_vec(self, new_beta_vec)->bool:
         """Change the current parameter vector beta and update intermediate results which depend
         on this"""
         # Prevent redundant computation
         if np.all(new_beta_vec == self._beta_vec):
-            return
+            return True
         self.flag_log_like_stored = False
         self.optim_function_state.beta_vec = new_beta_vec
         self._beta_vec = new_beta_vec
 
-        self._compute_short_term_utility()
+        sucess_flag = self._compute_short_term_utility()
+        if sucess_flag is False:
+            return sucess_flag
         self._compute_exponential_utility_matrix()
+        return True
 
     def get_log_likelihood(self, n_obs_override=None):
         """Compute the log likelihood of the data with the current beta vec
@@ -706,6 +712,13 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         """update beta vec and compute log likelihood in one step - used for lambdas
         Effectively a bad functools.partial"""
         self.update_beta_vec(beta_vec)
+        success_flag = self.update_beta_vec(beta_vec)
+        if success_flag is False:
+            self.log_like_stored = OptimiserBase.LL_ERROR_VALUE
+            self.grad_stored = np.ones(self.n_dims)  # TODO better error gradient?
+            self.flag_log_like_stored = True
+            # print("Parameters are infeasible.")
+            return self.log_like_stored, self.grad_stored
         return self.get_log_likelihood()
 
     def _compute_obs_path_indices(self, obs_row: Union[scipy.sparse.dok_matrix,
