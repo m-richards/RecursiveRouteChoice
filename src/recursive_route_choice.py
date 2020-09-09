@@ -1,6 +1,6 @@
 import abc
 import warnings
-from typing import List
+from typing import List, Union
 import scipy
 from scipy import linalg
 # from scipy.sparse import coo_matrix
@@ -21,7 +21,7 @@ ALLOW_POSITIVE_VALUE_FUNCTIONS = False
 
 def _to_dense_if_sparse(mat):
     if sparse.issparse(mat):
-        return mat.todense()
+        return mat.toarray()
     else:
         return mat
 
@@ -256,7 +256,6 @@ class RecursiveLogitModel(abc.ABC):
 
         self.flag_log_like_stored = False
         self.flag_exp_val_funcs_error = True
-        self._prev_path = None
 
         self.n_log_like_calls = 0
         self.n_log_like_calls_non_redundant = 0
@@ -266,6 +265,10 @@ class RecursiveLogitModel(abc.ABC):
             beta_vec = np.array([initial_beta for _ in range(self.n_dims)])
         else:
             beta_vec = initial_beta
+        if np.any(beta_vec > 0):
+            raise ValueError("Beta vector contains positive terms. Beta must be negative "
+                             "so that the short term utilities are negative.")
+
         # setup optimiser initialisation
         self._beta_vec = beta_vec
         self._compute_short_term_utility()
@@ -273,27 +276,27 @@ class RecursiveLogitModel(abc.ABC):
         #
         # self.get_log_likelihood()  # need to compute starting LL for optimiser
 
-        self._path_start_nodes = None
-        self._path_finish_nodes = None
-
     def get_beta_vec(self):
         """Getter is purely to imply that beta vec is not a fixed field"""
         return self._beta_vec
 
-    def _compute_short_term_utility(self):
-        # print("data dim\n")
-        # print_data_struct(self.network_data)
-
-        # print("beta", self.get_beta_vec())
+    def _compute_short_term_utility(self, skip_check=False):  # TODO review
         self.short_term_utility = np.sum(self.get_beta_vec() * self.data_array, axis=0)
         # note axis=0 means that ndarrays will give a matrix result back, not a scalar
         # which is what we want
-        # print(self.data_array)
-        # print("vmat",)
-        # print(self.get_beta_vec().shape, self.data_array.shape)
-        # print(self.short_term_utility)
-        # print_sparse(self.short_term_utility)
-        # print(type(self.short_term_utility))
+        if skip_check is False:
+            if sparse.issparse(self.short_term_utility):
+                nz_rows, nz_cols = self.short_term_utility.nonzero()  # this is dense so cast ok
+                cond = self.short_term_utility[nz_rows, nz_cols].toarray()
+            else:
+                cond = self.short_term_utility
+            if np.any(cond > 0):
+                warnings.warn("Short term utility contains positive terms, which is illegal. "
+                                 "Network attributes must be non-negative and beta must be "
+                                 "negative.")
+                # raise ValueError("Short term utility contains positive terms, which is illegal. "
+                #                  "Network attributes must be non-negative and beta must be "
+                #                  "negative.")
 
     def get_short_term_utility(self):
         """Returns v(a|k)  for all (a,k) as 2D array,
@@ -303,24 +306,25 @@ class RecursiveLogitModel(abc.ABC):
         return self.short_term_utility
 
     def _compute_exponential_utility_matrix(self):
-        """ # TODO can cache this if I deem it handy.
-            Returns M_{ka} matrix which is not orig dependent
+        """ Compute M_{ka} matrix which is not orig dependent, with empty bottom, right
+        row/ col for dest.
         """
 
         # explicitly do need this copy since we modify m_mat
         m_mat = self.get_short_term_utility().copy()
-        print(type(m_mat))
+        # print(type(m_mat))
         # note we currently use incidence matrix here, since this distinguishes the
         # genuine zero arcs from the absent arcs
-        # (since data format has zero arcs for silly reasons)
+        # (since data format has zero arcs, should not be a problem with good data)
         nonzero_entries = self.network_data.incidence_matrix.nonzero()
-
+        # note dense cast is fine here, since is the dense cast of a dense selection from sparse
+        # (note that sparse matrices don't have exp method defined on them because exp(0)=1
         m_mat[nonzero_entries] = np.exp(
             1 / self.mu * _to_dense_if_sparse(m_mat[nonzero_entries]))
         self._exponential_utility_matrix = m_mat
 
     def get_exponential_utility_matrix(self):
-        """ # TODO can cached this if I deem it handy.
+        """ #
         Returns M_{ka} matrix
         """
 
@@ -334,7 +338,7 @@ class RecursiveLogitModel(abc.ABC):
         rhs[-1, 0] = 1
         # (I-M)z =b
         a_mat = sparse.identity(ncols) - m_tilde
-        z_vec = splinalg.spsolve(a_mat, rhs)  # rhs has to be (n,1) not (1,n)
+        z_vec = splinalg.spsolve(a_mat, rhs)  # rhs has to be (n,1)
         z_vec = np.atleast_2d(z_vec).T  # Transpose to have appropriate dims
         if return_pieces:
             return a_mat, z_vec, rhs
@@ -348,8 +352,8 @@ class RecursiveLogitModel(abc.ABC):
         # print_sparse(m_tilde)
         error_flag = False  # start with no errors
         a_mat, z_vec, rhs = self._compute_exp_value_function(m_tilde, return_pieces=True)
-        # if we have non near zero negative, we have a problem and parameters are infeasible
-        # since log will be complex
+        # if we z values negative, or near zero, parameters
+        # are infeasible since log will be complex or -infty
         # print("z_pre", z_vec)
         if z_vec.min() <= min(-1e-10, OptimiserBase.NUMERICAL_ERROR_THRESH):
             # thresh on this?
@@ -547,20 +551,14 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         self.optim_function_state.beta_vec = new_beta_vec
         self._beta_vec = new_beta_vec
 
-        # self._beta_changed = True
-        # TODO delay this from happening until the update is needed - use flag
-
         self._compute_short_term_utility()
         self._compute_exponential_utility_matrix()
-        # self._compute_value_function_matrix()
-        # TODO make sure new stuff gets added here
 
     def get_log_likelihood(self, n_obs_override=None):
         """Compute the log likelihood of the data with the current beta vec
                 n_obs override is for debug purposes to artificially lower the
                  number of observations"""
-        self.n_log_like_calls += 1
-        # TODO reinstate caching, currently have problems because beta can update externally
+        self.n_log_like_calls += 1  # TODO remove this counter?
         if self.flag_log_like_stored:
             return self.log_like_stored, self.grad_stored
         self.n_log_like_calls_non_redundant += 1
@@ -568,7 +566,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         obs_record = self.obs_record
         if sparse.issparse(obs_record):  # TODO redact this compatibility
             num_obs, _ = obs_record.shape
-        else:
+        else:  # TODO list of lists support (perhaps this gets done preprocessed)
             # num_obs = len(obs_record) # equivalent but clearer this is ak array
             num_obs = ak.num(obs_record, axis=0)
         if n_obs_override is not None:
@@ -576,10 +574,10 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         # local references with idomatic names
         n_dims = self.n_dims  # number of attributes in data
         mu = self.mu
-        v_mat = self.get_short_term_utility()  # capital u in tien mai's code
+        v_mat = self.get_short_term_utility()
         m_mat = self.get_exponential_utility_matrix()
         local_incidence_mat = self.network_data.incidence_matrix
-        # reuse augmented matrices for each
+        # local copies which have dest column connections applied to
         m_tilde = m_mat.copy()
         i_tilde = local_incidence_mat.copy()
 
@@ -594,34 +592,27 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             # TODO we should be sorting by dest index to avoid recomputation
             #   if dests are the same we don't need to recompute value functions
             # a[ak.argsort(a[:,0]) or a[np.argsort(a[:,0])
-            dest_index = obs_record[n, 0] - 1  # subtract 1 for zero based python
+            # Subtract 1 since we expect dests are 1,2,..., without zero, subtract to align into
+            # zero arrays. This is in part left over from sparse array obs format,
+            # which should probably be deprecated in favour of more efficient formats only.
+            dest_index = obs_record[n, 0] - 1
             orig_index = obs_record[n, 1] - 1
 
             m_tilde, i_tilde = self._apply_dest_column(dest_index, m_tilde, i_tilde)
-
-            # # TODO review this, still not sure it makes mathematical sense
-            # # Compute modified matrices for current dest
-            # old_row_shape = m_mat.shape[0]
-            # last_index_in_rows = old_row_shape - 1
-            #
-            # m_tilde = m_mat[0:last_index_in_rows + 1,
-            #           0:last_index_in_rows + 1]  # plus 1 for inclusive
-            # m_tilde[:, last_index_in_rows, ] = m_mat[:, dest_index]
-            # print("shape check", m_mat.shape, m_tilde.shape, last_index_in_rows+1)
 
             # Now get exponentiated value funcs
             error_flag = self.compute_value_function(m_tilde)
             # If we had numerical issues in computing value functions
             if error_flag:  # terminate early with error vals
                 self.log_like_stored = OptimiserBase.LL_ERROR_VALUE
-                self.grad_stored = np.ones(n_dims)
+                self.grad_stored = np.ones(n_dims)  # TODO better error gradient?
                 self.flag_log_like_stored = True
                 print("Parameters are infeasible.")
                 return self.log_like_stored, self.grad_stored
 
             value_funcs, exp_val_funcs = self._value_functions, self._exp_value_functions
             # Gradient and log like depend on origin values
-            orig_utility = value_funcs[orig_index]  # TODO should these be nested inside
+
             # respective sub function? probably yes
             grad_orig = self.get_value_func_grad_orig(orig_index, m_tilde, exp_val_funcs)
 
@@ -629,7 +620,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             # LogLikeGrad in Code doc
             mu_gradient_current_obs = self._compute_current_obs_mu_ll_grad(grad_orig)
             # LogLikeFn in Code Doc - for this n
-            mu_log_like_obs = self._compute_current_obs_mu_log_like(v_mat, orig_utility)
+            mu_log_like_obs = self._compute_current_obs_mu_log_like(v_mat, value_funcs[orig_index])
 
             # # Some kind of successive over relaxation/ momentum
             mu_log_like_cumulative += (mu_log_like_obs - mu_log_like_cumulative) / (n + 1)
@@ -659,8 +650,9 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         self.update_beta_vec(beta_vec)
         return self.get_log_likelihood()
 
-    def _compute_obs_path_indices(self, obs_row: scipy.sparse.dok_matrix):
-        """Takes in the current iterate row of the observation matrix.
+    def _compute_obs_path_indices(self, obs_row: Union[scipy.sparse.dok_matrix,
+                                                       ak.highlevel.Array]):
+        """Takes in the current observation sequence.
         Returns the vectors of start positions and end positions in the provided observation.
         This is used in computation of the particular observations log likelihood and its
         gradient. This essentially slices indices from [:-1] and from [1:] with
@@ -679,7 +671,6 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             path = obs_row[0, 1:path_len].toarray().squeeze()
 
         elif isinstance(obs_row, ak.highlevel.Array):
-            path_len = len(obs_row)
             path = obs_row[1:]
             path = ak.to_numpy(path)
 
@@ -691,27 +682,37 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         path_arc_start_nodes = path[:-1] - 1  # all nodes i in (i ->j) transitions
         path_arc_finish_nodes = path[1:] - 1  # all nodes j
 
-        final_index_in_data = np.shape(self.network_data.incidence_matrix)[0]
+        # Note -1 is because data struct adds a zero column to put the dest into
+        # TODO unless user pre-empts this and it doesn't
+        final_index_in_data = np.shape(self.network_data.incidence_matrix)[0]-1
 
         if np.any(path_arc_finish_nodes > final_index_in_data):
-            path_arc_finish_nodes = np.minimum(path_arc_finish_nodes, final_index_in_data)
-            warnings.warn("WARN, dodgy bounds indexing hack occur in path tracing,"
-                          " changed a node to not exceed maximum", category='error')
+            raise ValueError("Observation received contains indexes larger than the dimension"
+                             "of the network matrix. This means input data is somehow "
+                             "inconsistent.")
 
         self._path_start_nodes = path_arc_start_nodes
         self._path_finish_nodes = path_arc_finish_nodes
         return self._path_start_nodes, self._path_finish_nodes
 
-    def _compute_current_obs_mu_log_like(self, v_mat, orig_utility):
-        """# LogLikeFn in Code Doc
+    def _compute_current_obs_mu_log_like(self, v_mat, value_func_orig):
+        r"""
         Compute the log likelihood function for the currently observed path.
         "Current" in this sense stipulates that compute_obs_path_indices has been called prior
-        in order to update these indices."""
+        in order to update these indices.
+        Log likelihood is given by
+        ..math::
+            \frac{1}{\sigma}\sum_{n=1}^N\bigg[\sum_{i=0}^{I_n-1}\Big(r(s_i^n, s_^n_{i+1})\Big) -V(
+            s_0^n) \Bigg]
+        This function computes this inner summation - i.e. for fixed n.
+
+        """
         arc_start_nodes = self._path_start_nodes
         arc_finish_nodes = self._path_finish_nodes
 
+        # index out v[(o,i1), (i1,i2), (i2, i3) ... (in,d)] then sum (all the short term contrib.)
         sum_inst_util = v_mat[arc_start_nodes, arc_finish_nodes].sum()
-        log_like_obs = sum_inst_util - orig_utility  # LogLikeFn in Code Doc
+        log_like_obs = sum_inst_util - value_func_orig  # LogLikeFn in Code Doc
         return log_like_obs
 
     def _compute_current_obs_mu_ll_grad(self, grad_orig):
@@ -775,7 +776,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             # due to matrices with terrible condition numbers in the examples
             # spsolve(A,b) == inv(A)*b
             # Note: A.multiply(B) is A .* B for sparse matrices
-            grad_v[q, :] = splinalg.spsolve(identity - m_tilde, m_tilde.multiply(chi) * z)
+            grad_v[q, :] = splinalg.spsolve(identity - m_tilde, m_tilde.multiply(chi) @ z)
             # print(np.linalg.norm((I- m_tilde)*grad_v[q, :] - m_tilde.multiply(chi) * z))
 
         return grad_v
