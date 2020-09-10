@@ -15,8 +15,8 @@ np.set_printoptions(edgeitems=10, linewidth=300)
 # silly deterministic network
 distances = np.array(
     [[0, 5, 0, 4],
-     [0, 0, 3, 0],
-     [0, 3, 0, 5],
+     [0, 0, 6, 0],
+     [0, 6, 0, 5],
      [4, 0, 0, 0]])
 
 

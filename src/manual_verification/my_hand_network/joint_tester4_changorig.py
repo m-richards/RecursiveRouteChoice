@@ -15,8 +15,8 @@ np.set_printoptions(edgeitems=10, linewidth=300)
 # silly deterministic network
 distances = np.array(
     [[0, 5, 0, 4],
-     [0, 0, 3, 0],
-     [0, 3, 0, 5],
+     [0, 0, 6, 0],
+     [0, 6, 0, 5],
      [4, 0, 0, 0]])
 
 
@@ -49,7 +49,7 @@ model = RecursiveLogitModelPrediction(network_struct,
 
 obs_indices = [0, 3]
 dest_indices = [1, 2]
-obs_per_pair = 60
+obs_per_pair = 15
 print(f"Generating {obs_per_pair * len(obs_indices) * len(dest_indices)} obs total")
 
 
