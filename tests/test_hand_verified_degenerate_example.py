@@ -116,3 +116,46 @@ class TestCases(object):
         ll = model.get_log_likelihood()[0]
         assert pytest.approx(ll) == 6.01398195541
 
+# bigger silly network - see phone photo
+@pytest.fixture
+def struct_bigger():
+    distances = np.array(
+            [[0, 5, 0, 4, 0, 0, 0, 0, 0, 0],
+             [0, 0, 6, 0, 0, 0, 0, 0, 0, 6],
+             [0, 6, 0, 5, 0, 0, 0, 0, 0, 0],
+             [4, 0, 0, 0, 5, 0, 0, 0, 0, 0],
+             [0, 0, 0, 0, 0, 6, 6, 0, 0, 0],
+             [5, 0, 0, 0, 6, 0, 0, 0, 0, 0],
+             [0, 0, 0, 0, 0, 0, 0, 6, 6, 0],
+             [0, 0, 0, 0, 0, 6, 6, 0, 0, 0],
+             [0, 0, 6, 0, 0, 0, 0, 0, 0, 6],
+             [0, 0, 0, 0, 0, 0, 0, 6, 6, 0]
+             ])
+    distances = dok_matrix(distances)
+    incidence_mat = (distances > 0).astype(int)
+    network_struct = ModelDataStruct([distances], incidence_mat,
+                                     data_array_names_debug=("distances",))
+    return network_struct
+
+
+class TestPredictionExceptions(object):
+
+    def test_bad_beta_fails(self, struct_bigger):
+
+        model = RecursiveLogitModelPrediction(struct_bigger,
+                                              initial_beta=-0.1)
+        with pytest.raises(ValueError) as e:
+            model.generate_observations(origin_indices=[0], dest_indices=[9], num_obs_per_pair=10)
+        assert "exp(V(s)) contains negative values" in str(e.value)
+
+    def test_bad_indexfails(self, struct_bigger):
+        model = RecursiveLogitModelPrediction(struct_bigger,
+                                              initial_beta=-0.2)
+        with pytest.raises(IndexError) as e:
+            model.generate_observations(origin_indices=[0], dest_indices=[100], num_obs_per_pair=10)
+        assert "Can only simulate observations from indexes which are in the model" in str(e.value)
+
+        with pytest.raises(IndexError) as e:
+            model.generate_observations(origin_indices=[0], dest_indices=[10], num_obs_per_pair=10)
+        assert "but the final index is reserved for internal dummy sink state" in str(e.value)
+
