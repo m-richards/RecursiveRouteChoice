@@ -292,8 +292,8 @@ class RecursiveLogitModel(abc.ABC):
                 cond = self.short_term_utility
             if np.any(cond > 0):
                 warnings.warn("Short term utility contains positive terms, which is illegal. "
-                                 "Network attributes must be non-negative and beta must be "
-                                 "negative.")
+                              "Network attributes must be non-negative and beta must be "
+                              "negative.")
                 # raise ValueError("Short term utility contains positive terms, which is illegal. "
                 #                  "Network attributes must be non-negative and beta must be "
                 #                  "negative.")
@@ -496,6 +496,14 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
                                                        beta_vec,
                                                        self._get_n_func_evals)
         self.update_beta_vec(beta_vec)  # to this to refresh dependent matrix quantitites
+
+        # book-keeping on observations record
+        if sparse.issparse(observations_record):  # TODO redact this compatibility
+            self.obs_count, _ = observations_record.shape
+
+        else:  # TODO list of lists support
+            # num_obs = len(observations_record) # equivalent but clearer this is ak array
+            self.obs_count = ak.num(observations_record, axis=0)
         self.get_log_likelihood()  # need to compute starting LL for optimiser
         if isinstance(optimiser, CustomOptimiserBase):
             optimiser.set_beta_vec(beta_vec)
@@ -559,7 +567,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         self._compute_short_term_utility()
         self._compute_exponential_utility_matrix()
 
-    def get_log_likelihood(self, n_obs_override=None):
+    def get_log_likelihood(self):
         """Compute the log likelihood of the data with the current beta vec
                 n_obs override is for debug purposes to artificially lower the
                  number of observations"""
@@ -569,13 +577,6 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         self.n_log_like_calls_non_redundant += 1
 
         obs_record = self.obs_record
-        if sparse.issparse(obs_record):  # TODO redact this compatibility
-            num_obs, _ = obs_record.shape
-        else:  # TODO list of lists support (perhaps this gets done preprocessed)
-            # num_obs = len(obs_record) # equivalent but clearer this is ak array
-            num_obs = ak.num(obs_record, axis=0)
-        if n_obs_override is not None:
-            num_obs = n_obs_override
         # local references with idomatic names
         n_dims = self.n_dims  # number of attributes in data
         mu = self.mu
@@ -593,7 +594,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         mu_ll_grad_cumulative = np.zeros(n_dims)  # gradient combined across all observations
 
         # iterate through observation number
-        for n in range(num_obs):
+        for n in range(self.obs_count):
             # TODO we should be sorting by dest index to avoid recomputation
             #   if dests are the same we don't need to recompute value functions
             # a[ak.argsort(a[:,0]) or a[np.argsort(a[:,0])
