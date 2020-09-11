@@ -866,6 +866,24 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
     Uses same structure as estimator in the hopes I can unify these such that one can use the
     estimator for prediction as well (probably have estimator inherit from this)"""
 
+    def _check_index_valid(self, indices):
+        max_index_present = np.max(indices)
+        m, n = self.network_data.incidence_matrix.shape
+        max_legal_index = m - 1  # zero based
+        max_legal_index -= 1  # also subtract padding column from count
+        if max_index_present > max_legal_index:
+            if max_index_present == max_legal_index + 1:
+                raise IndexError("Received observation index "
+                                 f"{max_index_present} > {max_legal_index}. "
+                                 f"Network data does have valid indices [0, ..., {m-1}] "
+                                 f"but the final "
+                                 "index is reserved for internal dummy sink state. The "
+                                 "dimensions of the original data passed in would have been "
+                                 "augmented, or data already had an empty final row and col.")
+            raise IndexError("Received observation index "
+                             f"{max_index_present} > {max_legal_index}. Can only simulate "
+                             "observations from indexes which are in the model.")
+
     def generate_observations(self, origin_indices, dest_indices, num_obs_per_pair, iter_cap=1000,
                               rng_seed=None,
                               ):
@@ -887,6 +905,8 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
         :rtype list<list<int>>
         :return List of list of all observations generated
         """
+        self._check_index_valid(dest_indices)
+        self._check_index_valid(origin_indices)
         rng = np.random.default_rng(rng_seed)
 
         # store output as list of lists, using AwkwardArrays might be more efficient,
