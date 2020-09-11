@@ -11,7 +11,7 @@ distances = np.array(
         1  2  3  4
 -----------------------
   #1  [[0, 5, 0, 4],
-  #2   [0, 0, 3, 0],
+  #2   [0, 0, 3, 0],   # 3's should be 6's
   #3   [0, 3, 0, 5],
   #4   [4, 0, 0, 0]])
 
@@ -35,24 +35,24 @@ np.set_printoptions(edgeitems=10, linewidth=300)
 # silly deterministic network
 distances = np.array(
     [[0, 5, 0, 4],
-     [0, 0, 3, 0],
+     [0, 0, 3, 0],  # 3's should be 6's mathematically
      [0, 3, 0, 5],
      [4, 0, 0, 0]])
 
 distances = dok_matrix(distances)
-
 incidence_mat = (distances > 0).astype(int)
+network_struct = ModelDataStruct([distances], incidence_mat,
+                                          data_array_names_debug=("distances",))
+optimiser = op.ScipyOptimiser(method='bfgs')
 
-# this did come from generate obs with beta = -0.4, but that code might change
+# this did come from generate obs with beta = -0.4, but that code might change with fixes
 # obs = model.generate_observations(origin_indices=[0],
 #                                   dest_indices=[1],
 #                                   num_obs_per_pair=3, iter_cap=2000, rng_seed=1,
 #                                   )
 input_obs = [[1, 0, 1, 2, 1], [1, 0, 3, 0, 1], [1, 0, 1]]
 
-network_struct = ModelDataStruct([distances], incidence_mat,
-                                          data_array_names_debug=("distances",))
-optimiser = op.ScipyOptimiser(method='bfgs')
+
 model = RecursiveLogitModelEstimation(network_struct, observations_record=input_obs,
                                       initial_beta=[-0.4], mu=1,
                                       optimiser=optimiser)
