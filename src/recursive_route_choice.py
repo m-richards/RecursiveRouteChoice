@@ -16,7 +16,7 @@ from optimisers.extra_optim import OptimFunctionState
 from optimisers.optimisers_file import CustomOptimiserBase, OptimType, ScipyOptimiser, OptimiserBase
 import numpy as np
 
-ALLOW_POSITIVE_VALUE_FUNCTIONS = False
+ALLOW_POSITIVE_VALUE_FUNCTIONS = True
 
 
 def _to_dense_if_sparse(mat):
@@ -98,6 +98,9 @@ class ModelDataStruct(object):
             for i in data_matrix_list:
                 data_matrix_list_new.append(_zero_pad_mat(i, bottom=True, right=True))
             data_matrix_list = data_matrix_list_new
+            self.padded = True
+        else:
+            self.padded = False
 
         self.incidence_matrix = incidence_matrix
 
@@ -762,7 +765,8 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         path_arc_finish_nodes = path[1:] - min_legal_index
 
         # Note -1 is because data struct adds a zero column to put the dest into
-        # TODO unless user pre-empts this and it doesn't
+        # TODO unless user pre-empts this and it doesn't should keep track of if augmentation
+        #  required
         final_index_in_data = np.shape(self.network_data.incidence_matrix)[0]-1
 
         if np.any(path_arc_finish_nodes > final_index_in_data):
