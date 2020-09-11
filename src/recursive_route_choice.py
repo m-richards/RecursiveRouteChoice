@@ -369,10 +369,15 @@ class RecursiveLogitModel(abc.ABC):
             #  norm element wise norm which would be convenient for sparse matrices
         # residual - i.e. ill conditioned solution
         # note that z_vec is dense so this should be dense without explicit cast
+        elif np.any(~np.isfinite(z_vec)):
+            print(f"W: Value function not finite (beta={self._beta_vec})")
+            self.flag_exp_val_funcs_error = True
+            error_flag = True
+
         elif linalg.norm(
                 np.array(a_mat @ z_vec - rhs)) > OptimiserBase.RESIDUAL:
             self.flag_exp_val_funcs_error = True
-            print("W: Value function solution is not exact, has residual.")
+            print(f"W: Value function solution is not exact, has residual. (beta={self._beta_vec})")
             # TODO convert from soft warning to legitimate warning. Soft since it happens
             #  relatively frequently
             error_flag = True
