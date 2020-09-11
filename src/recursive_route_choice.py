@@ -939,8 +939,17 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
                 value_funcs = np.log(z_vec)
             # catch errors manually
             if np.any(~np.isfinite(value_funcs)):  # any infinite (nan/ -inf)
-                raise ValueError("Parameter Beta is incorrectly determined, value function has "
-                                 "no solution in this case.")
+                print("got infinite valu funcs")
+                if np.any(~np.isfinite(z_vec)):
+                    msg = "exp(V(s)) contains nan or infinity"
+                elif np.any(z_vec <= 0):
+                    msg = "exp(V(s)) contains negative values"
+                else:
+                    msg = "Unknown cause"
+                print("end of error")
+                raise ValueError("Parameter Beta is incorrectly determined, or poorly chosen. "
+                                 "Value functions have "
+                                 f"no solution [{msg}].")
 
             elif ALLOW_POSITIVE_VALUE_FUNCTIONS is False and np.any(value_funcs > 0):
                 warnings.warn("WARNING: Positive value functions:"
