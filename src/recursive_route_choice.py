@@ -333,6 +333,8 @@ class RecursiveLogitModel(abc.ABC):
             1 / self.mu * _to_dense_if_sparse(m_mat[nonzero_entries]))
         self._exponential_utility_matrix = m_mat
 
+       # print("exp", np.all(np.isfinite(_to_dense_if_sparse(m_mat))))
+
     def get_exponential_utility_matrix(self):
         """ #
         Returns M_{ka} matrix
@@ -350,6 +352,12 @@ class RecursiveLogitModel(abc.ABC):
         a_mat = sparse.identity(ncols) - m_tilde
         z_vec = splinalg.spsolve(a_mat, rhs)  # rhs has to be (n,1)
         z_vec = np.atleast_2d(z_vec).T  # Transpose to have appropriate dims
+        # print("m_tilde")
+        # print(_to_dense_if_sparse(m_tilde))
+        # print("a_mat")
+        # print(_to_dense_if_sparse(a_mat))
+        # print("z_vec")
+        # print(z_vec)
         if return_pieces:
             return a_mat, z_vec, rhs
         else:
@@ -362,6 +370,12 @@ class RecursiveLogitModel(abc.ABC):
         # print_sparse(m_tilde)
         error_flag = False  # start with no errors
         a_mat, z_vec, rhs = self._compute_exp_value_function(m_tilde, return_pieces=True)
+        # print("m_tilde")
+        # print(_to_dense_if_sparse(m_tilde))
+        # print("a_mat")
+        # print(_to_dense_if_sparse(a_mat))
+        # print("z_mat")
+        # print(_to_dense_if_sparse(z_vec))
         # if we z values negative, or near zero, parameters
         # are infeasible since log will be complex or -infty
         # print("z_pre", z_vec)
@@ -427,6 +441,11 @@ class RecursiveLogitModel(abc.ABC):
         #                               Reivew needs to change the inverse ops at end of loop
 
         # Allow positive value functions:
+        # print("applying dest", dest_index)
+        # print("m tilde")
+        # print(_to_dense_if_sparse(m_tilde))
+        # print("i_tilde")
+        # print(_to_dense_if_sparse(i_tilde))
         if ALLOW_POSITIVE_VALUE_FUNCTIONS:
             m_tilde[dest_index, -1] = 1  # exp(v(a|k)) = 1 when v(a|k) = 0 # try 0.2
             i_tilde[dest_index, -1] = 1
@@ -659,6 +678,9 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             # actually need to do this unless I cache M and reset at the top of the function call
             # tODO this would be free minor speed I think
             m_tilde, i_tilde = self._apply_dest_column(dest_index, m_tilde, i_tilde)
+            # if np.all(np.isfinite(m_tilde.A)) is False:
+            #     print(np.all(np.isfinite(m_tilde.A)))
+            #     pass
 
             # value functions are unchanged so we can reuse them
             if dest_index == dest_index_old:
@@ -666,18 +688,21 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             else:
 
                 # Now get exponentiated value funcs
+                # if np.all(np.isfinite(m_tilde.A)) is False:
+                #     print("something bad")
+                # print(np.all(np.isfinite(m_tilde.A)))
                 error_flag = self.compute_value_function(m_tilde)
                 # If we had numerical issues in computing value functions
                 if error_flag:  # terminate early with error vals
                     self.log_like_stored = OptimiserBase.LL_ERROR_VALUE
                     self.grad_stored = np.ones(n_dims)  # TODO better error gradient?
                     self.flag_log_like_stored = True
-                    print("Parameters are infeasible.")
+                    # print("Parameters are infeasible.")
                     return self.log_like_stored, self.grad_stored
 
                 value_funcs, exp_val_funcs = self._value_functions, self._exp_value_functions
-                print("V:")
-                print(_to_dense_if_sparse(value_funcs))
+                # print("V:")
+                # print(_to_dense_if_sparse(value_funcs))
 
             dest_index_old = dest_index
             # Gradient and log like depend on origin values
@@ -711,6 +736,12 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         self.optim_function_state.value = self.log_like_stored
         self.optim_function_state.grad = self.grad_stored
         self.flag_log_like_stored = True
+
+        b1 = self.optim_function_state.beta_vec
+        b2 = self._beta_vec  # these are the same
+        # This line kills the tests
+        # print(f"β={float(b1)}, LL: {-self.log_like_stored} Like ={np.exp(-self.log_like_stored)}, -dLL/dβ"
+        #       f"={self.grad_stored}")
         return self.log_like_stored, self.grad_stored
 
     def eval_log_like_at_new_beta(self, beta_vec):
@@ -794,8 +825,16 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         arc_finish_nodes = self._path_finish_nodes
 
         # index out v[(o,i1), (i1,i2), (i2, i3) ... (in,d)] then sum (all the short term contrib.)
+        # print("vmat:")
+        # print(_to_dense_if_sparse(v_mat))
+        # print("origins, dest", arc_start_nodes, arc_finish_nodes)
+        # print("v indexed", _to_dense_if_sparse(v_mat[arc_start_nodes, arc_finish_nodes]))
         sum_inst_util = v_mat[arc_start_nodes, arc_finish_nodes].sum()
+        # print("sum inst util =", sum_inst_util)
         log_like_obs = sum_inst_util - value_func_orig  # LogLikeFn in Code Doc
+        # print("val func orig", value_func_orig)
+        # print("LL obs", log_like_obs)
+
         return log_like_obs
 
     def _compute_current_obs_mu_ll_grad(self, grad_orig):
@@ -938,10 +977,15 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
             self._apply_dest_column(dest, m_tilde, i_tilde)
 
             z_vec = self._compute_exp_value_function(m_tilde)
-            # print(z_vec)
+
+
             with np.errstate(divide='ignore', invalid='ignore'):
                 value_funcs = np.log(z_vec)
+                # print("V")
+                # print(value_funcs)
             # catch errors manually
+            # print(z_vec, np.any(~np.isfinite(z_vec)))
+            # print(value_funcs, np.any(~np.isfinite(value_funcs)))
             if np.any(~np.isfinite(value_funcs)):  # any infinite (nan/ -inf)
                 print("got infinite valu funcs")
                 if np.any(~np.isfinite(z_vec)):
