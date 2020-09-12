@@ -16,7 +16,7 @@ from optimisers.extra_optim import OptimFunctionState
 from optimisers.optimisers_file import CustomOptimiserBase, OptimType, ScipyOptimiser, OptimiserBase
 import numpy as np
 
-ALLOW_POSITIVE_VALUE_FUNCTIONS = False
+ALLOW_POSITIVE_VALUE_FUNCTIONS = True
 
 
 def _to_dense_if_sparse(mat):
