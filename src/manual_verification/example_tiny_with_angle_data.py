@@ -6,7 +6,7 @@ import time
 
 from data_loading import load_standard_path_format_csv
 from data_processing import AngleProcessor
-from main import RecursiveLogitModelEstimation, RecursiveLogitDataStruct
+from recursive_route_choice import RecursiveLogitModelEstimation, ModelDataStruct
 from optimisers import LineSearchOptimiser, OptimHessianType
 import os
 # np.seterr(all='raise')  # all='print')
@@ -30,9 +30,9 @@ left, _, _, u_turn = AngleProcessor.get_turn_categorical_matrices(angle_cts_mat,
 # incidence matrix which only has nonzero travel times - rather than what is specified in file
 t_time_incidence = (travel_times_mat > 0).astype('int').todok()
 data_list =[travel_times_mat, left, u_turn, t_time_incidence]
-network_data_struct = RecursiveLogitDataStruct(data_list, incidence_mat)
+network_data_struct = ModelDataStruct(data_list, incidence_mat)
 #
-# network_data_struct, obs_mat = RecursiveLogitDataStruct.from_directory(
+# network_data_struct, obs_mat = ModelDataStruct.from_directory(
 #     folder, add_angles=True, angle_type='comparison', delim=" ")
 #
 # print(network_data_struct.data_array)

@@ -7,7 +7,7 @@ import scipy
 from scipy.sparse import linalg as splinalg
 from data_loading import load_standard_path_format_csv
 from data_processing import AngleProcessor
-from main import RecursiveLogitModelEstimation, RecursiveLogitDataStruct, RecursiveLogitModel, \
+from recursive_route_choice import RecursiveLogitModelEstimation, ModelDataStruct, RecursiveLogitModel, \
     RecursiveLogitModelPrediction
 from optimisers import LineSearchOptimiser, OptimHessianType
 from scipy import sparse
@@ -91,7 +91,7 @@ left, right, neutral, u_turn = AngleProcessor.get_turn_categorical_matrices(dok_
 distances = dok_matrix(Distances)
 # data_list = np.array([distances, left])
 data_list = np.array([distances])
-network_struct = RecursiveLogitDataStruct(data_list, incidence_mat,
+network_struct = ModelDataStruct(data_list, incidence_mat,
                                           data_array_names_debug=("distances", "u_turn"))
 m = -1
 # beta_vec = np.array([-1, -1])

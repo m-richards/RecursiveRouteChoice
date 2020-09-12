@@ -6,7 +6,7 @@ import awkward1 as ak
 from data_loading import write_obs_to_json, load_obs_from_json
 import optimisers as op
 
-from main import RecursiveLogitDataStruct, RecursiveLogitModelPrediction, \
+from recursive_route_choice import ModelDataStruct, RecursiveLogitModelPrediction, \
     RecursiveLogitModelEstimation
 from scipy import optimize as scopt
 
@@ -34,7 +34,7 @@ distances = np.array(
 incidence_mat = (distances > 0).astype(int)
 
 data_list = [distances]
-network_struct = RecursiveLogitDataStruct(data_list, incidence_mat,
+network_struct = ModelDataStruct(data_list, incidence_mat,
                                           data_array_names_debug=("distances"))
 
 beta_vec = np.array([-2])
@@ -73,7 +73,7 @@ print("len ", len(obs_ak))
 distances = dok_matrix(distances)
 incidence_mat = (distances > 0).astype(int)
 data_list = [distances]
-network_struct = RecursiveLogitDataStruct(data_list, incidence_mat,
+network_struct = ModelDataStruct(data_list, incidence_mat,
                                           data_array_names_debug=("distances"))
 # silly levels of inefficiency but will fix later
 

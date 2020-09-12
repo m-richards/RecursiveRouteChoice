@@ -2,7 +2,7 @@ import time
 import numpy as np
 
 from data_loading import load_standard_path_format_csv
-from main import RecursiveLogitModelEstimation, RecursiveLogitDataStruct
+from recursive_route_choice import RecursiveLogitModelEstimation, ModelDataStruct
 
 from os.path import join
 import optimisers as op
@@ -26,7 +26,7 @@ time_io_end = time.time()
 obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=False)
 incidence_mat, travel_times_mat = attrs
 data_list =[travel_times_mat, travel_times_mat]
-network_data_struct = RecursiveLogitDataStruct(data_list, incidence_mat)
+network_data_struct = ModelDataStruct(data_list, incidence_mat)
 
 
 optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)

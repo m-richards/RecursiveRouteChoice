@@ -1,6 +1,6 @@
 import time
 import numpy as np
-from main import RecursiveLogitModelEstimation, RecursiveLogitDataStructDeprecated
+from recursive_route_choice import RecursiveLogitModelEstimation, RecursiveLogitDataStructDeprecated
 
 import os
 import optimisers as op

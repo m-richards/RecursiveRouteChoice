@@ -120,10 +120,9 @@ class ScipyOptimiser(OptimiserBase):
                 return approx_derivative(grad_wrapper, x, **fd_options)
         x0 = optim_function_state.beta_vec
 
-        options['disp'] = True
-
         if verbose:
             self.iter_count = 0
+            options['disp'] = True
 
             def cb(x):
                 print(self.get_iteration_log(optim_function_state), file=output_file)
