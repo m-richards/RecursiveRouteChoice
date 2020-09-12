@@ -1,0 +1,269 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>1. Overview &mdash; RecursiveRouteChoice 0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="3. A Simple Example" href="simple_example.html" />
+    <link rel="prev" title="Welcome to RecursiveRouteChoice’s documentation!" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> RecursiveRouteChoice
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Introduction &amp; Overview:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">1. Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#installation">2. Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="simple_example.html">3. A Simple Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_formats.html">4. Data Format Support</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/data_loading.html">data_loading module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/data_processing.html">data_processing module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/optimisers.html">optimisers package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/recursive_route_choice.html">recursive_route_choice module</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">RecursiveRouteChoice</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li><span class="section-number">1. </span>Overview</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/source/introduction_install.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="overview">
+<h1><span class="section-number">1. </span>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h1>
+<p>This package implements the recursive logit model first developed in
+<a class="reference external" href="https://doi.org/10.1016/j.trb.2013.07.012">Fosgerau, Frejinger &amp; Karlstrom 2013</a>
+with further developments in papers Tien Mai. There are two key components:</p>
+<ul>
+<li><div class="line-block">
+<div class="line"><strong>Estimation -</strong> Given a series of observations on a network and a set of network attributes,</div>
+<div class="line">estimate the parameter coefficients of each attribute</div>
+</div>
+</li>
+<li><div class="line-block">
+<div class="line"><strong>Simulation/ Prediction -</strong> Given a set of network attributes and parameter estimates for each</div>
+<div class="line">attribute, simulate observations on the network consistent to the parameter values</div>
+</div>
+</li>
+</ul>
+<p><a class="reference external" href="https://github.com/maitien86">Tien Mai has previously released an implementation</a>
+for the recursive logit and
+more advanced variants which are not (currently) implemented here. Unfortunately, this code is
+in various states of ill-repair (for instance running the <code class="code docutils literal notranslate"><span class="pre">RecursiveLogit.Classical.V2</span></code> repo
+using the estimation script, <code class="code docutils literal notranslate"><span class="pre">RLoptimizer</span></code> immediately crashes due to hard coded minimum
+dimensions,
+and the simulation code <code class="code docutils literal notranslate"><span class="pre">createSimulatedObs</span></code> crashes due some some change in
+version where “Value” has become “value”).</p>
+<p>This package intends to address some of the shortcomings of this implementation, to list a few key
+points
+* Simple examples work out of the box, with a clearly specified data format
+* Code is documented consistently, with explanatory introductory material
+* Code is designed in a modular, clear main to aid in understanding and extensibility</p>
+<p>The package has been developed as part of my honours thesis and subsequently, significant emphasis
+has been placed on ensuring the mathematical correctness of the components.</p>
+<p>Whilst the shortcomings of Tien Mai’s code have been noted, it has still been an important reference
+in the development of this package. In fact, the original checks of consistency were made with
+respect to a corrected version of these scripts. At this point however, RecursiveRouteChoice should
+be
+considered completely independent. The only exception is the inclusion of a direct port of the line
+search code (but this is slow since python loops are slow), but this is deprecated in favour of
+the interface to SciPy solvers.</p>
+</div>
+<div class="section" id="installation">
+<h1><span class="section-number">2. </span>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<p>Currently one can install from the repository directly using pip:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">git</span><span class="o">+</span><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">m</span><span class="o">-</span><span class="n">richards</span><span class="o">/</span><span class="n">RecursiveLogit</span><span class="o">.</span><span class="n">git</span>
+</pre></div>
+</div>
+<p>Hopefully this will also appear on PyPi at some point.</p>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="simple_example.html" class="btn btn-neutral float-right" title="3. A Simple Example" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../index.html" class="btn btn-neutral float-left" title="Welcome to RecursiveRouteChoice’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Matthew Richards
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
