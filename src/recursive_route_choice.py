@@ -90,6 +90,9 @@ class ModelDataStruct(object):
             for i in data_matrix_list:
                 data_matrix_list_new.append(_zero_pad_mat(i, bottom=True, right=True))
             data_matrix_list = data_matrix_list_new
+            self.padded = True
+        else:
+            self.padded = False
 
         self.incidence_matrix = incidence_matrix
 
@@ -630,9 +633,10 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         path_arc_start_nodes = path[:-1] - min_legal_index
         path_arc_finish_nodes = path[1:] - min_legal_index
 
-        # Note -1 is because data struct adds a zero column to put the dest into
-        # TODO unless user pre-empts this and it doesn't
-        final_index_in_data = np.shape(self.network_data.incidence_matrix)[0]-1
+        # tODO think there should be an extra -1 (one for zero based, one for pad col) in every
+        #  case but would need to review to make sure.
+        #  On review, this should be checked globally on obs_record, there is a global max index
+        final_index_in_data = np.shape(self.network_data.incidence_matrix)[0] - 1
 
         if np.any(path_arc_finish_nodes > final_index_in_data):
             raise ValueError("Observation received contains indexes larger than the dimension"
