@@ -263,6 +263,11 @@ class RecursiveLogitModel(abc.ABC):
         # allow for specification of vector beta or scalar beta repeated
         if isinstance(initial_beta, (float, int)):
             beta_vec = np.array([initial_beta for _ in range(self.n_dims)])
+        elif isinstance(initial_beta, (list, tuple)):
+            if len(initial_beta) != self.n_dims:
+                raise ValueError(f"beta vector must have length {self.n_dims} for given network "
+                                 f"attributes.")
+            beta_vec = np.array(initial_beta)
         else:
             beta_vec = initial_beta
         if np.any(beta_vec > 0):
