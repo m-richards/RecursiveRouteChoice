@@ -6,7 +6,6 @@ import os
 import numpy as np
 import scipy
 import pandas as pd
-
 from scipy.sparse import coo_matrix, dok_matrix
 
 INCIDENCE = "incidence.txt"
@@ -17,9 +16,17 @@ TURN_ANGLE = "turnAngle.txt"
 
 def load_standard_path_format_csv(directory_path, delim=None, match_tt_shape=False,
                                   angles_included=True):
-    """Expects standardised filenames in directory direction_name.
-    Delim is csv delimiter, match tt_shape is for rescaling incidence and angle matrices
-    so that dimensions are consistent"""
+    """Returns the observations and list of matrices loaded from specified file directory
+    :param directory_path: folder which contains files
+    :type directory_path: str or os.PathLike[Any]
+    :param delim: csv separator (i.e. ",", "\t", ...)
+    :type delim: str
+    :param match_tt_shape: trim all matrixes to have same shape as travel time mtrix
+    :type match_tt_shape: bool
+    :param angles_included: Boolean flag controlling whether angle file is expected or not.
+    :type angles_included: bool
+    :return: observations matrix and list of all data matrices
+    :rtype: tuple[dok_matrix, list[dok_matrix]"""
     file_incidence = os.path.join(directory_path, INCIDENCE)
     file_travel_time = os.path.join(directory_path, TRAVEL_TIME)
     file_turn_angle = os.path.join(directory_path, TURN_ANGLE)
@@ -59,7 +66,6 @@ def load_csv_to_sparse(fname, dtype=None, delim=None, square_matrix=True, shape=
     :matrix_format_cast_function is the output format of the matrix to be returned. Given as a
     function to avoid having to specify string equivalents"""
     row, col, data = np.loadtxt(fname, delimiter=delim, unpack=True, dtype=dtype)
-    # print(row, col, data)
     # convert row and col to integers for coo_matrix
     # note we need this for float inputs since row cols still need to be ints to index
     rows_integer = row.astype(int)
@@ -73,19 +79,11 @@ def load_csv_to_sparse(fname, dtype=None, delim=None, square_matrix=True, shape=
         if shape is None:
             # note we add one to counteract minus one above
             max_dim = max(np.max(rows_integer), np.max(cols_integer))+1
-            # print(max_dim)
             shape = (max_dim, max_dim)
         mat = coo_matrix((data, (rows_integer, cols_integer)),
                          dtype=dtype)
-        # print(mat.shape)
         mat.resize(shape)  # trim cols
 
-    # if mat.shape[0] == mat.shape[1] - 1 and square_matrix:
-    #     # this means we have 1 less row than columns from our input data
-    #     # i.e. missing the final k==d row with no successors
-    #     ncols = np.shape(mat)[1]
-    #     sparse_zeros = csr_matrix((1, ncols))
-    #     mat = scipy.sparse.vstack((mat, sparse_zeros))
     return mat
 
 
@@ -123,7 +121,7 @@ def load_tnpm_to_sparse(net_fpath, columns_to_extract=None, use_file_order_for_a
     # Note that some of these will be constant across arcs and are redundant to include.
 
     :return
-    :rtype [bidict, scipy.sparse.coo_matrix, ...]
+    :rtype [dict, scipy.sparse.coo_matrix, ...]
 
 
     """
@@ -148,7 +146,6 @@ def load_tnpm_to_sparse(net_fpath, columns_to_extract=None, use_file_order_for_a
     arc_to_index_map = {}
     if use_file_order_for_arc_numbers:  # for consistency with any visuals
         for n, s, f in net2[['init_node', 'term_node']].itertuples():
-            # print(n,s,f)
             arc_to_index_map[(s, f)] = n
 
     print(arc_to_index_map)
@@ -175,7 +172,6 @@ def load_tnpm_to_sparse(net_fpath, columns_to_extract=None, use_file_order_for_a
                     n += 1
                 arc_matrix[arc_to_index_map[first_arc],
                            arc_to_index_map[end_arc]] = (start_len + end_len) / 2
-    # print(arc_to_index_map)
     return arc_to_index_map, arc_matrix
 
 
@@ -189,11 +185,3 @@ def write_obs_to_json(filename, obs, allow_rewrite=False):
         raise IOError("File already exists. Specify 'force_override=True' to enable re-writing.")
     with open(filename, 'w') as f:
         json.dump(obs, f)
-    # Naive plaintest
-
-    # with open(filename, 'w') as f:
-    #
-    #     for ob in obs:
-    #         for arc in obs:
-    #             print(arc, end=", ", file=filename)
-    #         print(file=filename)
