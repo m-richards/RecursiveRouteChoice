@@ -34,4 +34,4 @@ jobs:
     - name: Test with pytest
       run: |
         pip install -e .
-        pytest --ignore=src/
+        pytest --ignore=src/ --ignore=manual_verification/
