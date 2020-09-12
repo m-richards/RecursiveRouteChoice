@@ -486,7 +486,6 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         #    on the basis that if it doesn't then we can use the same base class here fro
         #    estimation. It might be easier for now to make a base class and have a
         #    subclass which gets an optimiser
-        self.obs_record = observations_record  # matrix of observed trips
 
         beta_vec = super().get_beta_vec()  # orig without optim tie in
         # setup optimiser initialisation
@@ -498,11 +497,12 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         self.update_beta_vec(beta_vec)  # to this to refresh dependent matrix quantitites
 
         # book-keeping on observations record
-        if sparse.issparse(observations_record):  # TODO redact this compatibility
+        if sparse.issparse(observations_record):  # TODO perhaps convert to ak format?
             self.obs_count, _ = observations_record.shape
             self.obs_min_legal_index = 1  # Zero is reserved index for sparsity
 
-        else:  # TODO list of lists support
+        else:
+            observations_record = self._convert_obs_record_format(observations_record)
             # num_obs = len(observations_record) # equivalent but clearer this is ak array
             self.obs_count = ak.num(observations_record, axis=0)
 
@@ -523,7 +523,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             else:  # just get the minimum index used, which should be zero or 1
                 self.obs_min_legal_index = ak.min(observations_record, axis=None)
                 #  TODO no unit test written for the zero case
-
+        self.obs_record = observations_record
         # finish initialising
         self.get_log_likelihood()  # need to compute starting LL for optimiser
         if isinstance(optimiser, CustomOptimiserBase):
@@ -532,6 +532,28 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
 
         self._path_start_nodes = None
         self._path_finish_nodes = None
+
+    @staticmethod
+    def _convert_obs_record_format(observations_record) -> ak.highlevel.Array:
+        if isinstance(observations_record, ak.highlevel.Array):
+            return observations_record
+
+        elif isinstance(observations_record, list):
+            if all(isinstance(i, list) for i in observations_record):
+                try:
+                    return ak.from_iter(observations_record)
+                except Exception as e:  # TODO BAD
+                    raise TypeError("Failed to parse input obs as Awkward Array.") from e
+            else:
+                raise TypeError("List observation format must contain list of lists, "
+                                "not a singleton list")
+
+        # else we blindly try to convert
+        try:
+            return ak.from_iter(observations_record)
+        except Exception as e:  # TODO BAD
+            raise TypeError("Obs format invalid, failed to parse input obs as Awkward Array.") \
+                from e
 
     def _get_n_func_evals(self):
         return self.n_log_like_calls_non_redundant
