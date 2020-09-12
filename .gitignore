@@ -21,3 +21,8 @@ __pycache__
 
 temp_demo_code/
 *.json
+
+# Documentation
+_build
+_static
+_templates
