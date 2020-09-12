@@ -1,7 +1,7 @@
 [flake8]
 # Temp files that are allowed to violate
 # note manual tests should conform if it is committed, but there are lots of non committed files
-exclude = temp_demo_code/, reference/ src/manual_verification/ versioneer.py
+exclude = temp_demo_code/, reference/ manual_verification/ versioneer.py
 
 max-line-length = 100
 
