@@ -698,18 +698,20 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             # LogLikeFn in Code Doc - for this n
             mu_log_like_obs = self._compute_current_obs_mu_log_like(v_mat, value_funcs[orig_index])
 
-            # # Some kind of successive over relaxation/ momentum
-            mu_log_like_cumulative += (mu_log_like_obs - mu_log_like_cumulative) / (n + 1)
-            # mu_log_like_cumulative += mu_log_like_obs
-            # ll_grad_cumulative += mu_gradient_current_obs
-            mu_ll_grad_cumulative += (mu_gradient_current_obs - mu_ll_grad_cumulative) / (n + 1)
-            # print("current grad weighted", ll_grad_cumulative)
+            # This is the aggregation in Tien Mai's code. Best interpretation is some kind of
+            # successive over relaxation/ momentum/ learning rate except that the gradient
+            # computation isn't batched, nor are observations shuffled, so it doesn't really make
+            # sense
+            # mu_log_like_cumulative += (mu_log_like_obs - mu_log_like_cumulative) / (n + 1)
+            # mu_ll_grad_cumulative += (mu_gradient_current_obs - mu_ll_grad_cumulative) / (n + 1)
+
+            # compute cumulative totals in the natural, standard mathematical way.
+            mu_log_like_cumulative += mu_log_like_obs
+            mu_ll_grad_cumulative += mu_gradient_current_obs
 
             # Put our matrices back untouched:
             m_tilde, i_tilde = self._revert_dest_column(dest_index, m_tilde, i_tilde,
                                                         m_mat, local_incidence_mat)
-            # m_tilde[dest_index, :] = m_mat[dest_index, :]
-            # i_tilde[dest_index, :] = local_incidence_mat[dest_index, :]
 
         # only apply this rescaling once rather than on all terms inside loops
         self.log_like_stored = -1/mu * mu_log_like_cumulative
@@ -759,7 +761,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         else:
             raise ValueError("obs record has unsupported type")
 
-        # if np.any(path != self._prev_path): # infer I was planning caching, unused though
+        # if np.any(path != self._prev_path): # infer I was planning caching, unused though #TODO
 
         min_legal_index = self.obs_min_legal_index
         # in a sequence of obs [o, 1, 2, 3, 4, 5, 6, 7, 8, 9, d]

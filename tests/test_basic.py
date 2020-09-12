@@ -57,7 +57,7 @@ class TestSimpleCases(object):
 
         log_like_out, grad_out = model.get_log_likelihood()
         eps = 1e-6
-        assert np.abs(log_like_out - 0.6931471805599454) < eps
+        assert np.abs(log_like_out - 2.7725887222397816) < eps
         assert np.abs(linalg.norm(grad_out) - 0) < eps
 
         # model.hessian = np.identity(network_data_struct.n_dims)
@@ -111,8 +111,9 @@ class TestSimpleCases(object):
             model.optim_function_state))  # Note this is currently required to
         # set the gradient so that compute relative gradient works, really bad
         # model.hessian = np.identity(network_data_struct.n_dims)
-        ll, line_search_step, grad_norm, rel_grad_norm = (0.519860, 0.0, 0.176776,
-                                                          0.125)
+        ll, line_search_step, grad_norm, rel_grad_norm = (2.079441541679836, 0.0,
+                                                          0.7071067811865476,
+                                                          0.24044917348149386)
         assert np.abs(log_like_out - ll) < eps
         assert np.abs(model.optimiser.step - line_search_step) < eps
 
@@ -120,9 +121,9 @@ class TestSimpleCases(object):
         assert np.abs(model.optimiser.compute_relative_gradient_non_static() - rel_grad_norm) < eps
 
         targets = [
-            (0.4905584, 0.1767767, 0.154794, 0.1094559),
-            (0.3779969, 1.244795, 0.04175985, 0.02952867),
-            (0.3634634, 0.4598828, 0.02309686, 0.01633195)
+            (1.699556, 0.7071068, 0.3803406, 0.1582422),
+            (1.495032, 0.8230394, 0.1457128, 0.06891792),
+            (1.440549, 0.5111388, 0.07468365, 0.03665915)
         ]
         for t in targets:
             ll, line_search_step, grad_norm, rel_grad_norm = t
