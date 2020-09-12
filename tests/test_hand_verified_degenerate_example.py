@@ -27,7 +27,8 @@ import pytest
 from scipy.sparse import dok_matrix
 import awkward1 as ak
 
-from recursive_route_choice import ModelDataStruct, RecursiveLogitModelEstimation
+from recursive_route_choice import ModelDataStruct, RecursiveLogitModelEstimation, \
+    RecursiveLogitModelPrediction
 
 import optimisers as op
 
@@ -54,7 +55,6 @@ optimiser = op.ScipyOptimiser(method='bfgs')
 #                                   num_obs_per_pair=3, iter_cap=2000, rng_seed=1,
 #                                   )
 input_obs = [[1, 0, 1, 2, 1], [1, 0, 3, 0, 1], [1, 0, 1]]
-
 
 model = RecursiveLogitModelEstimation(network_struct, observations_record=input_obs,
                                       initial_beta=[-0.4], mu=1,
@@ -118,3 +118,47 @@ class TestCases(object):
                                               optimiser=optimiser)
         ll = model.get_log_likelihood()[0]
         assert pytest.approx(ll) == 6.01398195541
+
+
+# bigger silly network - see phone photo
+@pytest.fixture
+def struct_bigger():
+    distances = np.array(
+        [[0, 5, 0, 4, 0, 0, 0, 0, 0, 0],
+         [0, 0, 6, 0, 0, 0, 0, 0, 0, 6],
+         [0, 6, 0, 5, 0, 0, 0, 0, 0, 0],
+         [4, 0, 0, 0, 5, 0, 0, 0, 0, 0],
+         [0, 0, 0, 0, 0, 6, 6, 0, 0, 0],
+         [5, 0, 0, 0, 6, 0, 0, 0, 0, 0],
+         [0, 0, 0, 0, 0, 0, 0, 6, 6, 0],
+         [0, 0, 0, 0, 0, 6, 6, 0, 0, 0],
+         [0, 0, 6, 0, 0, 0, 0, 0, 0, 6],
+         [0, 0, 0, 0, 0, 0, 0, 6, 6, 0]
+         ])
+    distances = dok_matrix(distances)
+    incidence_mat = (distances > 0).astype(int)
+    network_struct = ModelDataStruct([distances], incidence_mat,
+                                     data_array_names_debug=("distances",))
+    return network_struct
+
+
+class TestPredictionExceptions(object):
+
+    def test_bad_beta_fails(self, struct_bigger):
+
+        model = RecursiveLogitModelPrediction(struct_bigger,
+                                              initial_beta=-0.1)
+        with pytest.raises(ValueError) as e:
+            model.generate_observations(origin_indices=[0], dest_indices=[9], num_obs_per_pair=10)
+        assert "exp(V(s)) contains negative values" in str(e.value)
+
+    def test_bad_indexfails(self, struct_bigger):
+        model = RecursiveLogitModelPrediction(struct_bigger,
+                                              initial_beta=-0.2)
+        with pytest.raises(IndexError) as e:
+            model.generate_observations(origin_indices=[0], dest_indices=[100], num_obs_per_pair=10)
+        assert "Can only simulate observations from indexes which are in the model" in str(e.value)
+
+        with pytest.raises(IndexError) as e:
+            model.generate_observations(origin_indices=[0], dest_indices=[10], num_obs_per_pair=10)
+        assert "but the final index is reserved for internal dummy sink state" in str(e.value)
