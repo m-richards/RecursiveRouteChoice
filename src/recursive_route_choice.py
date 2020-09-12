@@ -896,11 +896,18 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
                     # while we haven't reached the dest
 
                     current_arc = orig
-                    current_path = [orig]
+                    # format is [dest, orig, l1, l2, ..., ln, dest]
+                    # why? so we know what the dest is without having to lookup to the
+                    # last nonzero (only really a problem for sparse, but still marginally
+                    # more efficient. Perhaps could have flags for data formats? TODO
+                    current_path = [dest]
                     # path_string = f"Start: {orig}"
                     count = 0
                     while current_arc != dest_dummy_arc_index:  # index of augmented dest arc
                         count += 1
+                        # TODO Note the int conversion here is purely for json serialisation compat
+                        #   if this is no longer used then we can keep numpy types
+                        current_path.append(int(current_arc))
                         if count > iter_cap:
                             # print("orig, dest =", orig, dest, value_funcs[0])
                             # print("path failed, in progress is:", path_string)
@@ -936,15 +943,13 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
                         # print(np.max(value_functions_observed), next_arc)
                         # path_string += f" -> {next_arc}"
                         current_arc = next_arc
-                        # TODO Note the int conversion here is purely for json serialisation compat
-                        #   if this is no longer used then we can keep numpy types
-                        current_path.append(int(current_arc))
                         # offset stops arc number being recorded as zero
 
                     # print(path_string + ": Fin")
                     if len(current_path) <= 2:
                         continue  # this is worthless information saying we got from O to D in one
                         # step
+                    # Note we don't append the final (dummy node) because it changes location
                     output_path_list.append(current_path)
 
             # Fix the columns we changed for this dest (cheaper than refreshing whole matrix)
