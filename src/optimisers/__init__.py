@@ -3,5 +3,3 @@ from .optimisers_file import OptimiserBase, LineSearchOptimiser, \
     OptimHessianType
 from . import line_search
 from . import hessian_approx
-
-from . import constants

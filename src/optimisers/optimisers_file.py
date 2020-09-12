@@ -51,12 +51,7 @@ class OptimiserBase(abc.ABC):
 
         # typf = 1.0 # some parameter? (input in tien code
         typxi = 1.0  # fixed in tien code
-        gmax = 0.0
-        # print("compute relative gradient start--------------------")
-        # print("val", val)
-        # print("grad", grad)
-        # print("beta", self.beta_vec)
-        # print("typf", typf)
+        # gmax = 0.0
         tmp_beta_max = np.maximum(current_beta, typxi)
         gmax = np.abs(fun_grad * tmp_beta_max / max(abs(fun_val), typf)).max()
 
@@ -138,8 +133,10 @@ class ScipyOptimiser(OptimiserBase):
 class CustomOptimiserBase(OptimiserBase):
     """Global wrapper object around all optim algs, delegate to sub classes for individual.
     Need to be clear about which properties are effectively read only and which store state.
-    Ideally this is a generic optim alg that doesn't know anything about RecursiveLogitModel
-    TODO currently is intrinsically dependent"""
+
+    Reviewed perspective after implementing Scipy support is that this should be allowed to know
+    details of recursive logit - and it itself may wrap a generic algorithm.
+    """
 
     def __init__(self, hessian_type=OptimHessianType.BFGS, max_iter=4):
         super().__init__()

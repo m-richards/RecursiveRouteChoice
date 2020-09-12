@@ -215,13 +215,6 @@ class TestSimpleCases(object):
         assert (expected_left_turn == actual_left_turn).all()
         assert (expected_u_turn == actual_u_turn).all()
 
-    def test_manual_tests_dont_throw(self):
-        """Just checking these scripts don't crash due to changes in api.
-        This is a hacky way of testing more cases without doing proper testing,
-        better than nothing but not my much"""
-        from manual_verification import (example_tiny_with_angle_data,  # noqa: F401
-                                         example_tiny_no_angle_data)  # noqa: F401
-
 
 class TestSimulation(object):
 

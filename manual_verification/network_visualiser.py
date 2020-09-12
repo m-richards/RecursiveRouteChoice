@@ -58,7 +58,7 @@ print(f"Graph has {G.number_of_nodes()} nodes and {G.number_of_edges()} edges", 
 layout = nx.drawing.kamada_kawai_layout(G, weight='travel_time')
 nx.drawing.draw_networkx(G, pos=layout)  # unweighted - for
 # structure
-plt.savefig(join("../../figures", f"{file} - network_dists - no dists.pdf"))
+plt.savefig(join("../figures", f"{file} - network_dists - no dists.pdf"))
 nx.drawing.draw_networkx_edge_labels(G, pos=layout,
                                      edge_labels={(i, j): round(k, 1) for (i, j, k) in dist_data})
 # networkx.drawing.draw_spectral(G)
@@ -68,5 +68,5 @@ nx.drawing.draw_networkx_edge_labels(G, pos=layout,
 
 pprint({(i, j): round(k, 1) for (i, j, k) in dist_data})
 plt.gca().set_aspect('equal', adjustable='box')
-plt.savefig(join("../../figures", f"{file} - network_dists.pdf"))
+plt.savefig(join("../figures", f"{file} - network_dists.pdf"))
 plt.show()

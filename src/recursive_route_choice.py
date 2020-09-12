@@ -9,8 +9,6 @@ from scipy import sparse
 
 import awkward1 as ak
 
-from data_loading import load_standard_path_format_csv
-from data_processing import AngleProcessor
 # from debug_helpers import print_sparse, print_data_struct
 from optimisers.extra_optim import OptimFunctionState
 from optimisers.optimisers_file import CustomOptimiserBase, OptimType, ScipyOptimiser, OptimiserBase
@@ -37,8 +35,6 @@ def _zero_pad_mat(mat, top=False, left=False, bottom=False, right=False):
         if right:
             m, n = mat.shape
 
-            # print(mat.shape, np.zeros(m).shape)
-            # print(mat, type(mat))
             mat = sparse.hstack([mat, sparse.dok_matrix((m, 1))])
         if bottom:
             m, n = mat.shape
@@ -53,13 +49,9 @@ def _zero_pad_mat(mat, top=False, left=False, bottom=False, right=False):
     else:
         if right:
             m, n = mat.shape
-            # print(mat.shape, np.zeros((m, 1)).shape)
-            # print(mat, type(mat))
             mat = np.c_[mat, np.zeros((m, 1))]
         if bottom:
             m, n = mat.shape
-            # print(mat.shape, np.zeros((1, n)).shape)
-            # print(mat, type(mat))
             mat = np.r_[mat, np.zeros((1, n))]
         if left:
             m, n = mat.shape
@@ -92,12 +84,15 @@ class ModelDataStruct(object):
                    + np.count_nonzero(incidence_matrix[:, -1]))
 
         if nnz > 0 and resize:
-            print("resizing to include zero pad")
+            print("Adding an additional row and column to house sink state.")
             incidence_matrix = _zero_pad_mat(incidence_matrix, bottom=True, right=True)
             data_matrix_list_new = []
             for i in data_matrix_list:
                 data_matrix_list_new.append(_zero_pad_mat(i, bottom=True, right=True))
             data_matrix_list = data_matrix_list_new
+            self.padded = True
+        else:
+            self.padded = False
 
         self.incidence_matrix = incidence_matrix
 
@@ -106,131 +101,6 @@ class ModelDataStruct(object):
             data_array_names_debug = (),
         self.data_fields = data_array_names_debug  # convenience for debugging
         self.n_dims = len(self.data_array)
-
-
-class RecursiveLogitDataStructDeprecated(object):
-    """Generic struct which stores all the arc attributes together in a convenient manner.
-    Also provides convenience constructors.
-    # TODO want to kill this in favour of some kind of preprocessing and then have this totally
-    generic
-    """
-
-    def __init__(self, travel_times: scipy.sparse.dok_matrix,
-                 incidence_matrix: scipy.sparse.dok_matrix, turn_angle_mat=None):
-        self.travel_times = travel_times
-        self.incidence_matrix = incidence_matrix
-        self.turn_angle_mat = turn_angle_mat
-        # TODO think perhaps no specific labels should be here, that these should be done by some
-        #  other preprocessing step before this class and
-        #  this should be a generic data class.
-        #  On review, easiest to have this non generic for now, but could easily
-        #  move init to classmethods. Wait for real data to see.
-        #  Should at least have methods to allow generic initialisation
-        self.data_array = np.array([self.travel_times])
-        self.data_fields = ['travel_time']  # convenience for debugging
-        self.n_dims = len(self.data_array)
-
-        self.has_categorical_turns = False
-        self.has_nz_incidence_mat = False
-        self.has_turn_angles = False
-
-    def add_second_travel_time_for_testing(self):
-        """Want a non 1d test case without dealing with angles"""
-        self.data_array = np.array([self.travel_times, self.travel_times])
-        self.data_fields = ['travel_time', 'travel_time']
-        self.n_dims = len(self.data_array)
-
-    def add_left_turn_incidence_uturn_for_comparison(self, left_turn_thresh=None,
-                                                     u_turn_thresh=None):
-        """Temporary method for comparison with Tien Mai's code to add data matrices in the same
-        order, shouldn't be used generally. Messy combination of
-            add_turn_categorical_variables and add_nonzero_arc_incidence methods."""
-        nz_arc_incidence = (self.travel_times > 0).astype('int').todok()
-        if self.has_categorical_turns:
-            return
-        self.has_categorical_turns = True
-        if self.turn_angle_mat is None:
-            raise ValueError("Creating categorical turn matrices failed. Raw turn angles matrix "
-                             "must be supplied in the constructor")
-        left_turn_dummy = AngleProcessor.get_left_turn_categorical_matrix(self.turn_angle_mat,
-                                                                          left_turn_thresh,
-                                                                          u_turn_thresh)
-        u_turn_dummy = AngleProcessor.get_u_turn_categorical_matrix(self.turn_angle_mat,
-                                                                    u_turn_thresh)
-        self.data_array = np.concatenate(
-            (self.data_array, np.array((left_turn_dummy, nz_arc_incidence, u_turn_dummy)))
-        )
-        self.n_dims = len(self.data_array)
-        self.has_turn_angles = True
-        self.has_nz_incidence_mat = True
-        self.data_fields.extend(("left_turn_dummy", "nonzero_arc_incidence", "u_turn_dummy"))
-
-    def add_turn_categorical_variables(self, left_turn_thresh=None, u_turn_thresh=None):
-        """Uses the turn matrix in the constructor and splits out into categorical matrices
-        for uturns and left uturns.
-
-        Note left turn_thresh is negative in radians, with angles lesser to the left,
-        and u_turn thresh is positive in radians, less than pi.
-        """
-        if self.has_categorical_turns:
-            return
-        self.has_categorical_turns = True
-        if self.turn_angle_mat is None:
-            raise ValueError("Creating categorical turn matrices failed. Raw turn angles matrix "
-                             "must be supplied in the constructor")
-        left_turn_dummy = AngleProcessor.get_left_turn_categorical_matrix(self.turn_angle_mat,
-                                                                          left_turn_thresh,
-                                                                          u_turn_thresh)
-        u_turn_dummy = AngleProcessor.get_u_turn_categorical_matrix(self.turn_angle_mat,
-                                                                    u_turn_thresh)
-        self.data_array = np.concatenate(
-            (self.data_array, np.array((left_turn_dummy, u_turn_dummy)))
-        )
-        self.n_dims = len(self.data_array)
-        self.has_turn_angles = True
-        self.data_fields.extend(("left_turn_dummy", "u_turn_dummy"))
-
-    def add_nonzero_arc_incidence(self):
-        """Adds an incidence matrix which is only 1 if the additional condition that the arc is
-            not of length zero is met. This encoded in the "LeftTurn" matrix in Tien's code"""
-        nz_arc_incidence = (self.travel_times > 0).astype('int').todok()
-        self.data_array = np.concatenate(
-            (self.data_array, np.array((nz_arc_incidence,)))
-        )
-        self.n_dims = len(self.data_array)
-        self.has_nz_incidence_mat = True
-        self.data_fields.append("nonzero_arc_incidence")
-
-    @classmethod
-    def from_directory(cls, path, add_angles=True, angle_type='correct', delim=None,
-                       match_tt_shape=False):
-        """Creates data set from specified folder, assuming standard file path names.
-        Also returns obs mat to keep IO tidy and together"""
-        if add_angles and angle_type not in ['correct', 'comparison']:
-            raise KeyError("Angle type should be 'correct' or 'comparison'")
-
-        obs_mat, (network_attribs) = load_standard_path_format_csv(path,
-                                                                   delim, match_tt_shape,
-                                                                   angles_included=add_angles)
-        if add_angles:
-            incidence_mat, travel_times_mat, turn_angle_mat = network_attribs
-            out = RecursiveLogitDataStructDeprecated(travel_times_mat, incidence_mat,
-                                                     turn_angle_mat)
-            if angle_type == 'correct':
-                out.add_turn_categorical_variables()
-            else:
-                # BROKEN = True
-                BROKEN = False
-                if BROKEN:
-                    out.add_left_turn_incidence_uturn_for_comparison()
-                else:
-                    out.add_turn_categorical_variables()
-                    out.add_nonzero_arc_incidence()  # swap f
-        else:
-            incidence_mat, travel_times_mat = network_attribs
-            out = RecursiveLogitDataStructDeprecated(travel_times_mat, incidence_mat,
-                                                     turn_angle_mat=None)
-        return out, obs_mat
 
 
 class RecursiveLogitModel(abc.ABC):
@@ -316,7 +186,6 @@ class RecursiveLogitModel(abc.ABC):
 
         # explicitly do need this copy since we modify m_mat
         m_mat = self.get_short_term_utility().copy()
-        # print(type(m_mat))
         # note we currently use incidence matrix here, since this distinguishes the
         # genuine zero arcs from the absent arcs
         # (since data format has zero arcs, should not be a problem with good data)
@@ -352,20 +221,14 @@ class RecursiveLogitModel(abc.ABC):
     def compute_value_function(self, m_tilde) -> bool:
         """Solves the system Z = Mz+b and stores the output for future use.
         Has rudimentary flagging of errors but doesn't attempt to solve any problems"""
-        # print("mmat_int")
-        # print_sparse(m_tilde)
         error_flag = False  # start with no errors
         a_mat, z_vec, rhs = self._compute_exp_value_function(m_tilde, return_pieces=True)
         # if we z values negative, or near zero, parameters
         # are infeasible since log will be complex or -infty
-        # print("z_pre", z_vec)
         if z_vec.min() <= min(-1e-10, OptimiserBase.NUMERICAL_ERROR_THRESH):
             # thresh on this?
             error_flag = True  # TODO abs and stuff once i fix tests
             return error_flag
-            # handling via flag rather than exceptions for efficiency
-            # raise ValueError("value function has too small entries")
-        # z_vec = abs()
 
         # Norm of residual
             # Note: Scipy sparse norm doesn't have a 2 norm so we use this
@@ -585,7 +448,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         print(self.optimiser.get_iteration_log(self.optim_function_state), file=None)
         n = 0
 
-        while n <= 1000:
+        while n <= 1000:  # TODO magic constant
             n += 1
             if self.optimiser.METHOD_FLAG == OptimType.LINE_SEARCH:
                 ok_flag, hessian, log_msg = self.optimiser.iterate_step(self.optim_function_state,
@@ -604,7 +467,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             if is_stopping:
                 print(f"The algorithm stopped due to condition: {stop_type}")
                 return self.optim_function_state.beta_vec
-        print("Infinite loop happened somehow, shouldn't have happened")
+        raise ValueError("Optimisation algorithm failed to converge")
 
     def update_beta_vec(self, new_beta_vec) -> bool:
         """Change the current parameter vector beta and update intermediate results which depend
@@ -616,9 +479,9 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         self.optim_function_state.beta_vec = new_beta_vec
         self._beta_vec = new_beta_vec
 
-        sucess_flag = self._compute_short_term_utility()
-        if sucess_flag is False:
-            return sucess_flag
+        success_flag = self._compute_short_term_utility()
+        if success_flag is False:
+            return success_flag
         self._compute_exponential_utility_matrix()
         return True
 
@@ -659,8 +522,6 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             # Subtract 1 since we expect dests are 1,2,..., without zero, subtract to align into
             # zero arrays. This is in part left over from sparse array obs format,
             # which should probably be deprecated in favour of more efficient formats only.
-            # print("observation")
-            # print(obs_record[n, :])
             dest_index = obs_record[n, 0] - self.obs_min_legal_index
             orig_index = obs_record[n, 1] - self.obs_min_legal_index
 
@@ -681,7 +542,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
                     self.log_like_stored = OptimiserBase.LL_ERROR_VALUE
                     self.grad_stored = np.ones(n_dims)  # TODO better error gradient?
                     self.flag_log_like_stored = True
-                    print("Parameters are infeasible.")
+                    # print("Parameters are infeasible.")
                     return self.log_like_stored, self.grad_stored
 
                 value_funcs, exp_val_funcs = self._value_functions, self._exp_value_functions
@@ -730,7 +591,6 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             self.log_like_stored = OptimiserBase.LL_ERROR_VALUE
             self.grad_stored = np.ones(self.n_dims)  # TODO better error gradient?
             self.flag_log_like_stored = True
-            # print("Parameters are infeasible.")
             return self.log_like_stored, self.grad_stored
         return self.get_log_likelihood()
 
@@ -773,9 +633,10 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         path_arc_start_nodes = path[:-1] - min_legal_index
         path_arc_finish_nodes = path[1:] - min_legal_index
 
-        # Note -1 is because data struct adds a zero column to put the dest into
-        # TODO unless user pre-empts this and it doesn't
-        final_index_in_data = np.shape(self.network_data.incidence_matrix)[0]-1
+        # tODO think there should be an extra -1 (one for zero based, one for pad col) in every
+        #  case but would need to review to make sure.
+        #  On review, this should be checked globally on obs_record, there is a global max index
+        final_index_in_data = np.shape(self.network_data.incidence_matrix)[0] - 1
 
         if np.any(path_arc_finish_nodes > final_index_in_data):
             raise ValueError("Observation received contains indexes larger than the dimension"
@@ -854,7 +715,6 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         Returns a data.n_dims * shape(M)[0] matrix
         - gradient in each x component at every node"""
         # TODO check if dimensions should be transposed
-        # print("incomplete grad func recieved for expV\n", exp_val_funcs)
         grad_v = np.zeros((self.n_dims, np.shape(m_tilde)[0]))
         identity = sparse.identity(np.shape(m_tilde)[0])
         z = exp_val_funcs  # consistency with maths doc
@@ -868,7 +728,6 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             # spsolve(A,b) == inv(A)*b
             # Note: A.multiply(B) is A .* B for sparse matrices
             grad_v[q, :] = splinalg.spsolve(identity - m_tilde, m_tilde.multiply(chi) @ z)
-            # print(np.linalg.norm((I- m_tilde)*grad_v[q, :] - m_tilde.multiply(chi) * z))
 
         return grad_v
 
@@ -938,27 +797,20 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
         # destination dummy arc is the final column (which was zero until filled)
         dest_dummy_arc_index = m-1
 
-        # print("shapes", m_tilde.shape, i_tilde.shape, local_short_term_util.shape,
-        #       local_exp_util_mat.shape)
-        # print(m_tilde.toarray())
-
         for dest in dest_indices:
             self._apply_dest_column(dest, m_tilde, i_tilde)
 
             z_vec = self._compute_exp_value_function(m_tilde)
-            # print(z_vec)
             with np.errstate(divide='ignore', invalid='ignore'):
                 value_funcs = np.log(z_vec)
             # catch errors manually
             if np.any(~np.isfinite(value_funcs)):  # any infinite (nan/ -inf)
-                print("got infinite valu funcs")
                 if np.any(~np.isfinite(z_vec)):
                     msg = "exp(V(s)) contains nan or infinity"
                 elif np.any(z_vec <= 0):
                     msg = "exp(V(s)) contains negative values"
                 else:
                     msg = "Unknown cause"
-                print("end of error")
                 raise ValueError("Parameter Beta is incorrectly determined, or poorly chosen. "
                                  "Value functions have "
                                  f"no solution [{msg}].")
@@ -970,7 +822,6 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
             # loop through path starts, with same base value functions
             for orig in origin_indices:
                 if orig == dest:  # redundant case
-                    # print("skipping o==d for o=", orig)
                     continue
 
                 # repeat until we have specified number of obs
@@ -983,7 +834,6 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
                     # last nonzero (only really a problem for sparse, but still marginally
                     # more efficient. Perhaps could have flags for data formats? TODO
                     current_path = [dest]
-                    # path_string = f"Start: {orig}"
                     count = 0
                     while current_arc != dest_dummy_arc_index:  # index of augmented dest arc
                         count += 1
@@ -991,8 +841,6 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
                         #   if this is no longer used then we can keep numpy types
                         current_path.append(int(current_arc))
                         if count > iter_cap:
-                            # print("orig, dest =", orig, dest, value_funcs[0])
-                            # print("path failed, in progress is:", path_string)
 
                             raise ValueError(f"Max iterations reached. No path from {orig} to "
                                              f"{dest} was found within cap.")
@@ -1006,8 +854,6 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
                         else:
                             # nd-arrays are smart enough to work out they are 1d
                             neighbour_arcs = current_incidence_col.nonzero()[0]
-                        # print(neighbour_arcs, "curr inc", current_incidence_col)
-                        # print('\t', current_incidence_col.nonzero())
 
                         # TODO it could be cheaper to block generate these in larger batches
                         eps = rng.gumbel(loc=-np.euler_gamma, scale=1, size=len(neighbour_arcs))
@@ -1022,12 +868,9 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
 
                         next_arc_index = np.argmax(value_functions_observed)
                         next_arc = neighbour_arcs[next_arc_index]
-                        # print(np.max(value_functions_observed), next_arc)
-                        # path_string += f" -> {next_arc}"
                         current_arc = next_arc
                         # offset stops arc number being recorded as zero
 
-                    # print(path_string + ": Fin")
                     if len(current_path) <= 2:
                         continue  # this is worthless information saying we got from O to D in one
                         # step

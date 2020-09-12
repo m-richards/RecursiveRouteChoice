@@ -4,6 +4,7 @@ or generate by hand/ other means.
 Currently just for processing angles"""
 import numpy as np
 import scipy
+from scipy.sparse import coo_matrix
 PI = 3.1415926535
 LEFT_TURN_THRESH = -30 * PI/180  # 30 degrees
 U_TURN_THRESH = 177 * PI/180  # radians # TODO this is very tight
@@ -45,14 +46,10 @@ class AngleProcessor(object):
         masked_rows = nz_rows[nz_u_turns_mask]
         masked_cols = nz_cols[nz_u_turns_mask]
         vals = np.ones(len(masked_cols), dtype='int')
-        u_turn_mat = scipy.sparse.coo_matrix(
+        u_turn_mat = coo_matrix(
             (vals, (masked_rows, masked_cols)), shape=turn_angle_mat.shape, dtype='int')
 
         return u_turn_mat.todok()
-
-        # return ((np.abs(turn_angles_cts) > u_turn_thresh)
-        #         & (np.abs(turn_angles_cts) < 2 * PI * NEAR_2PI_MULTIPLIER)
-        #         ).astype(int).todok()
 
     @classmethod
     def get_left_turn_categorical_matrix(cls, turn_angle_mat, left_turn_thresh=None,
@@ -70,7 +67,6 @@ class AngleProcessor(object):
         nz_left_turns_mask = np.array(
             (turn_angle_mat[nz_rows, nz_cols].toarray() < left_turn_thresh) &  # turn is to the left
             (turn_angle_mat[nz_rows, nz_cols].toarray() > -u_turn_thresh))[0]  # turn is not a uturn
-        # note testing todense suggests faster or at least not worse, supresses error
         masked_rows = nz_rows[nz_left_turns_mask]
         masked_cols = nz_cols[nz_left_turns_mask]
         vals = np.ones(len(masked_cols), dtype='int')
@@ -96,7 +92,6 @@ class AngleProcessor(object):
             (turn_angle_mat[nz_rows, nz_cols].toarray() > right_turn_thresh) &  # turn is to the
             # right
             (turn_angle_mat[nz_rows, nz_cols].toarray() < u_turn_thresh))[0]  # turn is not a uturn
-        # note testing todense suggests faster or at least not worse, supresses error
         masked_rows = nz_rows[nz_right_turns_mask]
         masked_cols = nz_cols[nz_right_turns_mask]
         vals = np.ones(len(masked_cols), dtype='int')
@@ -139,8 +134,6 @@ class AngleProcessor(object):
         # sparse matrices. Also is more efficient to only do comparison on
         # nonzero (since this is dense)
         nz_rows, nz_cols = turn_angle_mat.nonzero()
-        # print("side", side_turn_thresh)
-        # print("mat\n", turn_angle_mat.toarray())
         nz_left_turns_mask = np.array(
             # not a left turn
             (turn_angle_mat[nz_rows, nz_cols].toarray() > -side_turn_thresh) &
@@ -150,24 +143,15 @@ class AngleProcessor(object):
         masked_rows = nz_rows[nz_left_turns_mask]
         masked_cols = nz_cols[nz_left_turns_mask]
         vals = np.ones(len(masked_cols), dtype='int')
-        neutral_turn_mat = scipy.sparse.coo_matrix(
+        neutral_turn_mat = coo_matrix(
             (vals, (masked_rows, masked_cols)), shape=turn_angle_mat.shape, dtype='int')
         # return element wise product with incident mat
-        # print("neutral \n", neutral_turn_mat.toarray())
-        # print(neutral_turn_mat.shape, incidence_mat.shape)
         return neutral_turn_mat.todok()
 
     @classmethod
     def to_radians(cls, angle_turn_mat):
 
         return angle_turn_mat * PI / 180.0
-
-
-#
-# def get_uturn_categorical_matrix(turn_angle_mat, u_turn_thresh=None):
-#     """Assumes that angles are between -pi and pi"""
-#     u_turn_thresh = u_turn_thresh if u_turn_thresh is not None else U_TURN_THRESH
-#     return (np.abs(turn_angle_mat) > u_turn_thresh).astype(int).todok()
 
 
 def get_incorrect_tien_turn_matrices(turn_angle_mat, left_turn_thresh=LEFT_TURN_THRESH,

@@ -3,7 +3,7 @@ from enum import Enum, auto
 import numpy as np
 from scipy import linalg
 
-from .constants import EPSILON_DOUBLE_PRECISION
+EPSILON_DOUBLE_PRECISION = 2.22e-16
 
 
 class OptimHessianType(Enum):
