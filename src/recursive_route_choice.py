@@ -615,6 +615,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         mu_ll_grad_cumulative = np.zeros(n_dims)  # gradient combined across all observations
 
         # iterate through observation number
+        dest_index_old = -np.nan
         for n in range(self.obs_count):
             # TODO we should be sorting by dest index to avoid recomputation
             #   if dests are the same we don't need to recompute value functions
@@ -629,19 +630,29 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             dest_index = obs_record[n, 0] - self.obs_min_legal_index
             orig_index = obs_record[n, 1] - self.obs_min_legal_index
 
+            # actually need to do this unless I cache M and reset at the top of the function call
+            # tODO this would be free minor speed I think
             m_tilde, i_tilde = self._apply_dest_column(dest_index, m_tilde, i_tilde)
 
-            # Now get exponentiated value funcs
-            error_flag = self.compute_value_function(m_tilde)
-            # If we had numerical issues in computing value functions
-            if error_flag:  # terminate early with error vals
-                self.log_like_stored = OptimiserBase.LL_ERROR_VALUE
-                self.grad_stored = np.ones(n_dims)  # TODO better error gradient?
-                self.flag_log_like_stored = True
-                print("Parameters are infeasible.")
-                return self.log_like_stored, self.grad_stored
+            # value functions are unchanged so we can reuse them
+            if dest_index == dest_index_old:
+                value_funcs, exp_val_funcs = self._value_functions, self._exp_value_functions
+                # TODO if this holds and the origin is the same as before we can reuse grad V(s_0)
+            else:
 
-            value_funcs, exp_val_funcs = self._value_functions, self._exp_value_functions
+                # Now get exponentiated value funcs
+                error_flag = self.compute_value_function(m_tilde)
+                # If we had numerical issues in computing value functions
+                if error_flag:  # terminate early with error vals
+                    self.log_like_stored = OptimiserBase.LL_ERROR_VALUE
+                    self.grad_stored = np.ones(n_dims)  # TODO better error gradient?
+                    self.flag_log_like_stored = True
+                    print("Parameters are infeasible.")
+                    return self.log_like_stored, self.grad_stored
+
+                value_funcs, exp_val_funcs = self._value_functions, self._exp_value_functions
+
+            dest_index_old = dest_index
             # Gradient and log like depend on origin values
 
             # respective sub function? probably yes
