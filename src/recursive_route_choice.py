@@ -525,6 +525,9 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
                 # the dest and we must be using padding. Then zero is an illegal index
                 if np.any((observations_record[:, -1] == 0) & (observations_record[:, 0] != 0)):
                     self.obs_min_legal_index = 1
+                else:
+                    self.obs_min_legal_index = ak.min(observations_record, axis=None)
+
             else:  # just get the minimum index used, which should be zero or 1
                 self.obs_min_legal_index = ak.min(observations_record, axis=None)
                 #  TODO no unit test written for the zero case
