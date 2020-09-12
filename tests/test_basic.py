@@ -175,7 +175,28 @@ class TestSimpleCases(object):
                                                left, u_turn, t_time_incidence,
                                                incidence_mat, obs_record)
 
+    def test_example_tiny_modified_awkward_array_in_expected_format(self):
+        """Test's awkward array input obs format when it is actually zero indexed and ragged
+        data, not square. See that output is consistent in this case"""
+        subfolder = "ExampleTinyModifiedObs"  # big data from classical v2
+        folder = join("Datasets", subfolder)
 
+        obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=True)
+        import awkward1 as ak
+        obs_mat = obs_mat.toarray()
+        obs_list_raw = obs_mat.tolist()
+        # we know that obs mat is square and 1 indexed with zero for padding (sparse originally)
+        obs_conv = [[(i - 1) for i in row if i != 0] for row in obs_list_raw]
+        obs_record = ak.from_iter(obs_conv)
+        incidence_mat, travel_times_mat, angle_cts_mat = attrs
+        left, _, _, u_turn = AngleProcessor.get_turn_categorical_matrices(angle_cts_mat,
+                                                                          incidence_mat)
+        # incidence matrix which only has nonzero travel times
+        # - rather than what is specified in file
+        t_time_incidence = (travel_times_mat > 0).astype('int').todok()
+        self._tiny_modified_common_data_checks(travel_times_mat,
+                                               left, u_turn, t_time_incidence,
+                                               incidence_mat, obs_record)
 
     def test_turn_angle_matrices(self):
         """ Note the problem of generating these kind of matrices is ignored"""

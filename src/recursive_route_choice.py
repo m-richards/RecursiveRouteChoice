@@ -530,7 +530,6 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
 
             else:  # just get the minimum index used, which should be zero or 1
                 self.obs_min_legal_index = ak.min(observations_record, axis=None)
-                #  TODO no unit test written for the zero case
         self.obs_record = observations_record
         # finish initialising
         self.get_log_likelihood()  # need to compute starting LL for optimiser
@@ -551,7 +550,8 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
                 try:
                     return ak.from_iter(observations_record)
                 except Exception as e:  # TODO BAD
-                    raise TypeError("Failed to parse input obs as Awkward Array.") from e
+                    raise TypeError("Obs format invalid, failed to parse input obs "
+                                    "as Awkward Array.") from e
             else:
                 raise TypeError("List observation format must contain list of lists, "
                                 "not a singleton list")
