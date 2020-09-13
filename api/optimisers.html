@@ -96,11 +96,11 @@
 <li class="toctree-l1"><a class="reference internal" href="data_processing.html">data_processing module</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">optimisers package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#optimisers-extra-optim-module">optimisers.extra_optim module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#optimisers-hessian-approx-module">optimisers.hessian_approx module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#optimisers-line-search-module">optimisers.line_search module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#optimisers-optimisers-file-module">optimisers.optimisers_file module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-contents">Module contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-optimisers.extra_optim">optimisers.extra_optim module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-optimisers.hessian_approx">optimisers.hessian_approx module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-optimisers.line_search">optimisers.line_search module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-optimisers.optimisers_file">optimisers.optimisers_file module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-optimisers">Module contents</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="recursive_route_choice.html">recursive_route_choice module</a></li>
@@ -174,20 +174,399 @@
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="optimisers-extra-optim-module">
-<h2>optimisers.extra_optim module<a class="headerlink" href="#optimisers-extra-optim-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-optimisers.extra_optim">
+<span id="optimisers-extra-optim-module"></span><h2>optimisers.extra_optim module<a class="headerlink" href="#module-optimisers.extra_optim" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="optimisers.extra_optim.OptimFunctionState">
+<em class="property">class </em><code class="sig-prename descclassname">optimisers.extra_optim.</code><code class="sig-name descname">OptimFunctionState</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">grad</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">hessian</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">hessian_approx_type</span></em>, <em class="sig-param"><span class="n">val_and_grad_evaluation_function</span></em>, <em class="sig-param"><span class="n">beta_vec</span></em>, <em class="sig-param"><span class="n">function_evals_stat</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.extra_optim.OptimFunctionState" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Data Class to store elements of log likelihood state &amp; grad which are relevant both
+in the computation of the log likelihood and also the global optimisation algorithm</p>
+<p>“Bridge” between RL and the more general optimisation code</p>
+<dl class="py method">
+<dt id="optimisers.extra_optim.OptimFunctionState.val_grad_function">
+<code class="sig-name descname">val_grad_function</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">beta_vec</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.extra_optim.OptimFunctionState.val_grad_function" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </div>
-<div class="section" id="optimisers-hessian-approx-module">
-<h2>optimisers.hessian_approx module<a class="headerlink" href="#optimisers-hessian-approx-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-optimisers.hessian_approx">
+<span id="optimisers-hessian-approx-module"></span><h2>optimisers.hessian_approx module<a class="headerlink" href="#module-optimisers.hessian_approx" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="optimisers.hessian_approx.OptimHessianType">
+<em class="property">class </em><code class="sig-prename descclassname">optimisers.hessian_approx.</code><code class="sig-name descname">OptimHessianType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.hessian_approx.OptimHessianType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></a></p>
+<p>An enumeration.</p>
+<dl class="py attribute">
+<dt id="optimisers.hessian_approx.OptimHessianType.BFGS">
+<code class="sig-name descname">BFGS</code><em class="property"> = 1</em><a class="headerlink" href="#optimisers.hessian_approx.OptimHessianType.BFGS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="optimisers.hessian_approx.update_hessian_approx">
+<code class="sig-prename descclassname">optimisers.hessian_approx.</code><code class="sig-name descname">update_hessian_approx</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">approx_method</span></em>, <em class="sig-param"><span class="n">step</span></em>, <em class="sig-param"><span class="n">delta_grad</span></em>, <em class="sig-param"><span class="n">hessian</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.hessian_approx.update_hessian_approx" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
-<div class="section" id="optimisers-line-search-module">
-<h2>optimisers.line_search module<a class="headerlink" href="#optimisers-line-search-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-optimisers.line_search">
+<span id="optimisers-line-search-module"></span><h2>optimisers.line_search module<a class="headerlink" href="#module-optimisers.line_search" title="Permalink to this headline">¶</a></h2>
+<p>% More and Thuente Arc Search
+% This is a port of Tien Mai’s  matlab code which is
+a modified implementation of the algorithm documented in:
+%
+% J. J. More and D. J. Thuente. Line Search Algorithms with Guaranteed
+% Sufficient Decrease. TOMS 20-3. September 1994. pg 286-307.</p>
+<dl class="py class">
+<dt id="optimisers.line_search.LineSearchFlags">
+<em class="property">class </em><code class="sig-prename descclassname">optimisers.line_search.</code><code class="sig-name descname">LineSearchFlags</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.line_search.LineSearchFlags" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></a></p>
+<p>An enumeration.</p>
+<dl class="py attribute">
+<dt id="optimisers.line_search.LineSearchFlags.TERMINATION_INTERVAL_TOO_SMALL">
+<code class="sig-name descname">TERMINATION_INTERVAL_TOO_SMALL</code><em class="property"> = 4</em><a class="headerlink" href="#optimisers.line_search.LineSearchFlags.TERMINATION_INTERVAL_TOO_SMALL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="optimisers.line_search.LineSearchFlags.TERMINATION_MAX_FUNC_EVALS">
+<code class="sig-name descname">TERMINATION_MAX_FUNC_EVALS</code><em class="property"> = 5</em><a class="headerlink" href="#optimisers.line_search.LineSearchFlags.TERMINATION_MAX_FUNC_EVALS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="optimisers.line_search.LineSearchFlags.TERMINATION_ROUNDING_ERROR">
+<code class="sig-name descname">TERMINATION_ROUNDING_ERROR</code><em class="property"> = 1</em><a class="headerlink" href="#optimisers.line_search.LineSearchFlags.TERMINATION_ROUNDING_ERROR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="optimisers.line_search.LineSearchFlags.TERMINATION_STPMAX">
+<code class="sig-name descname">TERMINATION_STPMAX</code><em class="property"> = 2</em><a class="headerlink" href="#optimisers.line_search.LineSearchFlags.TERMINATION_STPMAX" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="optimisers.line_search.LineSearchFlags.TERMINATION_STPMIN">
+<code class="sig-name descname">TERMINATION_STPMIN</code><em class="property"> = 3</em><a class="headerlink" href="#optimisers.line_search.LineSearchFlags.TERMINATION_STPMIN" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="optimisers.line_search.LineSearchFlags.TERMINATION_STRONG_WOLFE_AND_STPMAX">
+<code class="sig-name descname">TERMINATION_STRONG_WOLFE_AND_STPMAX</code><em class="property"> = 7</em><a class="headerlink" href="#optimisers.line_search.LineSearchFlags.TERMINATION_STRONG_WOLFE_AND_STPMAX" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="optimisers.line_search.LineSearchFlags.TERMINATION_STRONG_WOLFE_MET">
+<code class="sig-name descname">TERMINATION_STRONG_WOLFE_MET</code><em class="property"> = 6</em><a class="headerlink" href="#optimisers.line_search.LineSearchFlags.TERMINATION_STRONG_WOLFE_MET" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="optimisers.line_search.line_search_asrch">
+<code class="sig-prename descclassname">optimisers.line_search.</code><code class="sig-name descname">line_search_asrch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fcn</span></em>, <em class="sig-param"><span class="n">x</span></em>, <em class="sig-param"><span class="n">f</span></em>, <em class="sig-param"><span class="n">g</span></em>, <em class="sig-param"><span class="n">arc</span></em>, <em class="sig-param"><span class="n">stp</span></em>, <em class="sig-param"><span class="n">maxfev</span></em>, <em class="sig-param"><span class="n">ncur</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">ftol</span><span class="o">=</span><span class="default_value">0.0001</span></em>, <em class="sig-param"><span class="n">gtol</span><span class="o">=</span><span class="default_value">0.9</span></em>, <em class="sig-param"><span class="n">xtol</span><span class="o">=</span><span class="default_value">2.2e-16</span></em>, <em class="sig-param"><span class="n">stpmin</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">stpmax</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">print_flag</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">fname</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">bisect</span><span class="o">=</span><span class="default_value">0.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.line_search.line_search_asrch" title="Permalink to this definition">¶</a></dt>
+<dd><p>outputs [x f g stp info_out_flag nfev] =
+% list of variables and parameters
+% extrap = parameter for extrapolations
+% is_bracketed = true once bracket containing solution is found
+% info_out_flag = status flag for output
+% nfev = number of function evaluations
+% s = displacement vector from arc
+% ds = derivative of displacement vector from arc
+%
+% stx = step size at “l” point
+% fx = function value at “l” point
+% dx = derivative of search function at “l” point
+%
+% sty = step size at “u” point
+% fy = function value at “u” point
+% dy = derivative of search function at “u” point
+%
+% stp = trial step size
+% fp = function value at trial step size
+% dp = derivative of search function at trial step size
+%
+% mfx = modified function value at “l” point
+% mdx = modified derivative value at “l” point
+%
+% mfp = modified function value at trial point
+% mdp = modified derivative value at trial point
+%
+% Note al and au define the bounds of the bracket if one is found. al and au
+% are the endpoints of the bracket, but are not ordered.
+%
+% finit = initial function value
+% ginit = initial gradient
+% amin = minimium step size
+% amax = maximum step size
+% ucase = arc search update case</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="optimisers.line_search.line_search_astep">
+<code class="sig-prename descclassname">optimisers.line_search.</code><code class="sig-name descname">line_search_astep</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">stx</span></em>, <em class="sig-param"><span class="n">fx</span></em>, <em class="sig-param"><span class="n">dx</span></em>, <em class="sig-param"><span class="n">sty</span></em>, <em class="sig-param"><span class="n">fy</span></em>, <em class="sig-param"><span class="n">dy</span></em>, <em class="sig-param"><span class="n">stp</span></em>, <em class="sig-param"><span class="n">fp</span></em>, <em class="sig-param"><span class="n">dp</span></em>, <em class="sig-param"><span class="n">brackt</span></em>, <em class="sig-param"><span class="n">stpmin</span></em>, <em class="sig-param"><span class="n">stpmax</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.line_search.line_search_astep" title="Permalink to this definition">¶</a></dt>
+<dd><p>% This function computes a safeguarded step for a search
+% procedure and updates an interval that contains a step that
+% satisfies a sufficient decrease and a curvature condition.
+%
+% The parameter stx contains the step with the least function
+% value. If brackt is set to true (1) then a minimizer has
+% been bracketed in an interval with endpoints stx and sty.
+% The parameter stp contains the current step.
+% The subroutine assumes that if brackt is set to true then
+%
+% min(stx,sty) &lt; stp &lt; max(stx,sty),
+%
+% and that the derivative at stx is negative in the direction
+% of the step.
+%
+% The subroutine statement is
+%
+% stf = line_search_astep(stx,fx,dx,sty,fy,dy,stp,fp,dp,brackt,stpmin,stpmax)
+%
+% where
+%
+% stx is a double precision variable.
+% On entry stx is the best step obtained so far and is an
+% endpoint of the interval that contains the minimizer.
+%
+% fx is a double precision variable.
+% On entry fx is the function at stx.
+%
+% dx is a double precision variable.
+% On entry dx is the derivative of the function at
+% stx. The derivative must be negative in the direction of
+% the step, that is, dx and stp - stx must have opposite
+% signs.
+%
+% sty is a double precision variable.
+% On entry sty is the second endpoint of the interval that
+% contains the minimizer.
+%
+% fy is a double precision variable.
+% On entry fy is the function at sty.
+%
+% dy is a double precision variable.
+% On entry dy is the derivative of the function at sty.
+%
+% stp is a double precision variable.
+% On entry stp is the current step. If brackt is set to true
+% then on input stp must be between stx and sty.
+%
+% fp is a double precision variable.
+% On entry fp is the function at stp
+%
+% dp is a double precision variable.
+% On entry dp is the the derivative of the function at stp.
+%
+% brackt is an logical variable.
+% On entry brackt specifies if a minimizer has been bracketed.
+% Initially brackt must be set to .false.
+%
+% stpmin is a double precision variable.
+% On entry stpmin is a lower bound for the step.
+%
+% stpmax is a double precision variable.
+% On entry stpmax is an upper bound for the step.
+%
+% MINPACK-1 Project. June 1983
+% Argonne National Laboratory.
+% Jorge J. More’ and David J. Thuente.
+%
+% MINPACK-2 Project. November 1993.
+% Argonne National Laboratory and University of Minnesota.
+% Brett M. Averick and Jorge J. More’.
+:return:
+:rtype:</p>
+</dd></dl>
+
 </div>
-<div class="section" id="optimisers-optimisers-file-module">
-<h2>optimisers.optimisers_file module<a class="headerlink" href="#optimisers-optimisers-file-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-optimisers.optimisers_file">
+<span id="optimisers-optimisers-file-module"></span><h2>optimisers.optimisers_file module<a class="headerlink" href="#module-optimisers.optimisers_file" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="optimisers.optimisers_file.CustomOptimiserBase">
+<em class="property">class </em><code class="sig-prename descclassname">optimisers.optimisers_file.</code><code class="sig-name descname">CustomOptimiserBase</code><span class="sig-paren">(</span><em class="sig-param">hessian_type=&lt;OptimHessianType.BFGS: 1&gt;</em>, <em class="sig-param">max_iter=4</em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.CustomOptimiserBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#optimisers.optimisers_file.OptimiserBase" title="optimisers.optimisers_file.OptimiserBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">optimisers.optimisers_file.OptimiserBase</span></code></a></p>
+<p>Global wrapper object around all optim algs, delegate to sub classes for individual.
+Need to be clear about which properties are effectively read only and which store state.</p>
+<p>Reviewed perspective after implementing Scipy support is that this should be allowed to know
+details of recursive logit - and it itself may wrap a generic algorithm.</p>
+<dl class="py method">
+<dt id="optimisers.optimisers_file.CustomOptimiserBase.check_stopping_criteria">
+<code class="sig-name descname">check_stopping_criteria</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.CustomOptimiserBase.check_stopping_criteria" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="optimisers.optimisers_file.CustomOptimiserBase.compute_relative_gradient_non_static">
+<code class="sig-name descname">compute_relative_gradient_non_static</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">typf</span><span class="o">=</span><span class="default_value">1.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.CustomOptimiserBase.compute_relative_gradient_non_static" title="Permalink to this definition">¶</a></dt>
+<dd><p>% Compute norm of relative gradient.
+Note this exists as we need this information in the stopping criteria,
+where getting the fields with explicit references would be messy</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="optimisers.optimisers_file.CustomOptimiserBase.iterate_step">
+<code class="sig-name descname">iterate_step</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">output_file</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">debug_counter</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.CustomOptimiserBase.iterate_step" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="optimisers.optimisers_file.CustomOptimiserBase.set_beta_vec">
+<code class="sig-name descname">set_beta_vec</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">beta_vec</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.CustomOptimiserBase.set_beta_vec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="optimisers.optimisers_file.CustomOptimiserBase.set_current_value">
+<code class="sig-name descname">set_current_value</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.CustomOptimiserBase.set_current_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="optimisers.optimisers_file.LineSearchOptimiser">
+<em class="property">class </em><code class="sig-prename descclassname">optimisers.optimisers_file.</code><code class="sig-name descname">LineSearchOptimiser</code><span class="sig-paren">(</span><em class="sig-param">hessian_type=&lt;OptimHessianType.BFGS: 1&gt;</em>, <em class="sig-param">max_iter=4</em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.LineSearchOptimiser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#optimisers.optimisers_file.CustomOptimiserBase" title="optimisers.optimisers_file.CustomOptimiserBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">optimisers.optimisers_file.CustomOptimiserBase</span></code></a></p>
+<dl class="py attribute">
+<dt id="optimisers.optimisers_file.LineSearchOptimiser.CURVATURE_CONDITION_PARAMETER">
+<code class="sig-name descname">CURVATURE_CONDITION_PARAMETER</code><em class="property"> = 0.9</em><a class="headerlink" href="#optimisers.optimisers_file.LineSearchOptimiser.CURVATURE_CONDITION_PARAMETER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="optimisers.optimisers_file.LineSearchOptimiser.INITIAL_STEP_LENGTH">
+<code class="sig-name descname">INITIAL_STEP_LENGTH</code><em class="property"> = 1.0</em><a class="headerlink" href="#optimisers.optimisers_file.LineSearchOptimiser.INITIAL_STEP_LENGTH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="optimisers.optimisers_file.LineSearchOptimiser.MAXIMUM_STEP_LENGTH">
+<code class="sig-name descname">MAXIMUM_STEP_LENGTH</code><em class="property"> = 1000</em><a class="headerlink" href="#optimisers.optimisers_file.LineSearchOptimiser.MAXIMUM_STEP_LENGTH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="optimisers.optimisers_file.LineSearchOptimiser.METHOD_FLAG">
+<code class="sig-name descname">METHOD_FLAG</code><em class="property"> = 1</em><a class="headerlink" href="#optimisers.optimisers_file.LineSearchOptimiser.METHOD_FLAG" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="optimisers.optimisers_file.LineSearchOptimiser.MINIMUM_STEP_LENGTH">
+<code class="sig-name descname">MINIMUM_STEP_LENGTH</code><em class="property"> = 0</em><a class="headerlink" href="#optimisers.optimisers_file.LineSearchOptimiser.MINIMUM_STEP_LENGTH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="optimisers.optimisers_file.LineSearchOptimiser.NEGATIVE_CURVATURE_PARAMETER">
+<code class="sig-name descname">NEGATIVE_CURVATURE_PARAMETER</code><em class="property"> = 0.0</em><a class="headerlink" href="#optimisers.optimisers_file.LineSearchOptimiser.NEGATIVE_CURVATURE_PARAMETER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="optimisers.optimisers_file.LineSearchOptimiser.SUFFICIENT_DECREASE_PARAMETER">
+<code class="sig-name descname">SUFFICIENT_DECREASE_PARAMETER</code><em class="property"> = 0.0001</em><a class="headerlink" href="#optimisers.optimisers_file.LineSearchOptimiser.SUFFICIENT_DECREASE_PARAMETER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="optimisers.optimisers_file.LineSearchOptimiser.X_TOLERANCE">
+<code class="sig-name descname">X_TOLERANCE</code><em class="property"> = 2.2e-16</em><a class="headerlink" href="#optimisers.optimisers_file.LineSearchOptimiser.X_TOLERANCE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="optimisers.optimisers_file.LineSearchOptimiser.get_iteration_log">
+<code class="sig-name descname">get_iteration_log</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">optim_vals</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#optimisers.extra_optim.OptimFunctionState" title="optimisers.extra_optim.OptimFunctionState">optimisers.extra_optim.OptimFunctionState</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.LineSearchOptimiser.get_iteration_log" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="optimisers.optimisers_file.LineSearchOptimiser.iterate_step">
+<code class="sig-name descname">iterate_step</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">optim_vals</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#optimisers.extra_optim.OptimFunctionState" title="optimisers.extra_optim.OptimFunctionState">optimisers.extra_optim.OptimFunctionState</a></span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">output_file</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">debug_counter</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.LineSearchOptimiser.iterate_step" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs a single step of the line search iteration,
+evaluating the value function and taking a step based upon the gradient</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="optimisers.optimisers_file.OptimType">
+<em class="property">class </em><code class="sig-prename descclassname">optimisers.optimisers_file.</code><code class="sig-name descname">OptimType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.OptimType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></a></p>
+<p>An enumeration.</p>
+<dl class="py attribute">
+<dt id="optimisers.optimisers_file.OptimType.LINE_SEARCH">
+<code class="sig-name descname">LINE_SEARCH</code><em class="property"> = 1</em><a class="headerlink" href="#optimisers.optimisers_file.OptimType.LINE_SEARCH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="optimisers.optimisers_file.OptimType.TRUST_REGION">
+<code class="sig-name descname">TRUST_REGION</code><em class="property"> = 2</em><a class="headerlink" href="#optimisers.optimisers_file.OptimType.TRUST_REGION" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="optimisers.optimisers_file.OptimiserBase">
+<em class="property">class </em><code class="sig-prename descclassname">optimisers.optimisers_file.</code><code class="sig-name descname">OptimiserBase</code><a class="headerlink" href="#optimisers.optimisers_file.OptimiserBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></a></p>
+<p>Base class for both custom and scipy to inherit from</p>
+<dl class="py attribute">
+<dt id="optimisers.optimisers_file.OptimiserBase.LL_ERROR_VALUE">
+<code class="sig-name descname">LL_ERROR_VALUE</code><em class="property"> = 99999</em><a class="headerlink" href="#optimisers.optimisers_file.OptimiserBase.LL_ERROR_VALUE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="optimisers.optimisers_file.OptimiserBase.METHOD_FLAG">
+<code class="sig-name descname">METHOD_FLAG</code><em class="property"> = None</em><a class="headerlink" href="#optimisers.optimisers_file.OptimiserBase.METHOD_FLAG" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="optimisers.optimisers_file.OptimiserBase.NUMERICAL_ERROR_THRESH">
+<code class="sig-name descname">NUMERICAL_ERROR_THRESH</code><em class="property"> = -0.001</em><a class="headerlink" href="#optimisers.optimisers_file.OptimiserBase.NUMERICAL_ERROR_THRESH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="optimisers.optimisers_file.OptimiserBase.RESIDUAL">
+<code class="sig-name descname">RESIDUAL</code><em class="property"> = 0.001</em><a class="headerlink" href="#optimisers.optimisers_file.OptimiserBase.RESIDUAL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="optimisers.optimisers_file.OptimiserBase.get_iteration_log">
+<code class="sig-name descname">get_iteration_log</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">optim_vals</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#optimisers.extra_optim.OptimFunctionState" title="optimisers.extra_optim.OptimFunctionState">optimisers.extra_optim.OptimFunctionState</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.OptimiserBase.get_iteration_log" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="optimisers.optimisers_file.ScipyOptimiser">
+<em class="property">class </em><code class="sig-prename descclassname">optimisers.optimisers_file.</code><code class="sig-name descname">ScipyOptimiser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">method</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)">str</a></span></em>, <em class="sig-param"><span class="n">options</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">fd_options</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.ScipyOptimiser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#optimisers.optimisers_file.OptimiserBase" title="optimisers.optimisers_file.OptimiserBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">optimisers.optimisers_file.OptimiserBase</span></code></a></p>
+<p>Wrapper around scipy.optimize.minimize to conform to the format we
+require.</p>
+<dl class="py attribute">
+<dt id="optimisers.optimisers_file.ScipyOptimiser.METHOD_FLAG">
+<code class="sig-name descname">METHOD_FLAG</code><em class="property"> = 'scipy-master'</em><a class="headerlink" href="#optimisers.optimisers_file.ScipyOptimiser.METHOD_FLAG" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="optimisers.optimisers_file.ScipyOptimiser.solve">
+<code class="sig-name descname">solve</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">optim_function_state</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#optimisers.extra_optim.OptimFunctionState" title="optimisers.extra_optim.OptimFunctionState">optimisers.extra_optim.OptimFunctionState</a></span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">output_file</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.ScipyOptimiser.solve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solve for optimal beta which minimises the negative log likelihood.
+Analogous to iterate step method on custom alg, except that these methods don’t
+require step by step intervention.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="optimisers.optimisers_file.TrustRegionOptimiser">
+<em class="property">class </em><code class="sig-prename descclassname">optimisers.optimisers_file.</code><code class="sig-name descname">TrustRegionOptimiser</code><span class="sig-paren">(</span><em class="sig-param">hessian_type=&lt;OptimHessianType.BFGS: 1&gt;</em>, <em class="sig-param">max_iter=4</em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.TrustRegionOptimiser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#optimisers.optimisers_file.CustomOptimiserBase" title="optimisers.optimisers_file.CustomOptimiserBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">optimisers.optimisers_file.CustomOptimiserBase</span></code></a></p>
+<dl class="py attribute">
+<dt id="optimisers.optimisers_file.TrustRegionOptimiser.METHOD_FLAG">
+<code class="sig-name descname">METHOD_FLAG</code><em class="property"> = 2</em><a class="headerlink" href="#optimisers.optimisers_file.TrustRegionOptimiser.METHOD_FLAG" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="optimisers.optimisers_file.TrustRegionOptimiser.method">
+<code class="sig-name descname">method</code><em class="property"> = 2</em><a class="headerlink" href="#optimisers.optimisers_file.TrustRegionOptimiser.method" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </div>
-<div class="section" id="module-contents">
-<h2>Module contents<a class="headerlink" href="#module-contents" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-optimisers">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-optimisers" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
