@@ -42,6 +42,12 @@ Installation
 Currently one can install from the repository directly using pip::
 
    pip install git+https://github.com/m-richards/RecursiveLogit.git
+   pip install -r requirements.txt
+
+It is recommended to use some kind of virtual environment to avoid conflicting package versions.
+There is also a :code:`requirements_strict.txt` which explicitly specifies package versions. This
+will likely contain less up to date package versions, but should always work regardless of future
+api changes of the dependencies.
 
 Hopefully this will also appear on PyPi at some point.
 

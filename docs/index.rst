@@ -3,8 +3,12 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to RecursiveRouteChoice's documentation!
-================================================
+Documentation for RecursiveRouteChoice
+======================================
+RecursiveRouteChoice is an efficient  python implementation of the recursive logit model for
+route choice. It supports both both prediction and estimation. See Overview and Installation for
+some more details.
+
 ..
     Put a readme in
 .. toctree::
