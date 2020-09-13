@@ -184,6 +184,23 @@
 in the computation of the log likelihood and also the global optimisation algorithm</p>
 <p>“Bridge” between RL and the more general optimisation code</p>
 <dl class="py method">
+<dt id="optimisers.extra_optim.OptimFunctionState.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">grad</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">hessian</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">hessian_approx_type</span></em>, <em class="sig-param"><span class="n">val_and_grad_evaluation_function</span></em>, <em class="sig-param"><span class="n">beta_vec</span></em>, <em class="sig-param"><span class="n">function_evals_stat</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.extra_optim.OptimFunctionState.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>value</strong> – </p></li>
+<li><p><strong>grad</strong> – </p></li>
+<li><p><strong>hessian</strong> – </p></li>
+<li><p><strong>val_and_grad_evaluation_function</strong> – function which takes in x_vec and returns the
+value and gradient at that particular x</p></li>
+<li><p><strong>beta_vec</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="optimisers.extra_optim.OptimFunctionState.val_grad_function">
 <code class="sig-name descname">val_grad_function</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">beta_vec</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.extra_optim.OptimFunctionState.val_grad_function" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -391,6 +408,12 @@ Need to be clear about which properties are effectively read only and which stor
 <p>Reviewed perspective after implementing Scipy support is that this should be allowed to know
 details of recursive logit - and it itself may wrap a generic algorithm.</p>
 <dl class="py method">
+<dt id="optimisers.optimisers_file.CustomOptimiserBase.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">hessian_type=&lt;OptimHessianType.BFGS: 1&gt;</em>, <em class="sig-param">max_iter=4</em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.CustomOptimiserBase.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt id="optimisers.optimisers_file.CustomOptimiserBase.check_stopping_criteria">
 <code class="sig-name descname">check_stopping_criteria</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.CustomOptimiserBase.check_stopping_criteria" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -465,6 +488,12 @@ where getting the fields with explicit references would be messy</p>
 <dd></dd></dl>
 
 <dl class="py method">
+<dt id="optimisers.optimisers_file.LineSearchOptimiser.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">hessian_type=&lt;OptimHessianType.BFGS: 1&gt;</em>, <em class="sig-param">max_iter=4</em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.LineSearchOptimiser.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt id="optimisers.optimisers_file.LineSearchOptimiser.get_iteration_log">
 <code class="sig-name descname">get_iteration_log</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">optim_vals</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#optimisers.extra_optim.OptimFunctionState" title="optimisers.extra_optim.OptimFunctionState">optimisers.extra_optim.OptimFunctionState</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.LineSearchOptimiser.get_iteration_log" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -521,6 +550,12 @@ evaluating the value function and taking a step based upon the gradient</p>
 <dd></dd></dl>
 
 <dl class="py method">
+<dt id="optimisers.optimisers_file.OptimiserBase.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.OptimiserBase.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt id="optimisers.optimisers_file.OptimiserBase.get_iteration_log">
 <code class="sig-name descname">get_iteration_log</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">optim_vals</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#optimisers.extra_optim.OptimFunctionState" title="optimisers.extra_optim.OptimFunctionState">optimisers.extra_optim.OptimFunctionState</a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.OptimiserBase.get_iteration_log" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -537,6 +572,12 @@ require.</p>
 <dt id="optimisers.optimisers_file.ScipyOptimiser.METHOD_FLAG">
 <code class="sig-name descname">METHOD_FLAG</code><em class="property"> = 'scipy-master'</em><a class="headerlink" href="#optimisers.optimisers_file.ScipyOptimiser.METHOD_FLAG" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt id="optimisers.optimisers_file.ScipyOptimiser.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">method</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)">str</a></span></em>, <em class="sig-param"><span class="n">options</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">fd_options</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.ScipyOptimiser.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt id="optimisers.optimisers_file.ScipyOptimiser.solve">
@@ -556,6 +597,12 @@ require step by step intervention.</p>
 <dt id="optimisers.optimisers_file.TrustRegionOptimiser.METHOD_FLAG">
 <code class="sig-name descname">METHOD_FLAG</code><em class="property"> = 2</em><a class="headerlink" href="#optimisers.optimisers_file.TrustRegionOptimiser.METHOD_FLAG" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt id="optimisers.optimisers_file.TrustRegionOptimiser.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param">hessian_type=&lt;OptimHessianType.BFGS: 1&gt;</em>, <em class="sig-param">max_iter=4</em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.TrustRegionOptimiser.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+</dd></dl>
 
 <dl class="py attribute">
 <dt id="optimisers.optimisers_file.TrustRegionOptimiser.method">
