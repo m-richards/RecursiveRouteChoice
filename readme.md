@@ -1,3 +1,9 @@
+# Recursive Route Choice
+This package implements the recursive logit model for prediction and estimation. [See the docs
+ for details.](https://m-richards.github.io/RecursiveRouteChoice/)
+The below discussion on data formats will shortly be superceded by a corresponding page in the
+ Sphinx documentation.
+
 ### Assumptions on Data Formats
 Each observation is read in the format
 ```
