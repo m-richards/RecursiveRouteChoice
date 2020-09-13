@@ -1,7 +1,6 @@
 import abc
 import warnings
 from typing import List, Union
-import scipy
 from scipy import linalg
 # from scipy.sparse import coo_matrix
 from scipy.sparse import linalg as splinalg
@@ -30,7 +29,7 @@ def _zero_pad_mat(mat, top=False, left=False, bottom=False, right=False):
     # pad_width =((int(top), int(bottom)), (int(left), int(right)))
     # return np.pad(arr, pad_width=pad_width, mode='constant',
     #               constant_values=0)
-    if scipy.sparse.issparse(mat):
+    if sparse.issparse(mat):
 
         if right:
             m, n = mat.shape
@@ -70,8 +69,8 @@ class ModelDataStruct(object):
     resize all the dependent quantities later
     """
 
-    def __init__(self, data_matrix_list: List[scipy.sparse.dok_matrix],
-                 incidence_matrix: scipy.sparse.dok_matrix, data_array_names_debug=None,
+    def __init__(self, data_matrix_list: List[sparse.dok_matrix],
+                 incidence_matrix: sparse.dok_matrix, data_array_names_debug=None,
                  resize=True):
 
         # check if the bottom row and right col are empty, if so, we can store the dest in them,
@@ -207,7 +206,7 @@ class RecursiveLogitModel(abc.ABC):
     def _compute_exp_value_function(m_tilde, return_pieces=False):
         """ Actual linear system solve without any error checking"""
         ncols = m_tilde.shape[1]
-        rhs = scipy.sparse.lil_matrix((ncols, 1))  # suppressing needless sparsity warning
+        rhs = sparse.lil_matrix((ncols, 1))  # suppressing needless sparsity warning
         rhs[-1, 0] = 1
         # (I-M)z =b
         a_mat = sparse.identity(ncols) - m_tilde
@@ -594,7 +593,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             return self.log_like_stored, self.grad_stored
         return self.get_log_likelihood()
 
-    def _compute_obs_path_indices(self, obs_row: Union[scipy.sparse.dok_matrix,
+    def _compute_obs_path_indices(self, obs_row: Union[sparse.dok_matrix,
                                                        ak.highlevel.Array]):
         """Takes in the current observation sequence.
         Returns the vectors of start positions and end positions in the provided observation.

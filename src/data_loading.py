@@ -4,9 +4,8 @@ import json
 import os
 
 import numpy as np
-import scipy
 import pandas as pd
-from scipy.sparse import coo_matrix, dok_matrix
+from scipy import sparse
 
 INCIDENCE = "incidence.txt"
 TRAVEL_TIME = 'travelTime.txt'
@@ -59,7 +58,8 @@ def load_standard_path_format_csv(directory_path, delim=None, match_tt_shape=Fal
     return obs_mat, to_return_data
 
 
-def load_csv_to_sparse(fname, dtype=None, delim=None, square_matrix=True, shape=None) -> coo_matrix:
+def load_csv_to_sparse(fname, dtype=None, delim=None, square_matrix=True, shape=None) -> \
+        sparse.coo_matrix:
     """IO function to load row, col, val CSV and return a sparse scipy matrix.
     :square_matix <bool> means that the input should be square and we will try to square it by
         adding a row (this is commonly required in data)
@@ -74,20 +74,20 @@ def load_csv_to_sparse(fname, dtype=None, delim=None, square_matrix=True, shape=
         rows_integer = rows_integer - 1  # convert to zero based indexing if needed
         cols_integer = cols_integer - 1
     if not square_matrix:
-        mat = coo_matrix((data, (rows_integer, cols_integer)), dtype=dtype)
+        mat = sparse.coo_matrix((data, (rows_integer, cols_integer)), dtype=dtype)
     else:
         if shape is None:
             # note we add one to counteract minus one above
-            max_dim = max(np.max(rows_integer), np.max(cols_integer))+1
+            max_dim = max(np.max(rows_integer), np.max(cols_integer)) + 1
             shape = (max_dim, max_dim)
-        mat = coo_matrix((data, (rows_integer, cols_integer)),
-                         dtype=dtype)
+        mat = sparse.coo_matrix((data, (rows_integer, cols_integer)),
+                                dtype=dtype)
         mat.resize(shape)  # trim cols
 
     return mat
 
 
-def resize_to_dims(matrix: scipy.sparse.dok_matrix, expected_max_shape,
+def resize_to_dims(matrix: sparse.dok_matrix, expected_max_shape,
                    matrix_name_debug="(Name not provided)"):
     """Resizes matrix to specified dims, issues warning if this is losing data from the matrix.
     Application is more general than the current error message suggests.
@@ -141,7 +141,7 @@ def load_tnpm_to_sparse(net_fpath, columns_to_extract=None, use_file_order_for_a
     net2 = net[['init_node', 'term_node'] + columns_to_extract]
     node_set = set(net2['init_node'].unique()).union(set(net2['term_node'].unique()))
     nrows = net2.shape[0]
-    arc_matrix = dok_matrix(coo_matrix((nrows, nrows)))
+    arc_matrix = sparse.dok_matrix(sparse.coo_matrix((nrows, nrows)))
 
     arc_to_index_map = {}
     if use_file_order_for_arc_numbers:  # for consistency with any visuals

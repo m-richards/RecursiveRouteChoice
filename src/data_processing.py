@@ -3,8 +3,7 @@ or generate by hand/ other means.
 
 Currently just for processing angles"""
 import numpy as np
-import scipy
-from scipy.sparse import coo_matrix
+from scipy import sparse
 PI = 3.1415926535
 LEFT_TURN_THRESH = -30 * PI/180  # 30 degrees
 U_TURN_THRESH = 177 * PI/180  # radians # TODO this is very tight
@@ -46,7 +45,7 @@ class AngleProcessor(object):
         masked_rows = nz_rows[nz_u_turns_mask]
         masked_cols = nz_cols[nz_u_turns_mask]
         vals = np.ones(len(masked_cols), dtype='int')
-        u_turn_mat = coo_matrix(
+        u_turn_mat = sparse.coo_matrix(
             (vals, (masked_rows, masked_cols)), shape=turn_angle_mat.shape, dtype='int')
 
         return u_turn_mat.todok()
@@ -70,7 +69,7 @@ class AngleProcessor(object):
         masked_rows = nz_rows[nz_left_turns_mask]
         masked_cols = nz_cols[nz_left_turns_mask]
         vals = np.ones(len(masked_cols), dtype='int')
-        left_turn_mat = scipy.sparse.coo_matrix(
+        left_turn_mat = sparse.coo_matrix(
             (vals, (masked_rows, masked_cols)), shape=turn_angle_mat.shape, dtype='int')
 
         return left_turn_mat.todok()
@@ -95,7 +94,7 @@ class AngleProcessor(object):
         masked_rows = nz_rows[nz_right_turns_mask]
         masked_cols = nz_cols[nz_right_turns_mask]
         vals = np.ones(len(masked_cols), dtype='int')
-        right_turn_mat = scipy.sparse.coo_matrix(
+        right_turn_mat = sparse.coo_matrix(
             (vals, (masked_rows, masked_cols)), shape=turn_angle_mat.shape, dtype='int')
 
         return right_turn_mat.todok()
@@ -143,7 +142,7 @@ class AngleProcessor(object):
         masked_rows = nz_rows[nz_left_turns_mask]
         masked_cols = nz_cols[nz_left_turns_mask]
         vals = np.ones(len(masked_cols), dtype='int')
-        neutral_turn_mat = coo_matrix(
+        neutral_turn_mat = sparse.coo_matrix(
             (vals, (masked_rows, masked_cols)), shape=turn_angle_mat.shape, dtype='int')
         # return element wise product with incident mat
         return neutral_turn_mat.todok()
