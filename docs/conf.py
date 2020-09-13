@@ -41,8 +41,15 @@ extensions = ['sphinx.ext.autodoc',
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
     'numpy' : ('https://numpy.org/doc/stable', None),
-    'scipy' : ('https://docs.scipy.org/doc/scipy/reference/', None),
+    'scipy' : ('https://docs.scipy.org/doc/scipy/reference', None),
 }
+
+# Tell sphinx what the primary language being documented is.
+primary_domain = 'py'
+
+# Tell sphinx what the pygments highlight language should be.
+highlight_language = 'py'
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -80,3 +87,15 @@ html_static_path = ['_static']
 #
 # html_sidebars = {}
 html_theme = 'sphinx_rtd_theme'
+
+
+# autoclass_content = 'both'
+# do not skip documenting the init
+def skip(app, what, name, obj, would_skip, options):
+    if name == "__init__":
+        return False
+    return would_skip
+
+
+def setup(app):
+    app.connect("autodoc-skip-member", skip)

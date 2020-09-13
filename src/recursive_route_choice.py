@@ -67,12 +67,28 @@ class ModelDataStruct(object):
     row/ col to bottom right which will have the destination dummy arc mapped to.
     This is perhaps not particularly, clear but it is done here to avoid having to
     resize all the dependent quantities later
+
     """
 
     def __init__(self, data_matrix_list: List[sparse.dok_matrix],
                  incidence_matrix: sparse.dok_matrix, data_array_names_debug=None,
                  resize=True):
+        r"""
+        Instantiate a ModelDataStruct instance.
 
+        Parameters
+        ----------
+        data_matrix_list : list of :py:class:`scipy.sparse.dok_matrix`
+            List of all network attribute matrices
+        incidence_matrix : :py:class:`scipy.sparse.dok_matrix`
+            Network incidence matrix
+        data_array_names_debug : list of str, optional
+            List of plaintext descriptors for the network attributes, used for debug printing
+        resize : bool
+            Whether to resize matrix to include zero column for dest. Should be True, unless you
+            know what you are doing.
+
+        """
         # check if the bottom row and right col are empty, if so, we can store the dest in them,
         # if not, we need to append
         if sparse.issparse(incidence_matrix):
@@ -103,16 +119,27 @@ class ModelDataStruct(object):
 
 
 class RecursiveLogitModel(abc.ABC):
-    """Abstraction of the linear algebra type relations on the recursive logit model to solve
-    the matrix system and compute log likelihood.
+    """Abstraction of the linear algebra operations for the recursive logit
+    model to solve the matrix system for the value functions.
 
-    Doesn't handle optimisation directly (but does compute log likelihood), should be
-    passed into optimisation algorithm in a clever way
-
+    Is subclassed to provide functionality for prediction and estimation and
+    should not be directly instantiated
     """
 
-    def __init__(self, data_struct: ModelDataStruct,
-                 initial_beta=-1.5, mu=1, ):
+    def __init__(self, data_struct: ModelDataStruct, initial_beta=-1.5, mu=1.0):
+        """
+        Initialises a RecursiveLogitModel instance.
+
+        Parameters
+        ----------
+        data_struct : ModelDataStruct
+            The ModelDataStruct corresponding to the network being estimated on
+        initial_beta : float or int or list[float] or array_like
+            The initial value for the parameter weights of the network attributes
+        mu : float
+            The scale parameter of the Gumbel random variables being modelled. Generally set
+            equal to 1 as it is non-identifiable due to the uncertainty in the parameter weights.
+        """
         self.network_data = data_struct  # all network attributes
         self.data_array = data_struct.data_array
         self.n_dims = len(self.data_array)
@@ -151,7 +178,13 @@ class RecursiveLogitModel(abc.ABC):
         # self.get_log_likelihood()  # need to compute starting LL for optimiser
 
     def get_beta_vec(self):
-        """Getter is purely to imply that beta vec is not a fixed field"""
+        """
+        Get the current value of the network attribute parameters.
+
+        Returns
+        -------
+        beta_vec : :py:func:`numpy.array` of float
+        """
         return self._beta_vec
 
     def _compute_short_term_utility(self, skip_check=False) -> bool:
@@ -172,10 +205,16 @@ class RecursiveLogitModel(abc.ABC):
         return True
 
     def get_short_term_utility(self):
-        """Returns v(a|k)  for all (a,k) as 2D array,
-        uses current value of beta
-        :rtype: np.array<scipy.sparse.csr_matrix>"""
+        """
+        Returns the matrix of short term utilities between all states for the current value of beta.
 
+        In the mathematical notation this is :math:`[r(s,a)]` or :math:`[v(a|k)]` in the
+        notation of Fosgerau.
+
+        Returns
+        -------
+        short_term_utility: :py:class:`scipy.sparse.csr_matrix`
+        """
         return self.short_term_utility
 
     def _compute_exponential_utility_matrix(self):
@@ -196,8 +235,15 @@ class RecursiveLogitModel(abc.ABC):
         self._exponential_utility_matrix = m_mat
 
     def get_exponential_utility_matrix(self):
-        """ #
-        Returns M_{ka} matrix
+        """
+        Returns the matrix of exponentiated short term utilities between all states for the current
+        value of beta.
+
+        In the mathematical notation this is :math:`[M_{s,a}]`.
+
+        Returns
+        -------
+        short_term_utility: :py:class:`scipy.sparse.csr_matrix`
         """
 
         return self._exponential_utility_matrix
@@ -218,8 +264,24 @@ class RecursiveLogitModel(abc.ABC):
             return z_vec
 
     def compute_value_function(self, m_tilde) -> bool:
-        """Solves the system Z = Mz+b and stores the output for future use.
-        Has rudimentary flagging of errors but doesn't attempt to solve any problems"""
+        """
+        Solves the linear system :math:`z = Mz+b` and stores the output for future use.
+        Returns a boolean indicating if solving the linear system was successful or not.
+
+        Parameters
+        ----------
+        m_tilde : :py:class:`scipy.sparse.csr_matrix`
+            The matrix M modified to reflect the current location of the sink destination state.
+
+        Returns
+        -------
+        error_flag : bool
+            Returns True if an error was encountered, else false if execution finished
+            successfully. Errors are due to the linear system having no solution, high residual
+            or having negative solution, such that the value functions have no real solution.
+        """
+        # """Solves the linear system :math:`z = Mz+b` and stores the output for future use.
+        # Has rudimentary flagging of errors but doesn't attempt to solve any problems"""
         error_flag = False  # start with no errors
         a_mat, z_vec, rhs = self._compute_exp_value_function(m_tilde, return_pieces=True)
         # if we z values negative, or near zero, parameters
@@ -329,23 +391,33 @@ class RecursiveLogitModel(abc.ABC):
 
 
 class RecursiveLogitModelEstimation(RecursiveLogitModel):
-    """Abstraction of the linear algebra type relations on the recursive logit model to solve
-    the matrix system and compute log likelihood.
-
-    This extension has a handle to an optimiser class to enable dynamic updating of beta in a
-    nice way. Ideally, this dependency would work neutrally and this wouldn't
-     be a subclass. Makes sense for the Model not to be an arg to optimiser because optimiser should
-     be able to take in any function and optimise.
-
-     # TODO this should subclass prediction so that we can optimise into prediction
-
-
-
+    """Extension of `RecursiveLogitModel` to support Estimation of network attribute parameters.
     """
+
+    # TODO this should subclass prediction so that we can optimise into prediction
 
     def __init__(self, data_struct: ModelDataStruct,
                  optimiser: OptimiserBase, observations_record,
                  initial_beta=-1.5, mu=1):
+        """
+        Initialises a RecursiveLogitEstimation instance.
+
+        Parameters
+        ----------
+        data_struct : ModelDataStruct
+           The ModelDataStruct corresponding to the network being estimated on
+        optimiser: OptimiserBase
+            The wrapper instance for the desired optimisation routine
+        observations_record: list of list or :py:class:`scipy.sparse.csr_matrix` or
+            ak.highlevel.Array
+            The observed series of observations to estimate parameters from. Either a sparse
+            matrix or a form of ragged array
+        initial_beta : float or int or list[float] or array_like
+           The initial value for the parameter weights of the network attributes
+        mu : float
+           The scale parameter of the Gumbel random variables being modelled. Generally set
+           equal to 1 as it is non-identifiable due to the uncertainty in the parameter weights.
+        """
 
         super().__init__(data_struct, initial_beta, mu)
         self.optimiser = optimiser  # optimisation alg wrapper class
@@ -428,11 +500,23 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
     def _get_n_func_evals(self):
         return self.n_log_like_calls_non_redundant
 
-    def solve_for_optimal_beta(self, verbose=True, extra_verbose=False, output_file=None):
-        """Runs the line search optimisation algorithm until a termination condition is reached.
-        Print output"""
-        # print out iteration 0 information
+    def solve_for_optimal_beta(self, verbose=True, output_file=None):
+        """
+        Executes the optimisation algorithm specified in the init to determine the most likely
+        parameter values based upon the input observations
 
+        Parameters
+        ----------
+        verbose : bool
+            Flag for printing of output
+        output_file : str or os.path.PathLike, optional
+            file to send verbose output to
+
+        Returns
+        -------
+        beta_vec :  :py:func:`numpy.array`
+            The optimal determined vector of parameters
+        """
         # if a scipy method then it is self contained and we don't need to query inbetween loops
         if isinstance(self.optimiser, ScipyOptimiser):
             optim_res = self.optimiser.solve(self.optim_function_state, verbose=verbose,
@@ -469,8 +553,24 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         raise ValueError("Optimisation algorithm failed to converge")
 
     def update_beta_vec(self, new_beta_vec) -> bool:
-        """Change the current parameter vector beta and update intermediate results which depend
-        on this"""
+        """
+        Update the interval value for the network parameters beta with the supplied value.
+
+
+        Parameters
+        ----------
+        new_beta_vec : :py:func:`numpy.array` of float
+
+
+        Returns
+        -------
+        error_flag : bool
+            Returns a boolean flag to indicate if updating beta was successful. This fails for an
+            ill chosen beta which either is positive and illegal, or is large in magnitude such
+            that the short term utility calculation overflows.
+
+            This flag is likely not used by an end user, only the internal code
+        """
         # Prevent redundant computation
         if np.all(new_beta_vec == self._beta_vec):
             return True
@@ -485,9 +585,20 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         return True
 
     def get_log_likelihood(self):
-        """Compute the log likelihood of the data with the current beta vec
-                n_obs override is for debug purposes to artificially lower the
-                 number of observations"""
+        """Compute the log likelihood of the data  and its gradient for the current beta vec
+
+        Main purpose is to update internal state however also returns the negative of these two
+        quantities
+
+        Returns
+        -------
+        log_like_stored:  float
+            The current negative log likelihood. Note that it is negative to be consistent
+            with a minimisation problem
+        self.grad_stored  :py:func:`numpy.array` of float
+            The current negative gradient of the log likelihood. Note that it is negative to be
+            consistent with a minimisation problem
+        """
         self.n_log_like_calls += 1  # TODO remove this counter?
         if self.flag_log_like_stored:
             return self.log_like_stored, self.grad_stored
