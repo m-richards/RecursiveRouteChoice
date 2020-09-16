@@ -398,7 +398,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
 
     def __init__(self, data_struct: ModelDataStruct,
                  optimiser: OptimiserBase, observations_record,
-                 initial_beta=-1.5, mu=1):
+                 initial_beta=-1.5, mu=1, sort_obs=True):
         """
         Initialises a RecursiveLogitEstimation instance.
 
@@ -464,7 +464,11 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
 
             else:  # just get the minimum index used, which should be zero or 1
                 self.obs_min_legal_index = ak.min(observations_record, axis=None)
-        self.obs_record = observations_record
+        if sort_obs:
+            self.obs_record = self._sort_obs(observations_record)
+        else:
+            self.obs_record = observations_record
+
         # finish initialising
         self.get_log_likelihood()  # need to compute starting LL for optimiser
         if isinstance(optimiser, CustomOptimiserBase):
@@ -496,6 +500,30 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         except Exception as e:  # TODO BAD
             raise TypeError("Obs format invalid, failed to parse input obs as Awkward Array.") \
                 from e
+
+    @staticmethod
+    def _sort_obs(obs_record):
+        """
+        Sorts input observations by destination, to allow efficient computation of log likelihood.
+        This allows us to cache some value functions and not recomputed them
+        Recall that destination is the first index of an observations.
+
+        Parameters
+        ----------
+        obs_record : ak.highlevel.Array or array like
+
+        Returns
+        -------
+        sorted_obs_record : observations record sorted by destination.
+        """
+        if isinstance(obs_record, ak.highlevel.Array):
+            # sort by first index
+            obs_record = obs_record[ak.argsort(obs_record[:, 0])]
+        else:  # assuming sparse, but should work for dense
+            index = np.argsort(obs_record[:, 0].toarray().squeeze())  # squeeze is since we have
+            # redundant 2d and we end up with all zeros in redundant dim
+            obs_record = obs_record[index, :]
+        return obs_record
 
     def _get_n_func_evals(self):
         return self.n_log_like_calls_non_redundant
