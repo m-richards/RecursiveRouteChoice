@@ -968,7 +968,6 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
                     # why? so we know what the dest is without having to lookup to the
                     # last nonzero (only really a problem for sparse, but still marginally
                     # more efficient. Perhaps could have flags for data formats? TODO
-                    current_path = [dest]
                     current_path = [int(dest)]
                     count = 0
                     while current_arc != dest_dummy_arc_index:  # index of augmented dest arc
