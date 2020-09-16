@@ -400,31 +400,28 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
                  optimiser: OptimiserBase, observations_record,
                  initial_beta=-1.5, mu=1, sort_obs=True):
         """
-        Initialises a RecursiveLogitEstimation instance.
+        Initialise recursive logit model for estimation
 
         Parameters
         ----------
         data_struct : ModelDataStruct
-           The ModelDataStruct corresponding to the network being estimated on
-        optimiser: OptimiserBase
+            containing network attributes of desired network
+        optimiser : ScipyOptimiser or LineSearchOptimiser
             The wrapper instance for the desired optimisation routine
-        observations_record: list of list or :py:class:`scipy.sparse.csr_matrix` or
-            ak.highlevel.Array
-            The observed series of observations to estimate parameters from. Either a sparse
-            matrix or a form of ragged array
-        initial_beta : float or int or list[float] or array_like
-           The initial value for the parameter weights of the network attributes
-        mu : float
-           The scale parameter of the Gumbel random variables being modelled. Generally set
+        observations_record : ak.highlighlevel.Array or :py:class:`scipy.sparse.spmatrix` or list of list
+            record of observations to estimate from
+        initial_beta : float or list or array like
+            initial guessed values of beta to begin optimisation algorithm with. If a scalar,
+            beta are uniformly initialised to this value
+        mu :
+            The scale parameter of the Gumbel random variables being modelled. Generally set
            equal to 1 as it is non-identifiable due to the uncertainty in the parameter weights.
+        sort_obs : bool
+            flag to sort input observations to allow for efficient caching. Should only be set to
+            False if the data is large and already known to be sorted.
         """
-
         super().__init__(data_struct, initial_beta, mu)
         self.optimiser = optimiser  # optimisation alg wrapper class
-        # TODO this probably shouldn't know about the optimiser
-        #    on the basis that if it doesn't then we can use the same base class here fro
-        #    estimation. It might be easier for now to make a base class and have a
-        #    subclass which gets an optimiser
 
         beta_vec = super().get_beta_vec()  # orig without optim tie in
         # setup optimiser initialisation
@@ -911,7 +908,7 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
         :param rng_seed: Seed for numpy generator, or instance of np.random.BitGenerator
         :type rng_seed: int or np.random.BitGenerator  (any legal input to np.random.default_rng())
 
-        :rtype list<list<int>>
+        :rtype list of list of int
         :return List of list of all observations generated
         """
         self._check_index_valid(dest_indices)
