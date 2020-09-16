@@ -19,6 +19,8 @@ __pycache__
 *.npy
 *.npz
 
+*.prof
+
 temp_demo_code/
 *.json
 
