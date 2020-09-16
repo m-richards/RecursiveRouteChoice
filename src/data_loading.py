@@ -110,7 +110,7 @@ def resize_to_dims(matrix: sparse.dok_matrix, expected_max_shape,
 
 
 # TODO none should not be legal
-def load_tnpm_to_sparse_arc_formulation(net_fpath, columns_to_extract=None,
+def load_tntp_to_sparse_arc_formulation(net_fpath, columns_to_extract=None,
                                         use_file_order_for_arc_numbers=True):
     """
     :param net_fpath path to network file
@@ -175,7 +175,7 @@ def load_tnpm_to_sparse_arc_formulation(net_fpath, columns_to_extract=None,
     return arc_to_index_map, arc_matrix
 
 
-def load_tnpm_to_sparse_node_formulation(net_fpath, columns_to_extract=None):
+def load_tntp_to_sparse_node_formulation(net_fpath, columns_to_extract=None):
     """
     :param net_fpath path to network file
     :param columns_to_extract list of columns to keep. init_node and term_node are always kept
