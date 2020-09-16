@@ -188,9 +188,17 @@ class RecursiveLogitModel(abc.ABC):
         return self._beta_vec
 
     def _compute_short_term_utility(self, skip_check=False) -> bool:
-        self.short_term_utility = np.sum(self.get_beta_vec() * self.data_array, axis=0)
-        # note axis=0 means that ndarrays will give a matrix result back, not a scalar
-        # which is what we want
+        # Data array is a np.ndarray, of either sparse matrices, or 2d nd-arrays.
+        # So we check the sparsity of the first element. If the user puts mixed types in here
+        # then errors are on them #TODO sparse or dense should be a flag on the network attributes
+        if sparse.issparse(self.data_array[0]):
+            self.short_term_utility = np.sum(self.get_beta_vec() * self.data_array, axis=0)
+            # note axis=0 means that ndarrays will give a matrix result back, not a scalar
+            # which is what we want
+        else:
+            # (beta * each_data_array_slice).sum(over all slices) is a tensor contraction
+            self.short_term_utility = np.tensordot(self.get_beta_vec(), self.data_array, axes=1)
+
         if skip_check is False:
             if sparse.issparse(self.short_term_utility):
                 nz_rows, nz_cols = self.short_term_utility.nonzero()  # this is dense so cast ok
@@ -252,12 +260,19 @@ class RecursiveLogitModel(abc.ABC):
     def _compute_exp_value_function(m_tilde, return_pieces=False):
         """ Actual linear system solve without any error checking"""
         ncols = m_tilde.shape[1]
-        rhs = sparse.lil_matrix((ncols, 1))  # suppressing needless sparsity warning
-        rhs[-1, 0] = 1
-        # (I-M)z =b
-        a_mat = sparse.identity(ncols) - m_tilde
-        z_vec = splinalg.spsolve(a_mat, rhs)  # rhs has to be (n,1)
-        z_vec = np.atleast_2d(z_vec).T  # Transpose to have appropriate dims
+        if sparse.issparse(m_tilde):
+            rhs = sparse.lil_matrix((ncols, 1))  # suppressing needless sparsity warning
+            rhs[-1, 0] = 1
+            # (I-M)z =b
+            a_mat = sparse.identity(ncols) - m_tilde
+            z_vec = splinalg.spsolve(a_mat, rhs)  # rhs has to be (n,1)
+            z_vec = np.atleast_2d(z_vec).T  # Transpose to have appropriate dims
+        else:
+            rhs = np.zeros((ncols, 1))
+            rhs[-1, 0] = 1
+            a_mat = np.identity(ncols) - m_tilde
+            z_vec = linalg.solve(a_mat, rhs)
+            # note shape is natively correct in the dense case, no need to worry
         if return_pieces:
             return a_mat, z_vec, rhs
         else:
@@ -851,7 +866,6 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         - gradient in each x component at every node"""
         # TODO check if dimensions should be transposed
         grad_v = np.zeros((self.n_dims, np.shape(m_tilde)[0]))
-        identity = sparse.identity(np.shape(m_tilde)[0])
         z = exp_val_funcs  # consistency with maths doc
 
         # low number of dims -> not vectorised for convenience
@@ -862,7 +876,13 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             # due to matrices with terrible condition numbers in the examples
             # spsolve(A,b) == inv(A)*b
             # Note: A.multiply(B) is A .* B for sparse matrices
-            grad_v[q, :] = splinalg.spsolve(identity - m_tilde, m_tilde.multiply(chi) @ z)
+            if sparse.issparse(
+                    m_tilde):  # TODO perhaps sparsity checks should be global and a flag?
+                identity = sparse.identity(np.shape(m_tilde)[0])
+                grad_v[q, :] = splinalg.spsolve(identity - m_tilde, m_tilde.multiply(chi) @ z)
+            else:
+                identity = np.identity(np.shape(m_tilde)[0])
+                grad_v[q, :] = linalg.solve(identity - m_tilde, m_tilde * chi @ z)
 
         return grad_v
 
