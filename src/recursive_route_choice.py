@@ -100,10 +100,10 @@ class ModelDataStruct(object):
         # write this (ex-NOR)
         if (all([not sparse.issparse(i) for i in data_attribute_list])
                 or all([sparse.issparse(i) for i in data_attribute_list])) is False:
-                warnings.warn("Recieved a mix of sparse and dense data types in "
-                              "data_attribute_list. Unexpected "
-                              "behaviour may occur. Please specify either sparse matrices or "
-                              "numpy arrays")
+            warnings.warn("Recieved a mix of sparse and dense data types in "
+                          "data_attribute_list. Unexpected "
+                          "behaviour may occur. Please specify either sparse matrices or "
+                          "numpy arrays")
 
         # check if the bottom row and right col are empty, if so, we can store the dest in them,
         # if not, we need to append
@@ -457,7 +457,9 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             containing network attributes of desired network
         optimiser : ScipyOptimiser or LineSearchOptimiser
             The wrapper instance for the desired optimisation routine
-        observations_record : ak.highlighlevel.Array or :py:class:`scipy.sparse.spmatrix` or list of list
+        observations_record : ak.highlighlevel.Array or :py:class:`scipy.sparse.spmatrix`
+            or list of list
+
             record of observations to estimate from
         initial_beta : float or list or array like
             initial guessed values of beta to begin optimisation algorithm with. If a scalar,
@@ -486,7 +488,6 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             self.is_obs_record_sparse = True
             self.obs_count, _ = observations_record.shape
             self.obs_min_legal_index = 1  # Zero is reserved index for sparsity
-
 
         else:
             self.is_obs_record_sparse = False
