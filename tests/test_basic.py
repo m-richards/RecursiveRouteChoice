@@ -4,7 +4,7 @@ Also tests are not directed as to whether code is "correct" for now, they check 
 existing code.
 
 """
-
+from recursive_route_choice import ALLOW_POSITIVE_VALUE_FUNCTIONS
 # import pytest
 
 import numpy as np
@@ -66,7 +66,8 @@ class TestSimpleCases(object):
         assert (hessian == np.identity(2)).all()
         assert optimiser.n_func_evals == 1
 
-    def test_first_example_manual_loading(self):
+    @staticmethod
+    def load_example_tiny_manually():
         subfolder = "ExampleTiny"  # big data from classical v2
         folder = join("Datasets", subfolder)
         INCIDENCE = "incidence.txt"
@@ -82,9 +83,30 @@ class TestSimpleCases(object):
         incidence_mat = load_csv_to_sparse(file_incidence, dtype='int').todok()
 
         obs_mat = load_csv_to_sparse(file_obs, dtype='int', square_matrix=False).todok()
+        return travel_times_mat, incidence_mat, obs_mat
+
+    def test_example_manual_loading_sparse_raw(self):
+        travel_times_mat, incidence_mat, obs_mat = self.load_example_tiny_manually()
         self._first_example_common_data_checks(travel_times_mat, incidence_mat, obs_mat)
 
-    def test_basic_clever_loading(self):
+    def test_example_manual_loading_sparse_dok(self):
+        """Dok is "prefered" and internal code should convert to csr when required"""
+        travel_times_mat, incidence_mat, obs_mat = self.load_example_tiny_manually()
+        travel_times_mat = travel_times_mat.todok()
+        incidence_mat = incidence_mat.todok()
+        obs_mat = obs_mat.todok()
+        self._first_example_common_data_checks(travel_times_mat, incidence_mat, obs_mat)
+
+    def test_example_manual_loading_dense(self):
+        travel_times_mat, incidence_mat, obs_mat = self.load_example_tiny_manually()
+
+        travel_times_mat = travel_times_mat.toarray()
+        incidence_mat = incidence_mat.toarray()
+        obs_mat = obs_mat.toarray()
+
+        self._first_example_common_data_checks(travel_times_mat, incidence_mat, obs_mat)
+
+    def test_example_tiny_smart_loading(self):
         subfolder = "ExampleTiny"  # big data from classical v2
         folder = join("Datasets", subfolder)
         obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=False)
@@ -141,7 +163,7 @@ class TestSimpleCases(object):
             assert np.abs(
                 model.optimiser.compute_relative_gradient_non_static() - rel_grad_norm) < eps
 
-    def test_example_tiny_modified(self):
+    def test_example_tiny_modified_sparse(self):
         # TODO shouldn't be using this data - data is just confusing/ unclear, nothing inherently
         #  wrong
         subfolder = "ExampleTinyModifiedObs"  # big data from classical v2
@@ -199,6 +221,29 @@ class TestSimpleCases(object):
                                                left, u_turn, t_time_incidence,
                                                incidence_mat, obs_record)
 
+    def test_example_tiny_modified_dense(self):
+        subfolder = "ExampleTinyModifiedObs"  # big data from classical v2
+        folder = join("Datasets", subfolder)
+
+        obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=True)
+        import awkward1 as ak
+        obs_mat = obs_mat.toarray()
+        obs_record = ak.from_numpy(obs_mat)
+        incidence_mat, travel_times_mat, angle_cts_mat = attrs
+
+        left, _, _, u_turn = AngleProcessor.get_turn_categorical_matrices(angle_cts_mat,
+                                                                          incidence_mat)
+
+        # incidence matrix which only has nonzero travel times
+        # - rather than what is specified in file
+        t_time_incidence = (travel_times_mat > 0).astype('int')
+        self._tiny_modified_common_data_checks(travel_times_mat.toarray(),
+                                               left.toarray(), u_turn.toarray(),
+                                               t_time_incidence.toarray(),
+                                               incidence_mat.toarray(), obs_record)
+
+
+class DataTransformsTest(object):
     def test_turn_angle_matrices(self):
         """ Note the problem of generating these kind of matrices is ignored"""
         a = np.array([[0, -0.1, 180, ],
@@ -218,45 +263,52 @@ class TestSimpleCases(object):
 
 class TestSimulation(object):
 
-    def test_basic_consistency(self):
+    @staticmethod
+    def _get_basic_consistency_expected(allow_positive_value_funcs):
+        if allow_positive_value_funcs:
+            return [
+                [1, 0, 4, 5, 1], [1, 0, 4, 1, 1], [1, 0, 1], [1, 0, 0, 4, 5, 1], [1, 2, 6, 1],
+                [1, 2, 1], [1, 2, 1], [1, 2, 1], [1, 7, 5, 1], [1, 7, 6, 1], [1, 7, 7, 5, 6, 1],
+                [1, 7, 3, 4, 1], [6, 0, 4, 6], [6, 0, 1, 1, 6], [6, 0, 4, 6], [6, 0, 4, 6],
+                [6, 1, 4, 6], [6, 1, 6], [6, 1, 6], [6, 1, 5, 1, 6], [6, 2, 7, 6], [6, 2, 6],
+                [6, 2, 7, 6], [6, 2, 6], [6, 7, 6], [6, 7, 6, 5, 4, 6], [6, 7, 5, 1, 6],
+                [6, 7, 6], [3, 0, 3], [3, 0, 3], [3, 0, 3], [3, 0, 3], [3, 1, 5, 3],
+                [3, 1, 4, 3], [3, 1, 5, 3], [3, 1, 4, 3], [3, 2, 7, 3], [3, 2, 7, 3],
+                [3, 2, 7, 3], [3, 2, 7, 7, 3], [3, 7, 7, 3], [3, 7, 3], [3, 7, 3, 3, 3, 3],
+                [3, 7, 3]]
+        else:
+            return [
+                [1, 0, 4, 5, 1], [1, 0, 1], [1, 0, 4, 1], [1, 0, 1], [1, 2, 1], [1, 2, 1],
+                [1, 2, 1], [1, 2, 1], [1, 7, 7, 7, 5, 1], [1, 7, 6, 1], [1, 7, 3, 4, 1],
+                [1, 7, 5, 1], [6, 0, 1, 6], [6, 0, 1, 6], [6, 0, 1, 6], [6, 0, 3, 7, 3, 7, 6],
+                [6, 1, 4, 6], [6, 1, 6], [6, 1, 6], [6, 1, 6], [6, 2, 6], [6, 2, 6], [6, 2, 6],
+                [6, 2, 6], [6, 7, 5, 4, 6], [6, 7, 6], [6, 7, 5, 6], [6, 7, 6], [3, 0, 3],
+                [3, 0, 3], [3, 0, 3], [3, 0, 3], [3, 1, 4, 3], [3, 1, 0, 3], [3, 1, 4, 3],
+                [3, 1, 4, 3], [3, 2, 7, 3], [3, 2, 7, 7, 3], [3, 2, 7, 3], [3, 2, 7, 7, 3],
+                [3, 7, 3], [3, 7, 3], [3, 7, 3], [3, 7, 3]]
 
-        distances = dok_matrix(hand_net_dists)
-
+    @staticmethod
+    def _basic_consistencey_checks(distances):
         data_list = [distances]
         network_struct = ModelDataStruct(data_list, hand_net_incidence,
                                          data_array_names_debug=("distances", "u_turn"))
-
         beta_vec = np.array([-1])
-
         model = RecursiveLogitModelPrediction(network_struct,
                                               initial_beta=beta_vec, mu=1)
-
         obs = model.generate_observations(origin_indices=[0, 1, 2, 7], dest_indices=[1, 6, 3],
                                           num_obs_per_pair=4, iter_cap=15, rng_seed=1)
-        # allow positive value_funcs
-        # print(obs)
-        expected = [
-            [1, 0, 4, 5, 1], [1, 0, 4, 1, 1], [1, 0, 1], [1, 0, 0, 4, 5, 1], [1, 2, 6, 1],
-            [1, 2, 1], [1, 2, 1], [1, 2, 1], [1, 7, 5, 1], [1, 7, 6, 1], [1, 7, 7, 5, 6, 1],
-            [1, 7, 3, 4, 1], [6, 0, 4, 6], [6, 0, 1, 1, 6], [6, 0, 4, 6], [6, 0, 4, 6],
-            [6, 1, 4, 6], [6, 1, 6], [6, 1, 6], [6, 1, 5, 1, 6], [6, 2, 7, 6], [6, 2, 6],
-            [6, 2, 7, 6], [6, 2, 6], [6, 7, 6], [6, 7, 6, 5, 4, 6], [6, 7, 5, 1, 6],
-            [6, 7, 6], [3, 0, 3], [3, 0, 3], [3, 0, 3], [3, 0, 3], [3, 1, 5, 3],
-            [3, 1, 4, 3], [3, 1, 5, 3], [3, 1, 4, 3], [3, 2, 7, 3], [3, 2, 7, 3],
-            [3, 2, 7, 3], [3, 2, 7, 7, 3], [3, 7, 7, 3], [3, 7, 3], [3, 7, 3, 3, 3, 3],
-            [3, 7, 3]]
-        # # only negative value funcs
-        # expected = [
-        #     [1, 0, 4, 5, 1], [1, 0, 1], [1, 0, 4, 1], [1, 0, 1], [1, 2, 1], [1, 2, 1],
-        #     [1, 2, 1], [1, 2, 1], [1, 7, 7, 7, 5, 1], [1, 7, 6, 1], [1, 7, 3, 4, 1],
-        #     [1, 7, 5, 1], [6, 0, 1, 6], [6, 0, 1, 6], [6, 0, 1, 6], [6, 0, 3, 7, 3, 7, 6],
-        #     [6, 1, 4, 6], [6, 1, 6], [6, 1, 6], [6, 1, 6], [6, 2, 6], [6, 2, 6], [6, 2, 6],
-        #     [6, 2, 6], [6, 7, 5, 4, 6], [6, 7, 6], [6, 7, 5, 6], [6, 7, 6], [3, 0, 3],
-        #     [3, 0, 3], [3, 0, 3], [3, 0, 3], [3, 1, 4, 3], [3, 1, 0, 3], [3, 1, 4, 3],
-        #     [3, 1, 4, 3], [3, 2, 7, 3], [3, 2, 7, 7, 3], [3, 2, 7, 3], [3, 2, 7, 7, 3],
-        #     [3, 7, 3], [3, 7, 3], [3, 7, 3], [3, 7, 3]]
-
+        expected = TestSimulation._get_basic_consistency_expected(ALLOW_POSITIVE_VALUE_FUNCTIONS)
         assert obs == expected
+
+    def test_basic_consistency_sparse(self):
+
+        distances = dok_matrix(hand_net_dists)
+        self._basic_consistencey_checks(distances)
+
+    def test_basic_consistency_dense(self):
+
+        distances = hand_net_dists
+        self._basic_consistencey_checks(distances)
 
     def test_invalid_beta_throws(self):
         distances = dok_matrix(hand_net_dists)

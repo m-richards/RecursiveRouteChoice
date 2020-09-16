@@ -16,8 +16,11 @@ import numpy as np
 ALLOW_POSITIVE_VALUE_FUNCTIONS = True
 
 
-def _to_dense_if_sparse(mat):
-    if sparse.issparse(mat):
+def _to_dense_if_sparse(mat, is_sparse=None):
+    """ convert to dense if sparse. Optional flag if this information is known a priori -
+        should be faster to recieve a bool directly than checking with isinstance"""
+    is_sparse = is_sparse if is_sparse is not None else sparse.issparse(mat)
+    if is_sparse:
         return mat.toarray()
     else:
         return mat
@@ -70,7 +73,7 @@ class ModelDataStruct(object):
 
     """
 
-    def __init__(self, data_matrix_list: List[sparse.dok_matrix],
+    def __init__(self, data_attribute_list: List[sparse.dok_matrix],
                  incidence_matrix: sparse.dok_matrix, data_array_names_debug=None,
                  resize=True):
         r"""
@@ -78,9 +81,9 @@ class ModelDataStruct(object):
 
         Parameters
         ----------
-        data_matrix_list : list of :py:class:`scipy.sparse.dok_matrix`
+        data_attribute_list : list of :py:class:`scipy.sparse.dok_matrix` or list of array like
             List of all network attribute matrices
-        incidence_matrix : :py:class:`scipy.sparse.dok_matrix`
+        incidence_matrix : :py:class:`scipy.sparse.dok_matrix` or array like
             Network incidence matrix
         data_array_names_debug : list of str, optional
             List of plaintext descriptors for the network attributes, used for debug printing
@@ -89,12 +92,28 @@ class ModelDataStruct(object):
             know what you are doing.
 
         """
+        if sparse.issparse(data_attribute_list[0]):
+            self.is_data_format_sparse = True
+        else:
+            self.is_data_format_sparse = False
+        # data list should be all sparse or all dense (there's probably a nicer way to
+        # write this (ex-NOR)
+        if (all([not sparse.issparse(i) for i in data_attribute_list])
+                or all([sparse.issparse(i) for i in data_attribute_list])) is False:
+                warnings.warn("Recieved a mix of sparse and dense data types in "
+                              "data_attribute_list. Unexpected "
+                              "behaviour may occur. Please specify either sparse matrices or "
+                              "numpy arrays")
+
         # check if the bottom row and right col are empty, if so, we can store the dest in them,
         # if not, we need to append
         if sparse.issparse(incidence_matrix):
+            self.is_incidence_mat_sparse = True
             nnz = (incidence_matrix[-1, :].count_nonzero()
                    + incidence_matrix[:, -1].count_nonzero())
+
         else:
+            self.is_incidence_mat_sparse = False
             nnz = (np.count_nonzero(incidence_matrix[-1, :])
                    + np.count_nonzero(incidence_matrix[:, -1]))
 
@@ -102,16 +121,16 @@ class ModelDataStruct(object):
             print("Adding an additional row and column to house sink state.")
             incidence_matrix = _zero_pad_mat(incidence_matrix, bottom=True, right=True)
             data_matrix_list_new = []
-            for i in data_matrix_list:
+            for i in data_attribute_list:
                 data_matrix_list_new.append(_zero_pad_mat(i, bottom=True, right=True))
-            data_matrix_list = data_matrix_list_new
+            data_attribute_list = data_matrix_list_new
             self.padded = True
         else:
             self.padded = False
 
         self.incidence_matrix = incidence_matrix
 
-        self.data_array = np.array(data_matrix_list)
+        self.data_array = np.array(data_attribute_list)
         if data_array_names_debug is None:
             data_array_names_debug = (),
         self.data_fields = data_array_names_debug  # convenience for debugging
@@ -142,6 +161,11 @@ class RecursiveLogitModel(abc.ABC):
         """
         self.network_data = data_struct  # all network attributes
         self.data_array = data_struct.data_array
+        # flags for sparsity, save us rechecking. Realistically, there should only be one
+        # flag since there is no use case where one is sparse and one is dense, but a hybrid
+        # is current permitted in the tests
+        self._is_network_data_sparse = self.network_data.is_data_format_sparse
+        self._is_incidence_sparse = self.network_data.is_incidence_mat_sparse
         self.n_dims = len(self.data_array)
         self.mu = mu
 
@@ -188,11 +212,19 @@ class RecursiveLogitModel(abc.ABC):
         return self._beta_vec
 
     def _compute_short_term_utility(self, skip_check=False) -> bool:
-        self.short_term_utility = np.sum(self.get_beta_vec() * self.data_array, axis=0)
-        # note axis=0 means that ndarrays will give a matrix result back, not a scalar
-        # which is what we want
+        # Data array is a np.ndarray, of either sparse matrices, or 2d nd-arrays.
+        # So we check the sparsity of the first element. If the user puts mixed types in here
+        # then errors are on them
+        if self._is_network_data_sparse:
+            self.short_term_utility = np.sum(self.get_beta_vec() * self.data_array, axis=0)
+            # note axis=0 means that ndarrays will give a matrix result back, not a scalar
+            # which is what we want
+        else:
+            # (beta * each_data_array_slice).sum(over all slices) is a tensor contraction
+            self.short_term_utility = np.tensordot(self.get_beta_vec(), self.data_array, axes=1)
+
         if skip_check is False:
-            if sparse.issparse(self.short_term_utility):
+            if self._is_network_data_sparse:
                 nz_rows, nz_cols = self.short_term_utility.nonzero()  # this is dense so cast ok
                 cond = self.short_term_utility[nz_rows, nz_cols].toarray()
             else:
@@ -231,7 +263,8 @@ class RecursiveLogitModel(abc.ABC):
         # note dense cast is fine here, since is the dense cast of a dense selection from sparse
         # (note that sparse matrices don't have exp method defined on them because exp(0)=1
         m_mat[nonzero_entries] = np.exp(
-            1 / self.mu * _to_dense_if_sparse(m_mat[nonzero_entries]))
+            1 / self.mu * _to_dense_if_sparse(m_mat[nonzero_entries],
+                                              self._is_network_data_sparse))
         self._exponential_utility_matrix = m_mat
 
     def get_exponential_utility_matrix(self):
@@ -249,21 +282,28 @@ class RecursiveLogitModel(abc.ABC):
         return self._exponential_utility_matrix
 
     @staticmethod
-    def _compute_exp_value_function(m_tilde, return_pieces=False):
+    def _compute_exp_value_function(m_tilde, data_is_sparse, return_pieces=False, ):
         """ Actual linear system solve without any error checking"""
         ncols = m_tilde.shape[1]
-        rhs = sparse.lil_matrix((ncols, 1))  # suppressing needless sparsity warning
-        rhs[-1, 0] = 1
-        # (I-M)z =b
-        a_mat = sparse.identity(ncols) - m_tilde
-        z_vec = splinalg.spsolve(a_mat, rhs)  # rhs has to be (n,1)
-        z_vec = np.atleast_2d(z_vec).T  # Transpose to have appropriate dims
+        if data_is_sparse:
+            rhs = sparse.lil_matrix((ncols, 1))  # suppressing needless sparsity warning
+            rhs[-1, 0] = 1
+            # (I-M)z =b
+            a_mat = sparse.identity(ncols) - m_tilde
+            z_vec = splinalg.spsolve(a_mat, rhs)  # rhs has to be (n,1)
+            z_vec = np.atleast_2d(z_vec).T  # Transpose to have appropriate dims
+        else:
+            rhs = np.zeros((ncols, 1))
+            rhs[-1, 0] = 1
+            a_mat = np.identity(ncols) - m_tilde
+            z_vec = linalg.solve(a_mat, rhs)
+            # note shape is natively correct in the dense case, no need to worry
         if return_pieces:
             return a_mat, z_vec, rhs
         else:
             return z_vec
 
-    def compute_value_function(self, m_tilde) -> bool:
+    def compute_value_function(self, m_tilde, data_is_sparse=None) -> bool:
         """
         Solves the linear system :math:`z = Mz+b` and stores the output for future use.
         Returns a boolean indicating if solving the linear system was successful or not.
@@ -272,7 +312,9 @@ class RecursiveLogitModel(abc.ABC):
         ----------
         m_tilde : :py:class:`scipy.sparse.csr_matrix`
             The matrix M modified to reflect the current location of the sink destination state.
-
+        data_is_sparse : bool, optional
+            flag to indicate if the data - in this case m_tilde is sparse. If supplied, we don't
+            need to check this manually.
         Returns
         -------
         error_flag : bool
@@ -280,10 +322,11 @@ class RecursiveLogitModel(abc.ABC):
             successfully. Errors are due to the linear system having no solution, high residual
             or having negative solution, such that the value functions have no real solution.
         """
-        # """Solves the linear system :math:`z = Mz+b` and stores the output for future use.
-        # Has rudimentary flagging of errors but doesn't attempt to solve any problems"""
+        if data_is_sparse is None:
+            data_is_sparse = sparse.issparse(m_tilde)
         error_flag = False  # start with no errors
-        a_mat, z_vec, rhs = self._compute_exp_value_function(m_tilde, return_pieces=True)
+        a_mat, z_vec, rhs = self._compute_exp_value_function(m_tilde, return_pieces=True,
+                                                             data_is_sparse=data_is_sparse)
         # if we z values negative, or near zero, parameters
         # are infeasible since log will be complex or -infty
         if z_vec.min() <= min(-1e-10, OptimiserBase.NUMERICAL_ERROR_THRESH):
@@ -359,9 +402,15 @@ class RecursiveLogitModel(abc.ABC):
 
     # TODO review signature after tests are updated
     @staticmethod
-    def _revert_dest_column(dest_index, m_tilde, i_tilde, local_exp_util_mat, local_incidence_mat):
+    def _revert_dest_column(dest_index, m_tilde, i_tilde, local_exp_util_mat, local_incidence_mat,
+                            data_is_sparse, incidence_is_sparse):
         """Inverse method to apply dest col - so that we can undo changes without resetting the
         matrix. Should be such that applying apply then revert is an identity operation."""
+
+        if data_is_sparse is None:
+            data_is_sparse = sparse.issparse(m_tilde)
+        if incidence_is_sparse is None:
+            incidence_is_sparse = sparse.issparse(local_incidence_mat)
 
         if ALLOW_POSITIVE_VALUE_FUNCTIONS:
             # Allow positive value functions
@@ -372,20 +421,20 @@ class RecursiveLogitModel(abc.ABC):
             # legacy for old understanding which required negative value functions
             # TODO the conditional to dense casts here are to avoid a bug in scipy with slice
             #  indexing a zero sparse matrix
-            if (sparse.issparse(local_exp_util_mat)
-                    and local_exp_util_mat[dest_index, :].count_nonzero() == 0):
+            # This is patched in @ 353f256, PR #12830, currently merged to master and due to
+            # fix in Scipy 1.6, but is also marked with backport tag
+            if data_is_sparse and local_exp_util_mat[dest_index, :].count_nonzero() == 0:
                 m_tilde[dest_index, :] = 0
             else:  # if this only has zeros in rhs, assignment does nothing
                 m_tilde[dest_index, :] = local_exp_util_mat[dest_index, :]
-            if (sparse.issparse(local_incidence_mat)
-                    and local_incidence_mat[dest_index, :].count_nonzero() == 0):
+            if incidence_is_sparse and local_incidence_mat[dest_index, :].count_nonzero() == 0:
                 i_tilde[dest_index, :] = 0
             else:
                 i_tilde[dest_index, :] = local_incidence_mat[dest_index, :]
             # TODO remove this - being extra paranoid since this is a bug with scipy, not my code
             assert np.all(
-                _to_dense_if_sparse(m_tilde[dest_index, :])
-                == _to_dense_if_sparse(local_exp_util_mat[dest_index, :]))
+                _to_dense_if_sparse(m_tilde[dest_index, :], data_is_sparse)
+                == _to_dense_if_sparse(local_exp_util_mat[dest_index, :]), incidence_is_sparse)
 
         return m_tilde, i_tilde
 
@@ -398,33 +447,30 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
 
     def __init__(self, data_struct: ModelDataStruct,
                  optimiser: OptimiserBase, observations_record,
-                 initial_beta=-1.5, mu=1):
+                 initial_beta=-1.5, mu=1, sort_obs=True):
         """
-        Initialises a RecursiveLogitEstimation instance.
+        Initialise recursive logit model for estimation
 
         Parameters
         ----------
         data_struct : ModelDataStruct
-           The ModelDataStruct corresponding to the network being estimated on
-        optimiser: OptimiserBase
+            containing network attributes of desired network
+        optimiser : ScipyOptimiser or LineSearchOptimiser
             The wrapper instance for the desired optimisation routine
-        observations_record: list of list or :py:class:`scipy.sparse.csr_matrix` or
-            ak.highlevel.Array
-            The observed series of observations to estimate parameters from. Either a sparse
-            matrix or a form of ragged array
-        initial_beta : float or int or list[float] or array_like
-           The initial value for the parameter weights of the network attributes
-        mu : float
-           The scale parameter of the Gumbel random variables being modelled. Generally set
+        observations_record : ak.highlighlevel.Array or :py:class:`scipy.sparse.spmatrix` or list of list
+            record of observations to estimate from
+        initial_beta : float or list or array like
+            initial guessed values of beta to begin optimisation algorithm with. If a scalar,
+            beta are uniformly initialised to this value
+        mu :
+            The scale parameter of the Gumbel random variables being modelled. Generally set
            equal to 1 as it is non-identifiable due to the uncertainty in the parameter weights.
+        sort_obs : bool
+            flag to sort input observations to allow for efficient caching. Should only be set to
+            False if the data is large and already known to be sorted.
         """
-
         super().__init__(data_struct, initial_beta, mu)
         self.optimiser = optimiser  # optimisation alg wrapper class
-        # TODO this probably shouldn't know about the optimiser
-        #    on the basis that if it doesn't then we can use the same base class here fro
-        #    estimation. It might be easier for now to make a base class and have a
-        #    subclass which gets an optimiser
 
         beta_vec = super().get_beta_vec()  # orig without optim tie in
         # setup optimiser initialisation
@@ -437,10 +483,13 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
 
         # book-keeping on observations record
         if sparse.issparse(observations_record):  # TODO perhaps convert to ak format?
+            self.is_obs_record_sparse = True
             self.obs_count, _ = observations_record.shape
             self.obs_min_legal_index = 1  # Zero is reserved index for sparsity
 
+
         else:
+            self.is_obs_record_sparse = False
             observations_record = self._convert_obs_record_format(observations_record)
             # num_obs = len(observations_record) # equivalent but clearer this is ak array
             self.obs_count = ak.num(observations_record, axis=0)
@@ -464,7 +513,11 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
 
             else:  # just get the minimum index used, which should be zero or 1
                 self.obs_min_legal_index = ak.min(observations_record, axis=None)
-        self.obs_record = observations_record
+        if sort_obs:
+            self.obs_record = self._sort_obs(observations_record)
+        else:
+            self.obs_record = observations_record
+
         # finish initialising
         self.get_log_likelihood()  # need to compute starting LL for optimiser
         if isinstance(optimiser, CustomOptimiserBase):
@@ -496,6 +549,30 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         except Exception as e:  # TODO BAD
             raise TypeError("Obs format invalid, failed to parse input obs as Awkward Array.") \
                 from e
+
+    @staticmethod
+    def _sort_obs(obs_record):
+        """
+        Sorts input observations by destination, to allow efficient computation of log likelihood.
+        This allows us to cache some value functions and not recomputed them
+        Recall that destination is the first index of an observations.
+
+        Parameters
+        ----------
+        obs_record : ak.highlevel.Array or array like
+
+        Returns
+        -------
+        sorted_obs_record : observations record sorted by destination.
+        """
+        if isinstance(obs_record, ak.highlevel.Array):
+            # sort by first index
+            obs_record = obs_record[ak.argsort(obs_record[:, 0])]
+        else:  # assuming sparse, but should work for dense
+            index = np.argsort(obs_record[:, 0].toarray().squeeze())  # squeeze is since we have
+            # redundant 2d and we end up with all zeros in redundant dim
+            obs_record = obs_record[index, :]
+        return obs_record
 
     def _get_n_func_evals(self):
         return self.n_log_like_calls_non_redundant
@@ -646,7 +723,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             else:
 
                 # Now get exponentiated value funcs
-                error_flag = self.compute_value_function(m_tilde)
+                error_flag = self.compute_value_function(m_tilde, self._is_network_data_sparse)
                 # If we had numerical issues in computing value functions
                 if error_flag:  # terminate early with error vals
                     self.log_like_stored = OptimiserBase.LL_ERROR_VALUE
@@ -682,7 +759,9 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
 
             # Put our matrices back untouched:
             m_tilde, i_tilde = self._revert_dest_column(dest_index, m_tilde, i_tilde,
-                                                        m_mat, local_incidence_mat)
+                                                        m_mat, local_incidence_mat,
+                                                        self._is_network_data_sparse,
+                                                        self._is_incidence_sparse)
 
         # only apply this rescaling once rather than on all terms inside loops
         self.log_like_stored = -1/mu * mu_log_like_cumulative
@@ -717,7 +796,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         # know all zeros are at the end since row is of the form:
         #   [dest, orig, ... , dest, 0 padding since sparse]
 
-        if sparse.issparse(obs_row):
+        if self.is_obs_record_sparse:
             path_len = obs_row.count_nonzero()
             # Note that this is now dense, so cast isn't so bad (required since subtract not
             # defined for sparse matrices)
@@ -826,7 +905,6 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         - gradient in each x component at every node"""
         # TODO check if dimensions should be transposed
         grad_v = np.zeros((self.n_dims, np.shape(m_tilde)[0]))
-        identity = sparse.identity(np.shape(m_tilde)[0])
         z = exp_val_funcs  # consistency with maths doc
 
         # low number of dims -> not vectorised for convenience
@@ -837,7 +915,12 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             # due to matrices with terrible condition numbers in the examples
             # spsolve(A,b) == inv(A)*b
             # Note: A.multiply(B) is A .* B for sparse matrices
-            grad_v[q, :] = splinalg.spsolve(identity - m_tilde, m_tilde.multiply(chi) @ z)
+            if self._is_network_data_sparse:
+                identity = sparse.identity(np.shape(m_tilde)[0])
+                grad_v[q, :] = splinalg.spsolve(identity - m_tilde, m_tilde.multiply(chi) @ z)
+            else:
+                identity = np.identity(np.shape(m_tilde)[0])
+                grad_v[q, :] = linalg.solve(identity - m_tilde, m_tilde * chi @ z)
 
         return grad_v
 
@@ -883,7 +966,7 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
         :param rng_seed: Seed for numpy generator, or instance of np.random.BitGenerator
         :type rng_seed: int or np.random.BitGenerator  (any legal input to np.random.default_rng())
 
-        :rtype list<list<int>>
+        :rtype list of list of int
         :return List of list of all observations generated
         """
         self._check_index_valid(dest_indices)
@@ -910,7 +993,7 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
         for dest in dest_indices:
             self._apply_dest_column(dest, m_tilde, i_tilde)
 
-            z_vec = self._compute_exp_value_function(m_tilde)
+            z_vec = self._compute_exp_value_function(m_tilde, self._is_network_data_sparse)
             with np.errstate(divide='ignore', invalid='ignore'):
                 value_funcs = np.log(z_vec)
             # catch errors manually
@@ -943,7 +1026,7 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
                     # why? so we know what the dest is without having to lookup to the
                     # last nonzero (only really a problem for sparse, but still marginally
                     # more efficient. Perhaps could have flags for data formats? TODO
-                    current_path = [dest]
+                    current_path = [int(dest)]
                     count = 0
                     while current_arc != dest_dummy_arc_index:  # index of augmented dest arc
                         count += 1
@@ -956,7 +1039,7 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
                                              f"{dest} was found within cap.")
                         current_incidence_col = i_tilde[current_arc, :]
                         # all arcs current arc connects to (index converts from 2d to 1d)
-                        if sparse.issparse(current_incidence_col):
+                        if self._is_incidence_sparse:
                             # we get a matrix return type for 1 row * n cols
                             # from .nonzero() - [0]th component is the row (always zero)
                             # and [1]th component is col,
@@ -989,6 +1072,7 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
 
             # Fix the columns we changed for this dest (cheaper than refreshing whole matrix)
             self._revert_dest_column(dest, m_tilde, i_tilde,
-                                     local_exp_util_mat, local_incidence_mat)
+                                     local_exp_util_mat, local_incidence_mat,
+                                     self._is_network_data_sparse, self._is_incidence_sparse)
 
         return output_path_list

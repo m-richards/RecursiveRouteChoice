@@ -35,12 +35,14 @@ network_struct = ModelDataStruct(data_list, incidence_mat,
 beta_vec = np.array([-1])
 model = RecursiveLogitModelPrediction(network_struct,
                                       initial_beta=beta_vec, mu=1)
-
-obs = model.generate_observations(origin_indices=[i for i in range(70)], dest_indices=[i for i in
-                                                                                       range(70)],
-                                  num_obs_per_pair=1, iter_cap=2000, rng_seed=1,
+# orig_indices = np.arange(1, 70, 50)
+orig_indices = [22.0]
+dest_indices = np.arange(2, 70, 50)
+obs_per_pair = 2
+obs = model.generate_observations(origin_indices=orig_indices, dest_indices=dest_indices,
+                                  num_obs_per_pair=obs_per_pair, iter_cap=2000, rng_seed=1,
                                   )
-print(obs)
+# print(obs)
 
 # Print paths in terms of nodes
 print("\nNode Paths")

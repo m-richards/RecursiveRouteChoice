@@ -1,0 +1,4 @@
+python -m cProfile -o program.prof profiling.py
+snakeviz program.prof
+
+# also is line_profiler but couldn't get dependencies to install on windows
