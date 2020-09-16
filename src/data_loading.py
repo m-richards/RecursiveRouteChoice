@@ -109,7 +109,9 @@ def resize_to_dims(matrix: sparse.dok_matrix, expected_max_shape,
     matrix.resize(*expected_max_shape)
 
 
-def load_tnpm_to_sparse(net_fpath, columns_to_extract=None, use_file_order_for_arc_numbers=True):
+# TODO none should not be legal
+def load_tnpm_to_sparse_arc_formulation(net_fpath, columns_to_extract=None,
+                                        use_file_order_for_arc_numbers=True):
     """
     :param net_fpath path to network file
     :param columns_to_extract list of columns to keep. init_node and term_node are always kept
