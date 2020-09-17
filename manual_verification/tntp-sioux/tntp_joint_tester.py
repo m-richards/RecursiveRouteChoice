@@ -18,6 +18,17 @@ arc_to_index_map, distances = load_tntp_to_sparse_arc_formulation(network_file, 
 # print(arc_to_index_map)
 index_node_pair_map = {v: k for (k, v) in arc_to_index_map.items()}
 
+# distances = np.array(
+#     [[4, 3.5, 4.5, 3, 3, 0, 0, 0],
+#      [3.5, 3, 4, 0, 2.5, 3, 3, 0],
+#      [4.5, 4, 5, 0, 0, 0, 4, 3.5],
+#      [3, 0, 0, 2, 2, 2.5, 0, 2],
+#      [3, 2.5, 0, 2, 2, 2.5, 2.5, 0],
+#      [0, 3, 0, 2.5, 2.5, 3, 3, 2.5],
+#      [0, 3, 4, 0, 2.5, 3, 3, 2.5],
+#      [0, 0, 3.5, 2, 0, 2.5, 2.5, 2]])
+#
+
 incidence_mat = (distances > 0).astype(int)
 
 data_list = [distances]
@@ -29,6 +40,8 @@ model = RecursiveLogitModelPrediction(network_struct,
                                       initial_beta=beta_vec, mu=1)
 orig_indices = np.arange(1, 70, 8)
 dest_indices = np.arange(2, 70, 8)
+# orig_indices = np.arange(0, 7, 1)
+# dest_indices = np.arange(0, 7, 1)
 obs_per_pair = 4
 
 
