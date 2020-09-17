@@ -10,7 +10,7 @@ from .extra_optim import OptimFunctionState
 from .hessian_approx import update_hessian_approx, OptimHessianType
 from .line_search import line_search_asrch
 from scipy.optimize import minimize
-from scipy import optimize
+# from scipy import optimize
 
 OPTIMIZE_CONSTANT_MAX_FEV = 10
 
@@ -125,13 +125,13 @@ class ScipyOptimiser(OptimiserBase):
                 self.iter_count += 1
         else:
             cb = None
-        print("options are", options)
-        print("method is", self.method)
-        if self.method in ['l-bfgs-b', 'tnc', 'slsqp', 'powell', 'trust-constr']:
-            print("enforcing negative beta")
-            bound = optimize.Bounds(-np.inf, 0.0, keep_feasible=False)
-        else:
-            bound = None
+        # print("options are", options)
+        # print("method is", self.method)
+        # if self.method in ['l-bfgs-b', 'tnc', 'slsqp', 'powell', 'trust-constr']:
+        #     print("enforcing negative beta")
+        #     bound = optimize.Bounds(-np.inf, 0.0, keep_feasible=False)
+        # else:
+        bound = None
 
         return minimize(fun_wrapper, x0, method=self.method, bounds=bound,
                         jac=grad_wrapper, hess=hess_wrapper, options=options,

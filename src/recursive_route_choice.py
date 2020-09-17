@@ -612,7 +612,8 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             if verbose:
                 print(optim_res)
             if optim_res.success is False:
-                raise ValueError("Scipy alg error flag was raised. Process failed.")
+                raise ValueError("Scipy alg error flag was raised. Process failed. Details:\n"
+                                 f"{optim_res.message} ")
             return optim_res.x
         # otherwise we have Optimiser is a Custom type
         print(self.optimiser.get_iteration_log(self.optim_function_state), file=None)
