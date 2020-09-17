@@ -1,17 +1,26 @@
 import abc
 import warnings
 from typing import List, Union
-from scipy import linalg
+import logging
+
+import numpy as np
+from scipy import linalg, sparse
 # from scipy.sparse import coo_matrix
 from scipy.sparse import linalg as splinalg
-from scipy import sparse
 
 import awkward1 as ak
 
 # from debug_helpers import print_sparse, print_data_struct
 from optimisers.extra_optim import OptimFunctionState
 from optimisers.optimisers_file import CustomOptimiserBase, OptimType, ScipyOptimiser, OptimiserBase
-import numpy as np
+
+logger = logging.getLogger()
+handler = logging.StreamHandler()
+formatter = logging.Formatter(
+    '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.setLevel(logging.DEBUG)
 
 ALLOW_POSITIVE_VALUE_FUNCTIONS = True
 
@@ -128,7 +137,7 @@ class ModelDataStruct(object):
         else:
             self.padded = False
 
-        self.incidence_matrix = incidence_matrix
+        self.incidence_matrix = incidence_matrix.astype(int)
 
         self.data_array = np.array(data_attribute_list)
         if data_array_names_debug is None:
@@ -226,13 +235,13 @@ class RecursiveLogitModel(abc.ABC):
         if skip_check is False:
             if self._is_network_data_sparse:
                 nz_rows, nz_cols = self.short_term_utility.nonzero()  # this is dense so cast ok
-                cond = self.short_term_utility[nz_rows, nz_cols].toarray()
+                condition = self.short_term_utility[nz_rows, nz_cols].toarray()
             else:
-                cond = self.short_term_utility
-            if np.any(cond > 0):
-                warnings.warn("Short term utility contains positive terms, which is illegal. "
-                              "Network attributes must be non-negative and beta must be "
-                              "negative.")
+                condition = self.short_term_utility
+            if np.any(condition > 0):
+                logger.warning("Short term utility contains positive terms, which is illegal. "
+                               "Network attributes must be non-negative and beta must be "
+                               "negative.")
                 return False
         return True
 
@@ -662,6 +671,13 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         self._compute_exponential_utility_matrix()
         return True
 
+    def _return_error_log_like(self):
+        self.log_like_stored = OptimiserBase.LL_ERROR_VALUE
+        self.grad_stored = np.ones(self.n_dims)  # TODO better error gradient?
+        self.flag_log_like_stored = True
+        # print("Parameters are infeasible.")
+        return self.log_like_stored, self.grad_stored
+
     def get_log_likelihood(self):
         """Compute the log likelihood of the data  and its gradient for the current beta vec
 
@@ -727,18 +743,13 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
                 error_flag = self.compute_value_function(m_tilde, self._is_network_data_sparse)
                 # If we had numerical issues in computing value functions
                 if error_flag:  # terminate early with error vals
-                    self.log_like_stored = OptimiserBase.LL_ERROR_VALUE
-                    self.grad_stored = np.ones(n_dims)  # TODO better error gradient?
-                    self.flag_log_like_stored = True
-                    # print("Parameters are infeasible.")
-                    return self.log_like_stored, self.grad_stored
+                    self._return_error_log_like()
 
                 value_funcs, exp_val_funcs = self._value_functions, self._exp_value_functions
 
             dest_index_old = dest_index
             # Gradient and log like depend on origin values
 
-            # respective sub function? probably yes
             grad_orig = self.get_value_func_grad_orig(orig_index, m_tilde, exp_val_funcs)
 
             self._compute_obs_path_indices(obs_record[n, :])  # required to compute LL & grad
@@ -776,6 +787,9 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
     def eval_log_like_at_new_beta(self, beta_vec):
         """update beta vec and compute log likelihood in one step - used for lambdas
         Effectively a bad functools.partial"""
+        if np.any(np.isnan(beta_vec)):
+            raise ValueError(f"Input beta vector {beta_vec} contains nans. Algorithm can no "
+                             f"longer converge.")
         success_flag = self.update_beta_vec(beta_vec)
         if success_flag is False:
             self.log_like_stored = OptimiserBase.LL_ERROR_VALUE
@@ -879,9 +893,17 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         Named GradValFnOrig in companion notes, see also GradValFn2 for component part
         - this function applies the 1/z_{orig} * [rest]_{evaluated at orig}
         """
+        if exp_val_funcs[orig_index] == 0.0:  # tODO thresh for zero inexactly
+            # if this is zero, it shouldn't contribute to gradient (we have divide by zero if we
+            # try anyway
+            return 0.0
         partial_grad = self._get_value_func_incomplete_grad(m_tilde, exp_val_funcs)
         # with np.errstate(divide='ignore', invalid='ignore'):
-        return partial_grad[:, orig_index] / exp_val_funcs[orig_index]
+        # print("pp", exp_val_funcs[orig_index])
+        # np.divide(partial_grad[:, orig_index], exp_val_funcs[orig_index], error)
+
+        with np.errstate(divide='raise', invalid='raise'):
+            return partial_grad[:, orig_index] / exp_val_funcs[orig_index]
 
     def _get_value_func_incomplete_grad(self, m_tilde, exp_val_funcs):
         r"""
