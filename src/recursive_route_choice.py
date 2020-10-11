@@ -173,7 +173,7 @@ class RecursiveLogitModel(abc.ABC):
         # flags for sparsity, save us rechecking. Realistically, there should only be one
         # flag since there is no use case where one is sparse and one is dense, but a hybrid
         # is current permitted in the tests
-        self._is_network_data_sparse = self.network_data.is_data_format_sparse
+        self.is_network_data_sparse = self.network_data.is_data_format_sparse
         self._is_incidence_sparse = self.network_data.is_incidence_mat_sparse
         self.n_dims = len(self.data_array)
         self.mu = mu
@@ -224,7 +224,7 @@ class RecursiveLogitModel(abc.ABC):
         # Data array is a np.ndarray, of either sparse matrices, or 2d nd-arrays.
         # So we check the sparsity of the first element. If the user puts mixed types in here
         # then errors are on them
-        if self._is_network_data_sparse:
+        if self.is_network_data_sparse:
             self.short_term_utility = np.sum(self.get_beta_vec() * self.data_array, axis=0)
             # note axis=0 means that ndarrays will give a matrix result back, not a scalar
             # which is what we want
@@ -233,7 +233,7 @@ class RecursiveLogitModel(abc.ABC):
             self.short_term_utility = np.tensordot(self.get_beta_vec(), self.data_array, axes=1)
 
         if skip_check is False:
-            if self._is_network_data_sparse:
+            if self.is_network_data_sparse:
                 nz_rows, nz_cols = self.short_term_utility.nonzero()  # this is dense so cast ok
                 condition = self.short_term_utility[nz_rows, nz_cols].toarray()
             else:
@@ -275,7 +275,7 @@ class RecursiveLogitModel(abc.ABC):
         # (note that sparse matrices don't have exp method defined on them because exp(0)=1
         m_mat[nonzero_entries] = np.exp(
             1 / self.mu * _to_dense_if_sparse(m_mat[nonzero_entries],
-                                              self._is_network_data_sparse))
+                                              self.is_network_data_sparse))
         self._exponential_utility_matrix = m_mat
 
     def get_exponential_utility_matrix(self):
@@ -484,6 +484,12 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             False if the data is large and already known to be sorted.
         """
         super().__init__(data_struct, initial_beta, mu)
+        self._init_estimation_body(data_struct, optimiser, observations_record, sort_obs)
+        self._init_post_init()
+
+    def _init_estimation_body(self, data_struct: ModelDataStruct,
+                              optimiser: OptimiserBase, observations_record, sort_obs=True):
+        """Factor component out for the sake of inheritance"""
         self.optimiser = optimiser  # optimisation alg wrapper class
 
         beta_vec = super().get_beta_vec()  # orig without optim tie in
@@ -493,7 +499,8 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
                                                        self.eval_log_like_at_new_beta,
                                                        beta_vec,
                                                        self._get_n_func_evals)
-        self.update_beta_vec(beta_vec)  # to this to refresh dependent matrix quantitites
+        self.update_beta_vec(beta_vec, from_init=True)  # to this to refresh dependent matrix
+        # quantitites
 
         # book-keeping on observations record
         if sparse.issparse(observations_record):  # TODO perhaps convert to ak format?
@@ -531,10 +538,12 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         else:
             self.obs_record = observations_record
 
+    def _init_post_init(self):
         # finish initialising
         self.get_log_likelihood()  # need to compute starting LL for optimiser
+        optimiser = self.optimiser
         if isinstance(optimiser, CustomOptimiserBase):
-            optimiser.set_beta_vec(beta_vec)
+            optimiser.set_beta_vec(self._beta_vec)
             optimiser.set_current_value(self.log_like_stored)
 
         self._path_start_nodes = None
@@ -643,7 +652,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
                 return self.optim_function_state.beta_vec
         raise ValueError("Optimisation algorithm failed to converge")
 
-    def update_beta_vec(self, new_beta_vec) -> bool:
+    def update_beta_vec(self, new_beta_vec, from_init=False) -> bool:
         """
         Update the interval value for the network parameters beta with the supplied value.
 
@@ -651,6 +660,8 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         Parameters
         ----------
         new_beta_vec : :py:func:`numpy.array` of float
+        from_init : bool
+            flag used in subclasses to avoid messy dependence sequencing issues
 
 
         Returns
@@ -744,7 +755,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             else:
 
                 # Now get exponentiated value funcs
-                error_flag = self.compute_value_function(m_tilde, self._is_network_data_sparse)
+                error_flag = self.compute_value_function(m_tilde, self.is_network_data_sparse)
                 # If we had numerical issues in computing value functions
                 if error_flag:  # terminate early with error vals
                     return self._return_error_log_like()
@@ -776,7 +787,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             # Put our matrices back untouched:
             m_tilde, i_tilde = self._revert_dest_column(dest_index, m_tilde, i_tilde,
                                                         m_mat, local_incidence_mat,
-                                                        self._is_network_data_sparse,
+                                                        self.is_network_data_sparse,
                                                         self._is_incidence_sparse)
 
         # only apply this rescaling once rather than on all terms inside loops
@@ -934,7 +945,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             # due to matrices with terrible condition numbers in the examples
             # spsolve(A,b) == inv(A)*b
             # Note: A.multiply(B) is A .* B for sparse matrices
-            if self._is_network_data_sparse:
+            if self.is_network_data_sparse:
                 identity = sparse.identity(np.shape(m_tilde)[0])
                 grad_v[q, :] = splinalg.spsolve(identity - m_tilde, m_tilde.multiply(chi) @ z)
             else:
@@ -1012,7 +1023,7 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
         for dest in dest_indices:
             self._apply_dest_column(dest, m_tilde, i_tilde)
 
-            z_vec = self._compute_exp_value_function(m_tilde, self._is_network_data_sparse)
+            z_vec = self._compute_exp_value_function(m_tilde, self.is_network_data_sparse)
             with np.errstate(divide='ignore', invalid='ignore'):
                 value_funcs = np.log(z_vec)
             # catch errors manually
@@ -1092,6 +1103,6 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
             # Fix the columns we changed for this dest (cheaper than refreshing whole matrix)
             self._revert_dest_column(dest, m_tilde, i_tilde,
                                      local_exp_util_mat, local_incidence_mat,
-                                     self._is_network_data_sparse, self._is_incidence_sparse)
+                                     self.is_network_data_sparse, self._is_incidence_sparse)
 
         return output_path_list
