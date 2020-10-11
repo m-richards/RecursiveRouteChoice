@@ -20,7 +20,7 @@ formatter = logging.Formatter(
     '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 ALLOW_POSITIVE_VALUE_FUNCTIONS = True
 
@@ -239,9 +239,11 @@ class RecursiveLogitModel(abc.ABC):
             else:
                 condition = self.short_term_utility
             if np.any(condition > 0):
-                logger.warning("Short term utility contains positive terms, which is illegal. "
-                               "Network attributes must be non-negative and beta must be "
-                               "negative.")
+                # only a debug print since this occurs frequently without error, -> with bad line
+                # search steps
+                logger.debug("Short term utility contains positive terms, which is illegal. "
+                             "Network attributes must be non-negative and beta must be "
+                             "negative.")
                 return False
         return True
 
@@ -744,7 +746,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
                 error_flag = self.compute_value_function(m_tilde, self._is_network_data_sparse)
                 # If we had numerical issues in computing value functions
                 if error_flag:  # terminate early with error vals
-                    self._return_error_log_like()
+                    return self._return_error_log_like()
 
                 value_funcs, exp_val_funcs = self._value_functions, self._exp_value_functions
 
@@ -894,17 +896,9 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         Named GradValFnOrig in companion notes, see also GradValFn2 for component part
         - this function applies the 1/z_{orig} * [rest]_{evaluated at orig}
         """
-        if exp_val_funcs[orig_index] == 0.0:  # tODO thresh for zero inexactly
-            # if this is zero, it shouldn't contribute to gradient (we have divide by zero if we
-            # try anyway
-            return 0.0
         partial_grad = self._get_value_func_incomplete_grad(m_tilde, exp_val_funcs)
         # with np.errstate(divide='ignore', invalid='ignore'):
-        # print("pp", exp_val_funcs[orig_index])
-        # np.divide(partial_grad[:, orig_index], exp_val_funcs[orig_index], error)
-
-        with np.errstate(divide='raise', invalid='raise'):
-            return partial_grad[:, orig_index] / exp_val_funcs[orig_index]
+        return partial_grad[:, orig_index] / exp_val_funcs[orig_index]
 
     def _get_value_func_incomplete_grad(self, m_tilde, exp_val_funcs):
         r"""
