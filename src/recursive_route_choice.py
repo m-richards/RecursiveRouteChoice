@@ -335,11 +335,16 @@ class RecursiveLogitModel(abc.ABC):
             or having negative solution, such that the value functions have no real solution.
         """
         if data_is_sparse is None:
-            data_is_sparse = sparse.issparse(m_tilde)
-        error_flag = False  # start with no errors
+            data_is_sparse = sparse.issparse(m_tilde)  # do this once rather than continual query
+
         a_mat, z_vec, rhs = self._compute_exp_value_function(m_tilde, return_pieces=True,
                                                              data_is_sparse=data_is_sparse)
-        # if we z values negative, or near zero, parameters
+        return self._value_function_checks(a_mat, z_vec, rhs)
+
+    def _value_function_checks(self, a_mat, z_vec, rhs):
+        error_flag = False  # start with no errors
+
+        # if we have z values negative, or near zero, parameters
         # are infeasible since log will be complex or -infty
         if z_vec.min() <= min(-1e-10, OptimiserBase.NUMERICAL_ERROR_THRESH):
             # thresh on this?
@@ -347,9 +352,9 @@ class RecursiveLogitModel(abc.ABC):
             return error_flag
 
         # Norm of residual
-            # Note: Scipy sparse norm doesn't have a 2 norm so we use this
-            # TODO note this is expensive, in practice we may want to switch to sparse frobenius
-            #  norm element wise norm which would be convenient for sparse matrices
+        # Note: Scipy sparse norm doesn't have a 2 norm so we use this
+        # TODO note this is expensive, in practice we may want to switch to sparse frobenius
+        #  norm element wise norm which would be convenient for sparse matrices
         # residual - i.e. ill conditioned solution
         # note that z_vec is dense so this should be dense without explicit cast
         elif np.any(~np.isfinite(z_vec)):
