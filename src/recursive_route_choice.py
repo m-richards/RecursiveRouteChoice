@@ -301,8 +301,9 @@ class RecursiveLogitModel(abc.ABC):
             rhs[-1, 0] = 1
             # (I-M)z =b
             a_mat = sparse.identity(ncols) - m_tilde
-            z_vec = splinalg.spsolve(a_mat, rhs)  # rhs has to be (n,1)
-            z_vec = np.atleast_2d(z_vec).T  # Transpose to have appropriate dims
+            z_vec = splinalg.spsolve(a_mat, rhs)
+            z_vec = z_vec.reshape(ncols, 1)  # rhs has to be (n,1)
+
         else:
             rhs = np.zeros((ncols, 1))
             rhs[-1, 0] = 1
