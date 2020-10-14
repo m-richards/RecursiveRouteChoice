@@ -465,7 +465,160 @@ class RecursiveLogitModel(abc.ABC):
         return m_tilde, i_tilde
 
 
-class RecursiveLogitModelEstimation(RecursiveLogitModel):
+class RecursiveLogitModelPrediction(RecursiveLogitModel):
+    """Subclass which generates simulated observations based upon the supplied beta vector.
+    Uses same structure as estimator in the hopes I can unify these such that one can use the
+    estimator for prediction as well (probably have estimator inherit from this)"""
+
+    def _check_index_valid(self, indices):
+        max_index_present = np.max(indices)
+        m, n = self.network_data.incidence_matrix.shape
+        max_legal_index = m - 1  # zero based
+        max_legal_index -= 1  # also subtract padding column from count
+        if max_index_present > max_legal_index:
+            if max_index_present == max_legal_index + 1:
+                raise IndexError("Received observation index "
+                                 f"{max_index_present} > {max_legal_index}. "
+                                 f"Network data does have valid indices [0, ..., {m-1}] "
+                                 f"but the final "
+                                 "index is reserved for internal dummy sink state. The "
+                                 "dimensions of the original data passed in would have been "
+                                 "augmented, or data already had an empty final row and col.")
+            raise IndexError("Received observation index "
+                             f"{max_index_present} > {max_legal_index}. Can only simulate "
+                             "observations from indexes which are in the model.")
+
+    def generate_observations(self, origin_indices, dest_indices, num_obs_per_pair, iter_cap=1000,
+                              rng_seed=None,
+                              ):
+        """
+
+        :param origin_indices: iterable of indices to start paths from
+        :type origin_indices: list or iterable
+        :param dest_indices: iterable of indices to end paths at
+        :type dest_indices: List or iterable
+        :param num_obs_per_pair: Number of observations to generate for each OD pair
+        :type num_obs_per_pair: int
+        :param iter_cap: iteration cap in the case of non convergent value functions.
+                        Hopefully should not occur but may happen if the value function solutions
+                        are negative but ill conditioned.
+        :type iter_cap: int
+        :param rng_seed: Seed for numpy generator, or instance of np.random.BitGenerator
+        :type rng_seed: int or np.random.BitGenerator  (any legal input to np.random.default_rng())
+
+        :rtype list of list of int
+        :return List of list of all observations generated
+        """
+        self._check_index_valid(dest_indices)
+        self._check_index_valid(origin_indices)
+        rng = np.random.default_rng(rng_seed)
+
+        # store output as list of lists, using AwkwardArrays might be more efficient,
+        # but the output format will not be the memory bottleneck
+        output_path_list = []
+
+        local_short_term_util = self.get_short_term_utility().copy()
+
+        local_exp_util_mat = self.get_exponential_utility_matrix()
+        local_incidence_mat = self.network_data.incidence_matrix
+        m_tilde = local_exp_util_mat.copy()
+        i_tilde = local_incidence_mat.copy()
+
+        m, n = m_tilde.shape
+        assert m == n  # paranoia
+
+        # destination dummy arc is the final column (which was zero until filled)
+        dest_dummy_arc_index = m-1
+
+        for dest in dest_indices:
+            self._apply_dest_column(dest, m_tilde, i_tilde)
+
+            z_vec = self._compute_exp_value_function(m_tilde, self.is_network_data_sparse)
+            with np.errstate(divide='ignore', invalid='ignore'):
+                value_funcs = np.log(z_vec)
+            # catch errors manually
+            if np.any(~np.isfinite(value_funcs)):  # any infinite (nan/ -inf)
+                if np.any(~np.isfinite(z_vec)):
+                    msg = "exp(V(s)) contains nan or infinity"
+                elif np.any(z_vec <= 0):
+                    msg = "exp(V(s)) contains negative values"
+                else:
+                    msg = "Unknown cause"
+                raise ValueError("Parameter Beta is incorrectly determined, or poorly chosen. "
+                                 "Value functions have "
+                                 f"no solution [{msg}].")
+
+            elif ALLOW_POSITIVE_VALUE_FUNCTIONS is False and np.any(value_funcs > 0):
+                warnings.warn("WARNING: Positive value functions:"
+                              f"{value_funcs[value_funcs > 0]}")
+
+            # loop through path starts, with same base value functions
+            for orig in origin_indices:
+                if orig == dest:  # redundant case
+                    continue
+
+                # repeat until we have specified number of obs
+                for i in range(num_obs_per_pair):
+                    # while we haven't reached the dest
+
+                    current_arc = orig
+                    # format is [dest, orig, l1, l2, ..., ln, dest]
+                    # why? so we know what the dest is without having to lookup to the
+                    # last nonzero (only really a problem for sparse, but still marginally
+                    # more efficient. Perhaps could have flags for data formats? TODO
+                    current_path = [int(dest)]
+                    count = 0
+                    while current_arc != dest_dummy_arc_index:  # index of augmented dest arc
+                        count += 1
+                        # TODO Note the int conversion here is purely for json serialisation compat
+                        #   if this is no longer used then we can keep numpy types
+                        current_path.append(int(current_arc))
+                        if count > iter_cap:
+
+                            raise ValueError(f"Max iterations reached. No path from {orig} to "
+                                             f"{dest} was found within cap.")
+                        current_incidence_col = i_tilde[current_arc, :]
+                        # all arcs current arc connects to (index converts from 2d to 1d)
+                        if self._is_incidence_sparse:
+                            # we get a matrix return type for 1 row * n cols
+                            # from .nonzero() - [0]th component is the row (always zero)
+                            # and [1]th component is col,
+                            neighbour_arcs = current_incidence_col.nonzero()[1]
+                        else:
+                            # nd-arrays are smart enough to work out they are 1d
+                            neighbour_arcs = current_incidence_col.nonzero()[0]
+
+                        # TODO it could be cheaper to block generate these in larger batches
+                        eps = rng.gumbel(loc=-np.euler_gamma, scale=1, size=len(neighbour_arcs))
+
+                        value_functions_observed = (
+                                local_short_term_util[current_arc, neighbour_arcs]
+                                + value_funcs[neighbour_arcs].T
+                                + eps)
+
+                        if np.any(np.isnan(value_functions_observed)):
+                            raise ValueError("beta vec is invalid, gives non real solution")
+
+                        next_arc_index = np.argmax(value_functions_observed)
+                        next_arc = neighbour_arcs[next_arc_index]
+                        current_arc = next_arc
+                        # offset stops arc number being recorded as zero
+
+                    if len(current_path) <= 2:
+                        continue  # this is worthless information saying we got from O to D in one
+                        # step
+                    # Note we don't append the final (dummy node) because it changes location
+                    output_path_list.append(current_path)
+
+            # Fix the columns we changed for this dest (cheaper than refreshing whole matrix)
+            self._revert_dest_column(dest, m_tilde, i_tilde,
+                                     local_exp_util_mat, local_incidence_mat,
+                                     self.is_network_data_sparse, self._is_incidence_sparse)
+
+        return output_path_list
+
+
+class RecursiveLogitModelEstimation(RecursiveLogitModelPrediction):
     """Extension of `RecursiveLogitModel` to support Estimation of network attribute parameters.
     """
 
@@ -967,156 +1120,3 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
                 grad_v[q, :] = linalg.solve(identity - m_tilde, m_tilde * chi @ z)
 
         return grad_v
-
-
-class RecursiveLogitModelPrediction(RecursiveLogitModel):
-    """Subclass which generates simulated observations based upon the supplied beta vector.
-    Uses same structure as estimator in the hopes I can unify these such that one can use the
-    estimator for prediction as well (probably have estimator inherit from this)"""
-
-    def _check_index_valid(self, indices):
-        max_index_present = np.max(indices)
-        m, n = self.network_data.incidence_matrix.shape
-        max_legal_index = m - 1  # zero based
-        max_legal_index -= 1  # also subtract padding column from count
-        if max_index_present > max_legal_index:
-            if max_index_present == max_legal_index + 1:
-                raise IndexError("Received observation index "
-                                 f"{max_index_present} > {max_legal_index}. "
-                                 f"Network data does have valid indices [0, ..., {m-1}] "
-                                 f"but the final "
-                                 "index is reserved for internal dummy sink state. The "
-                                 "dimensions of the original data passed in would have been "
-                                 "augmented, or data already had an empty final row and col.")
-            raise IndexError("Received observation index "
-                             f"{max_index_present} > {max_legal_index}. Can only simulate "
-                             "observations from indexes which are in the model.")
-
-    def generate_observations(self, origin_indices, dest_indices, num_obs_per_pair, iter_cap=1000,
-                              rng_seed=None,
-                              ):
-        """
-
-        :param origin_indices: iterable of indices to start paths from
-        :type origin_indices: list or iterable
-        :param dest_indices: iterable of indices to end paths at
-        :type dest_indices: List or iterable
-        :param num_obs_per_pair: Number of observations to generate for each OD pair
-        :type num_obs_per_pair: int
-        :param iter_cap: iteration cap in the case of non convergent value functions.
-                        Hopefully should not occur but may happen if the value function solutions
-                        are negative but ill conditioned.
-        :type iter_cap: int
-        :param rng_seed: Seed for numpy generator, or instance of np.random.BitGenerator
-        :type rng_seed: int or np.random.BitGenerator  (any legal input to np.random.default_rng())
-
-        :rtype list of list of int
-        :return List of list of all observations generated
-        """
-        self._check_index_valid(dest_indices)
-        self._check_index_valid(origin_indices)
-        rng = np.random.default_rng(rng_seed)
-
-        # store output as list of lists, using AwkwardArrays might be more efficient,
-        # but the output format will not be the memory bottleneck
-        output_path_list = []
-
-        local_short_term_util = self.get_short_term_utility().copy()
-
-        local_exp_util_mat = self.get_exponential_utility_matrix()
-        local_incidence_mat = self.network_data.incidence_matrix
-        m_tilde = local_exp_util_mat.copy()
-        i_tilde = local_incidence_mat.copy()
-
-        m, n = m_tilde.shape
-        assert m == n  # paranoia
-
-        # destination dummy arc is the final column (which was zero until filled)
-        dest_dummy_arc_index = m-1
-
-        for dest in dest_indices:
-            self._apply_dest_column(dest, m_tilde, i_tilde)
-
-            z_vec = self._compute_exp_value_function(m_tilde, self.is_network_data_sparse)
-            with np.errstate(divide='ignore', invalid='ignore'):
-                value_funcs = np.log(z_vec)
-            # catch errors manually
-            if np.any(~np.isfinite(value_funcs)):  # any infinite (nan/ -inf)
-                if np.any(~np.isfinite(z_vec)):
-                    msg = "exp(V(s)) contains nan or infinity"
-                elif np.any(z_vec <= 0):
-                    msg = "exp(V(s)) contains negative values"
-                else:
-                    msg = "Unknown cause"
-                raise ValueError("Parameter Beta is incorrectly determined, or poorly chosen. "
-                                 "Value functions have "
-                                 f"no solution [{msg}].")
-
-            elif ALLOW_POSITIVE_VALUE_FUNCTIONS is False and np.any(value_funcs > 0):
-                warnings.warn("WARNING: Positive value functions:"
-                              f"{value_funcs[value_funcs > 0]}")
-
-            # loop through path starts, with same base value functions
-            for orig in origin_indices:
-                if orig == dest:  # redundant case
-                    continue
-
-                # repeat until we have specified number of obs
-                for i in range(num_obs_per_pair):
-                    # while we haven't reached the dest
-
-                    current_arc = orig
-                    # format is [dest, orig, l1, l2, ..., ln, dest]
-                    # why? so we know what the dest is without having to lookup to the
-                    # last nonzero (only really a problem for sparse, but still marginally
-                    # more efficient. Perhaps could have flags for data formats? TODO
-                    current_path = [int(dest)]
-                    count = 0
-                    while current_arc != dest_dummy_arc_index:  # index of augmented dest arc
-                        count += 1
-                        # TODO Note the int conversion here is purely for json serialisation compat
-                        #   if this is no longer used then we can keep numpy types
-                        current_path.append(int(current_arc))
-                        if count > iter_cap:
-
-                            raise ValueError(f"Max iterations reached. No path from {orig} to "
-                                             f"{dest} was found within cap.")
-                        current_incidence_col = i_tilde[current_arc, :]
-                        # all arcs current arc connects to (index converts from 2d to 1d)
-                        if self._is_incidence_sparse:
-                            # we get a matrix return type for 1 row * n cols
-                            # from .nonzero() - [0]th component is the row (always zero)
-                            # and [1]th component is col,
-                            neighbour_arcs = current_incidence_col.nonzero()[1]
-                        else:
-                            # nd-arrays are smart enough to work out they are 1d
-                            neighbour_arcs = current_incidence_col.nonzero()[0]
-
-                        # TODO it could be cheaper to block generate these in larger batches
-                        eps = rng.gumbel(loc=-np.euler_gamma, scale=1, size=len(neighbour_arcs))
-
-                        value_functions_observed = (
-                                local_short_term_util[current_arc, neighbour_arcs]
-                                + value_funcs[neighbour_arcs].T
-                                + eps)
-
-                        if np.any(np.isnan(value_functions_observed)):
-                            raise ValueError("beta vec is invalid, gives non real solution")
-
-                        next_arc_index = np.argmax(value_functions_observed)
-                        next_arc = neighbour_arcs[next_arc_index]
-                        current_arc = next_arc
-                        # offset stops arc number being recorded as zero
-
-                    if len(current_path) <= 2:
-                        continue  # this is worthless information saying we got from O to D in one
-                        # step
-                    # Note we don't append the final (dummy node) because it changes location
-                    output_path_list.append(current_path)
-
-            # Fix the columns we changed for this dest (cheaper than refreshing whole matrix)
-            self._revert_dest_column(dest, m_tilde, i_tilde,
-                                     local_exp_util_mat, local_incidence_mat,
-                                     self.is_network_data_sparse, self._is_incidence_sparse)
-
-        return output_path_list
