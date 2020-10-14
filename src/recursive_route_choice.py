@@ -298,9 +298,10 @@ class RecursiveLogitModel(abc.ABC):
 
         return self._exponential_utility_matrix
 
-    @staticmethod
-    def _compute_exp_value_function(m_tilde, data_is_sparse, return_pieces=False, ):
-        """ Actual linear system solve without any error checking"""
+    # @staticmethod
+    def _compute_exp_value_function(self, m_tilde, data_is_sparse, return_pieces=False):
+        """ Actual linear system solve without any error checking.
+        Here is a static method, subclasses are not"""
         ncols = m_tilde.shape[1]
         if data_is_sparse:
             rhs = sparse.lil_matrix((ncols, 1))  # suppressing needless sparsity warning
@@ -978,7 +979,10 @@ class RecursiveLogitModelEstimation(RecursiveLogitModelPrediction):
             self.grad_stored = np.ones(self.n_dims)  # TODO better error gradient?
             self.flag_log_like_stored = True
             return self.log_like_stored, self.grad_stored
-        return self.get_log_likelihood()
+        x = self.get_log_likelihood()
+        if np.isnan(x[0]):
+            raise ValueError("unexpected nan")
+        return x
 
     def _compute_obs_path_indices(self, obs_row: Union[sparse.dok_matrix,
                                                        ak.highlevel.Array]):
