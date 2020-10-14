@@ -154,7 +154,7 @@ class RecursiveLogitModel(abc.ABC):
     should not be directly instantiated
     """
 
-    def __init__(self, data_struct: ModelDataStruct, initial_beta=-1.5, mu=1.0):
+    def __init__(self, data_struct: ModelDataStruct, initial_beta=-1.5, mu=1.0, safety_checks=True):
         """
         Initialises a RecursiveLogitModel instance.
 
@@ -207,8 +207,14 @@ class RecursiveLogitModel(abc.ABC):
         self._beta_vec = beta_vec
         self._compute_short_term_utility()
         self._compute_exponential_utility_matrix()
-        #
-        # self.get_log_likelihood()  # need to compute starting LL for optimiser
+        if safety_checks:
+            m_mat = self.get_exponential_utility_matrix()
+            if linalg.norm(_to_dense_if_sparse(m_mat)) < 1e-10:
+                logger.warning("Initial values of beta are such that the short term utilities "
+                               "are effectively zero.\n This means legal solutions of value "
+                               "functions is not possible.\n If optimiser does not find a legal "
+                               "step quickly it will terminate in failure. Try using beta of "
+                               "smaller magnitude.")
 
     def get_beta_vec(self):
         """
