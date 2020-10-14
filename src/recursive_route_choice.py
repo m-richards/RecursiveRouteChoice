@@ -366,9 +366,9 @@ class RecursiveLogitModel(abc.ABC):
         elif linalg.norm(
                 np.array(a_mat @ z_vec - rhs)) > OptimiserBase.RESIDUAL:
             self.flag_exp_val_funcs_error = True
-            print(f"W: Value function solution is not exact, has residual. (beta={self._beta_vec})")
-            # TODO convert from soft warning to legitimate warning. Soft since it happens
-            #  relatively frequently
+            logger.warning(
+                "W: Value function solution is not exact, has residual."
+                f" (beta={self._beta_vec})")
             error_flag = True
             # raise ValueError("value function solution does not satisfy system well.")
         else:  # No errors or non terminal errors
@@ -376,16 +376,19 @@ class RecursiveLogitModel(abc.ABC):
             zeroes = z_vec[z_vec == 0]
             # Not considered error, even though degenerate case.
             if len(zeroes) > 0:
-                print("W: Z contains zeros in it, so value functions are undefined for some nodes")
+                # print("W: Z contains zeros in it, so value functions are undefined
+                #       for some nodes")
                 val_funcs_tmp = z_vec.copy()
                 val_funcs_tmp[val_funcs_tmp == 0] = np.nan
                 # with np.errstate(invalid='ignore'):
                 # At the moment I would prefer this crashes
                 self._value_functions = np.log(val_funcs_tmp)
-                # error_flag = True # TODO not from tien mai
+                error_flag = True
+                # TODO this error is uncaught in Tien Mai. I believe it has to be caught. Whilst
+                #  if we only use a path based upon the value functions that have legal values,
+                #  we are still informing the decision for beta based upon illegal values if we
+                #  leave it.
 
-                # in the cases where nans occur we might not actually need to deal with the numbers
-                # that are nan so we don't just end here (this is not good justification TODO)
             else:
                 self._value_functions = np.log(z_vec)
             self._exp_value_functions = z_vec  # TODO should this be saved onto OptimStruct?
