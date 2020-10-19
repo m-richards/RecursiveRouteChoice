@@ -202,7 +202,8 @@ class RecursiveLogitModel(abc.ABC):
         if np.any(beta_vec > 0):
             raise ValueError("Beta vector contains positive terms. Beta must be negative "
                              "so that the short term utilities are negative.")
-
+        if len(beta_vec) != self.n_dims:
+            raise ValueError("Beta must have same length as number of network attributes.")
         # setup optimiser initialisation
         self._beta_vec = beta_vec
         self._compute_short_term_utility()
@@ -210,11 +211,11 @@ class RecursiveLogitModel(abc.ABC):
         if safety_checks:
             m_mat = self.get_exponential_utility_matrix()
             if linalg.norm(_to_dense_if_sparse(m_mat)) < 1e-10:
-                logger.warning("Initial values of beta are such that the short term utilities "
-                               "are effectively zero.\n This means legal solutions of value "
-                               "functions is not possible.\n If optimiser does not find a legal "
-                               "step quickly it will terminate in failure. Try using beta of "
-                               "smaller magnitude.")
+                logger.warning("\nInitial values of beta are such that the short term utilities "
+                               "are approaching zero.\n This means legal solutions of "
+                               "value functions may not be possible.\n If optimiser does "
+                               "not find a legal step quickly it will terminate in failure.\n"
+                               " Try setting initial beta of smaller magnitude.")
 
     def get_beta_vec(self):
         """
@@ -541,13 +542,19 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
             if np.any(~np.isfinite(value_funcs)):  # any infinite (nan/ -inf)
                 if np.any(~np.isfinite(z_vec)):
                     msg = "exp(V(s)) contains nan or infinity"
-                elif np.any(z_vec <= 0):
-                    msg = "exp(V(s)) contains negative values"
+                elif np.any(z_vec <= -1e-10):
+                    # print(z_vec)
+                    msg = "exp(V(s)) contains negative values (likely |beta| too small)"
+                elif np.linalg.norm(z_vec[:-1]) <= 1e-10 and np.allclose(z_vec[-1], 1.0):
+                    msg = "M is numerically zero for given beta"
+                elif np.any(np.abs(z_vec) < 1e-10):
+                    msg = ("V(s) diverges for some s, since z_s contains zeros"
+                           " (likely |beta| too large, not always true)")
                 else:
                     msg = "Unknown cause"
-                raise ValueError("Parameter Beta is incorrectly determined, or poorly chosen. "
-                                 "Value functions have "
-                                 f"no solution [{msg}].")
+                raise ValueError("RLPrediction: Parameter Beta is incorrectly determined, "
+                                 "or poorly chosen.\n Value functions cannot be solved"
+                                 f" [{msg}].")
 
             elif ALLOW_POSITIVE_VALUE_FUNCTIONS is False and np.any(value_funcs > 0):
                 warnings.warn("WARNING: Positive value functions:"
