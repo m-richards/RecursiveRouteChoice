@@ -215,6 +215,10 @@ class RecursiveLogitModel(abc.ABC):
         self._compute_exponential_utility_matrix()
         if safety_checks:
             m_mat = self.get_exponential_utility_matrix()
+            if len(m_mat[m_mat > 1e-10]) == 0:  # matrix is all zero
+                raise ValueError("Matrix M is consists of only zeros\n  i.e. "
+                                 "Some attribute is so large such that exp(-r(s,a;beta))=0."
+                                 "Try reducing the corresponding coefficient beta_q.")
             if linalg.norm(_to_dense_if_sparse(m_mat)) < 1e-10:
                 logger.warning("\nInitial values of beta are such that the short term utilities "
                                "are approaching zero.\n This means legal solutions of "
