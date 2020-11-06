@@ -111,7 +111,8 @@ def resize_to_dims(matrix: sparse.dok_matrix, expected_max_shape,
 
 # TODO none should not be legal
 def load_tntp_to_sparse_arc_formulation(net_fpath, columns_to_extract=None,
-                                        use_file_order_for_arc_numbers=True):
+                                        use_file_order_for_arc_numbers=True,
+                                        standardise=None):
     """
     :param net_fpath path to network file
     :param columns_to_extract list of columns to keep. init_node and term_node are always kept
@@ -140,9 +141,27 @@ def load_tntp_to_sparse_arc_formulation(net_fpath, columns_to_extract=None,
     # And drop the silly first and last columns
     net.drop(['~', ';'], axis=1, inplace=True)
 
-    net2 = net[['init_node', 'term_node'] + columns_to_extract]
+    net2 = net.loc[:, ['init_node', 'term_node'] + columns_to_extract]
     node_set = set(net2['init_node'].unique()).union(set(net2['term_node'].unique()))
     nrows = net2.shape[0]
+    if standardise is not None:
+        if len(columns_to_extract) > 1:
+            raise NotImplementedError("Need to review standardisation in this case")
+        if standardise.lower() == "meanvar":
+            # this should never be reasonably used, it does not make sense since then lengths can
+            # be negative
+
+            # net2[columns_to_extract].std()
+            # net2[columns_to_extract].mean()
+            tmp = net2.loc[:, columns_to_extract]
+            net2.loc[:, columns_to_extract] = (tmp - tmp.mean()) / tmp.std()
+        elif standardise.lower() == "minmax":
+            tmp = net2.loc[:, columns_to_extract]
+
+            net2.loc[:, columns_to_extract] = (tmp - tmp.min()) / (tmp.max() - tmp.min())
+        else:
+            raise KeyError("Standardise must be 'minmax', 'meanvar' or None")
+
     arc_matrix = sparse.dok_matrix(sparse.coo_matrix((nrows, nrows)))
 
     arc_to_index_map = {}
