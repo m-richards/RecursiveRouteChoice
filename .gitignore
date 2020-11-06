@@ -23,6 +23,7 @@ __pycache__
 
 
 *.pdf
+*.tntp
 
 temp_demo_code/
 *.json
