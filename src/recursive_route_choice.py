@@ -125,6 +125,10 @@ class ModelDataStruct(object):
             self.is_incidence_mat_sparse = False
             nnz = (np.count_nonzero(incidence_matrix[-1, :])
                    + np.count_nonzero(incidence_matrix[:, -1]))
+        if self.is_data_format_sparse != self.is_incidence_mat_sparse:
+            raise ValueError("Recieved one sparse/ dense network attributes and the opposite for "
+                             "for incidence matrix. Please specify both as sparse or dense, "
+                             "not a mix")
 
         if nnz > 0 and resize:
             print("Adding an additional row and column to house sink state.")
@@ -203,7 +207,8 @@ class RecursiveLogitModel(abc.ABC):
             raise ValueError("Beta vector contains positive terms. Beta must be negative "
                              "so that the short term utilities are negative.")
         if len(beta_vec) != self.n_dims:
-            raise ValueError("Beta must have same length as number of network attributes.")
+            raise ValueError("Beta must have same length as number of network attributes.\n"
+                             f"Got len(beta)={len(beta_vec)} and # attrs = {self.n_dims}")
         # setup optimiser initialisation
         self._beta_vec = beta_vec
         self._compute_short_term_utility()
