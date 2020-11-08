@@ -109,7 +109,10 @@ def resize_to_dims(matrix: sparse.dok_matrix, expected_max_shape,
     matrix.resize(*expected_max_shape)
 
 
-def load_tnpm_to_sparse(net_fpath, columns_to_extract=None, use_file_order_for_arc_numbers=True):
+# TODO none should not be legal
+def load_tntp_to_sparse_arc_formulation(net_fpath, columns_to_extract=None,
+                                        use_file_order_for_arc_numbers=True,
+                                        standardise=None):
     """
     :param net_fpath path to network file
     :param columns_to_extract list of columns to keep. init_node and term_node are always kept
@@ -117,7 +120,7 @@ def load_tnpm_to_sparse(net_fpath, columns_to_extract=None, use_file_order_for_a
     Currently only length is supported since the conversion from node to arc is not clear in
     this case.
     # Legal columns to extract are:
-    #  capacity, length, free_flow_time, b, power, speed_limit, toll, link_type
+    #  capacity, length, free_flow_time, b, power, speed, toll, link_type
     # Note that some of these will be constant across arcs and are redundant to include.
 
     :return
@@ -138,17 +141,33 @@ def load_tnpm_to_sparse(net_fpath, columns_to_extract=None, use_file_order_for_a
     # And drop the silly first and last columns
     net.drop(['~', ';'], axis=1, inplace=True)
 
-    net2 = net[['init_node', 'term_node'] + columns_to_extract]
+    net2 = net.loc[:, ['init_node', 'term_node'] + columns_to_extract]
     node_set = set(net2['init_node'].unique()).union(set(net2['term_node'].unique()))
     nrows = net2.shape[0]
+    if standardise is not None:
+        if len(columns_to_extract) > 1:
+            raise NotImplementedError("Need to review standardisation in this case")
+        if standardise.lower() == "meanvar":
+            # this should never be reasonably used, it does not make sense since then lengths can
+            # be negative
+
+            # net2[columns_to_extract].std()
+            # net2[columns_to_extract].mean()
+            tmp = net2.loc[:, columns_to_extract]
+            net2.loc[:, columns_to_extract] = (tmp - tmp.mean()) / tmp.std()
+        elif standardise.lower() == "minmax":
+            tmp = net2.loc[:, columns_to_extract]
+
+            net2.loc[:, columns_to_extract] = (tmp - tmp.min()) / (tmp.max() - tmp.min())
+        else:
+            raise KeyError("Standardise must be 'minmax', 'meanvar' or None")
+
     arc_matrix = sparse.dok_matrix(sparse.coo_matrix((nrows, nrows)))
 
     arc_to_index_map = {}
     if use_file_order_for_arc_numbers:  # for consistency with any visuals
         for n, s, f in net2[['init_node', 'term_node']].itertuples():
             arc_to_index_map[(s, f)] = n
-
-    print(arc_to_index_map)
 
     n = 0
     for first_arc_start in node_set:
@@ -173,6 +192,56 @@ def load_tnpm_to_sparse(net_fpath, columns_to_extract=None, use_file_order_for_a
                 arc_matrix[arc_to_index_map[first_arc],
                            arc_to_index_map[end_arc]] = (start_len + end_len) / 2
     return arc_to_index_map, arc_matrix
+
+
+def load_tntp_to_sparse_node_formulation(net_fpath, columns_to_extract=None):
+    """
+    :param net_fpath path to network file
+    :param columns_to_extract list of columns to keep. init_node and term_node are always kept
+    # and form the basis of the arc-arc matrix.
+    Currently only length is supported since the conversion from node to arc is not clear in
+    this case.
+    Legal columns to extract are:
+     { capacity, length, free_flow_time, b, power, speed, critical_speed, toll, link_type, lanes }
+    # Note that some of these will be constant across arcs and are redundant to include.
+
+    :return
+    :rtype [ :py:class:`scipy.sparse.coo_matrix`, list of str]
+
+
+    """
+    print(f"Loading {net_fpath} for recursive route choice.")
+    if columns_to_extract is None:
+        columns_to_extract = ["length"]
+    columns_to_extract = [i.lower() for i in columns_to_extract]
+
+    net = pd.read_csv(net_fpath, skiprows=8, sep='\t')
+    trimmed = [s.strip().lower() for s in net.columns]
+    net.columns = trimmed
+
+    # And drop the silly first and last columns
+    net.drop(['~', ';'], axis=1, inplace=True)
+
+    net2 = net[['init_node', 'term_node'] + columns_to_extract]
+
+    rows = net2.values[:, 0].astype('int')
+
+    cols = net2.values[:, 1].astype('int')
+    # if 1 is minimum node, we subtract 1 to avoid a zero first row and col
+    if rows.min() == 1:
+        rows -= 1
+    if cols.min() == 1:
+        cols -= 1
+    data_list = []
+    data_list_headers = []
+    for i in range(len(columns_to_extract)):
+        data = net2[columns_to_extract[i]].values
+        data_list.append(sparse.coo_matrix((data, (rows, cols))))
+        data_list_headers.append(columns_to_extract[i])
+
+    num_nodes = len(np.unique(np.append(rows, cols)))
+    print(f"\tNetwork has {num_nodes} nodes present")
+    return data_list, data_list_headers
 
 
 def load_obs_from_json(filename):

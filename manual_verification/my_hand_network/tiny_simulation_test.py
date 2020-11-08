@@ -35,10 +35,11 @@ model = RecursiveLogitModelPrediction(network_struct,
 #                                   dest_indices=obs_indices,
 #                                   num_obs_per_pair=1, iter_cap=2000, rng_seed=1,
 #                                   )
-obs_indices = [1, 2, 3, 4, 5, 6, 7, 8]
+obs_indices = [0, 1, 2, 3, 4, 5, 6, 7]
+dest_indices = [0, 1, 2, 3, 4, 5, 6, 7]
 obs = model.generate_observations(origin_indices=obs_indices,
-                                  dest_indices=[7],
-                                  num_obs_per_pair=1, iter_cap=2000, rng_seed=1,
+                                  dest_indices=dest_indices,
+                                  num_obs_per_pair=2, iter_cap=2000, rng_seed=1,
                                   )
 
 print(obs)

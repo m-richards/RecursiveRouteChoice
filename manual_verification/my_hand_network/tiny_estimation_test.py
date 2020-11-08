@@ -40,12 +40,16 @@ data_list = [distances]
 network_struct = ModelDataStruct(data_list, incidence_mat,
                                           data_array_names_debug=("distances",))
 
-beta_vec = np.array([-4.96])  # 4.96 diverges
+beta_vec = np.array([-114])  # 4.96 diverges
+import time
+
 optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=40)
+# optimiser = op.ScipyOptimiser(method='bfgs')
 
 model = RecursiveLogitModelEstimation(network_struct, observations_record=obs_ak,
                                       initial_beta=beta_vec, mu=1,
                                       optimiser=optimiser)
 # log_like_out, grad_out = model.get_log_likelihood()
-
+a = time.time()
 model.solve_for_optimal_beta()
+print(time.time() - a)

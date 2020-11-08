@@ -1,17 +1,26 @@
 import abc
 import warnings
 from typing import List, Union
-from scipy import linalg
+import logging
+
+import numpy as np
+from scipy import linalg, sparse
 # from scipy.sparse import coo_matrix
 from scipy.sparse import linalg as splinalg
-from scipy import sparse
 
 import awkward1 as ak
 
 # from debug_helpers import print_sparse, print_data_struct
 from optimisers.extra_optim import OptimFunctionState
 from optimisers.optimisers_file import CustomOptimiserBase, OptimType, ScipyOptimiser, OptimiserBase
-import numpy as np
+
+logger = logging.getLogger()
+handler = logging.StreamHandler()
+formatter = logging.Formatter(
+    '%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
 
 ALLOW_POSITIVE_VALUE_FUNCTIONS = True
 
@@ -100,10 +109,10 @@ class ModelDataStruct(object):
         # write this (ex-NOR)
         if (all([not sparse.issparse(i) for i in data_attribute_list])
                 or all([sparse.issparse(i) for i in data_attribute_list])) is False:
-                warnings.warn("Recieved a mix of sparse and dense data types in "
-                              "data_attribute_list. Unexpected "
-                              "behaviour may occur. Please specify either sparse matrices or "
-                              "numpy arrays")
+            warnings.warn("Recieved a mix of sparse and dense data types in "
+                          "data_attribute_list. Unexpected "
+                          "behaviour may occur. Please specify either sparse matrices or "
+                          "numpy arrays")
 
         # check if the bottom row and right col are empty, if so, we can store the dest in them,
         # if not, we need to append
@@ -116,6 +125,10 @@ class ModelDataStruct(object):
             self.is_incidence_mat_sparse = False
             nnz = (np.count_nonzero(incidence_matrix[-1, :])
                    + np.count_nonzero(incidence_matrix[:, -1]))
+        if self.is_data_format_sparse != self.is_incidence_mat_sparse:
+            raise ValueError("Recieved one sparse/ dense network attributes and the opposite for "
+                             "for incidence matrix. Please specify both as sparse or dense, "
+                             "not a mix")
 
         if nnz > 0 and resize:
             print("Adding an additional row and column to house sink state.")
@@ -128,7 +141,7 @@ class ModelDataStruct(object):
         else:
             self.padded = False
 
-        self.incidence_matrix = incidence_matrix
+        self.incidence_matrix = incidence_matrix.astype(int)
 
         self.data_array = np.array(data_attribute_list)
         if data_array_names_debug is None:
@@ -145,7 +158,12 @@ class RecursiveLogitModel(abc.ABC):
     should not be directly instantiated
     """
 
-    def __init__(self, data_struct: ModelDataStruct, initial_beta=-1.5, mu=1.0):
+    zeros_error_override = None  # Hack attribute to make a test case relevant, should be removed
+    # not a global class attribute, but presented here to indicate it is different from other
+    # fields
+    # TODO this is probably an okay way to implement the non positive value function toggle
+
+    def __init__(self, data_struct: ModelDataStruct, initial_beta=-1.5, mu=1.0, safety_checks=True):
         """
         Initialises a RecursiveLogitModel instance.
 
@@ -159,12 +177,13 @@ class RecursiveLogitModel(abc.ABC):
             The scale parameter of the Gumbel random variables being modelled. Generally set
             equal to 1 as it is non-identifiable due to the uncertainty in the parameter weights.
         """
+
         self.network_data = data_struct  # all network attributes
         self.data_array = data_struct.data_array
         # flags for sparsity, save us rechecking. Realistically, there should only be one
         # flag since there is no use case where one is sparse and one is dense, but a hybrid
         # is current permitted in the tests
-        self._is_network_data_sparse = self.network_data.is_data_format_sparse
+        self.is_network_data_sparse = self.network_data.is_data_format_sparse
         self._is_incidence_sparse = self.network_data.is_incidence_mat_sparse
         self.n_dims = len(self.data_array)
         self.mu = mu
@@ -193,13 +212,25 @@ class RecursiveLogitModel(abc.ABC):
         if np.any(beta_vec > 0):
             raise ValueError("Beta vector contains positive terms. Beta must be negative "
                              "so that the short term utilities are negative.")
-
+        if len(beta_vec) != self.n_dims:
+            raise ValueError("Beta must have same length as number of network attributes.\n"
+                             f"Got len(beta)={len(beta_vec)} and # attrs = {self.n_dims}")
         # setup optimiser initialisation
         self._beta_vec = beta_vec
         self._compute_short_term_utility()
         self._compute_exponential_utility_matrix()
-        #
-        # self.get_log_likelihood()  # need to compute starting LL for optimiser
+        if safety_checks:
+            m_mat = self.get_exponential_utility_matrix()
+            if len(m_mat[m_mat > 1e-10]) == 0:  # matrix is all zero
+                raise ValueError("Matrix M is consists of only zeros\n  i.e. "
+                                 "Some attribute is so large such that exp(-r(s,a;beta))=0."
+                                 "Try reducing the corresponding coefficient beta_q.")
+            if linalg.norm(_to_dense_if_sparse(m_mat)) < 1e-10:
+                logger.warning("\nInitial values of beta are such that the short term utilities "
+                               "are approaching zero.\n This means legal solutions of "
+                               "value functions may not be possible.\n If optimiser does "
+                               "not find a legal step quickly it will terminate in failure.\n"
+                               " Try setting initial beta of smaller magnitude.")
 
     def get_beta_vec(self):
         """
@@ -215,7 +246,7 @@ class RecursiveLogitModel(abc.ABC):
         # Data array is a np.ndarray, of either sparse matrices, or 2d nd-arrays.
         # So we check the sparsity of the first element. If the user puts mixed types in here
         # then errors are on them
-        if self._is_network_data_sparse:
+        if self.is_network_data_sparse:
             self.short_term_utility = np.sum(self.get_beta_vec() * self.data_array, axis=0)
             # note axis=0 means that ndarrays will give a matrix result back, not a scalar
             # which is what we want
@@ -224,15 +255,17 @@ class RecursiveLogitModel(abc.ABC):
             self.short_term_utility = np.tensordot(self.get_beta_vec(), self.data_array, axes=1)
 
         if skip_check is False:
-            if self._is_network_data_sparse:
+            if self.is_network_data_sparse:
                 nz_rows, nz_cols = self.short_term_utility.nonzero()  # this is dense so cast ok
-                cond = self.short_term_utility[nz_rows, nz_cols].toarray()
+                condition = self.short_term_utility[nz_rows, nz_cols].toarray()
             else:
-                cond = self.short_term_utility
-            if np.any(cond > 0):
-                warnings.warn("Short term utility contains positive terms, which is illegal. "
-                              "Network attributes must be non-negative and beta must be "
-                              "negative.")
+                condition = self.short_term_utility
+            if np.any(condition > 0):
+                # only a debug print since this occurs frequently without error, -> with bad line
+                # search steps
+                logger.debug("Short term utility contains positive terms, which is illegal. "
+                             "Network attributes must be non-negative and beta must be "
+                             "negative.")
                 return False
         return True
 
@@ -264,7 +297,7 @@ class RecursiveLogitModel(abc.ABC):
         # (note that sparse matrices don't have exp method defined on them because exp(0)=1
         m_mat[nonzero_entries] = np.exp(
             1 / self.mu * _to_dense_if_sparse(m_mat[nonzero_entries],
-                                              self._is_network_data_sparse))
+                                              self.is_network_data_sparse))
         self._exponential_utility_matrix = m_mat
 
     def get_exponential_utility_matrix(self):
@@ -281,17 +314,19 @@ class RecursiveLogitModel(abc.ABC):
 
         return self._exponential_utility_matrix
 
-    @staticmethod
-    def _compute_exp_value_function(m_tilde, data_is_sparse, return_pieces=False, ):
-        """ Actual linear system solve without any error checking"""
+    # @staticmethod
+    def _compute_exp_value_function(self, m_tilde, data_is_sparse, return_pieces=False):
+        """ Actual linear system solve without any error checking.
+        Here is a static method, subclasses are not"""
         ncols = m_tilde.shape[1]
         if data_is_sparse:
             rhs = sparse.lil_matrix((ncols, 1))  # suppressing needless sparsity warning
             rhs[-1, 0] = 1
             # (I-M)z =b
             a_mat = sparse.identity(ncols) - m_tilde
-            z_vec = splinalg.spsolve(a_mat, rhs)  # rhs has to be (n,1)
-            z_vec = np.atleast_2d(z_vec).T  # Transpose to have appropriate dims
+            z_vec = splinalg.spsolve(a_mat, rhs)
+            z_vec = z_vec.reshape(ncols, 1)  # rhs has to be (n,1)
+
         else:
             rhs = np.zeros((ncols, 1))
             rhs[-1, 0] = 1
@@ -323,11 +358,16 @@ class RecursiveLogitModel(abc.ABC):
             or having negative solution, such that the value functions have no real solution.
         """
         if data_is_sparse is None:
-            data_is_sparse = sparse.issparse(m_tilde)
-        error_flag = False  # start with no errors
+            data_is_sparse = sparse.issparse(m_tilde)  # do this once rather than continual query
+
         a_mat, z_vec, rhs = self._compute_exp_value_function(m_tilde, return_pieces=True,
                                                              data_is_sparse=data_is_sparse)
-        # if we z values negative, or near zero, parameters
+        return self._value_function_checks(a_mat, z_vec, rhs)
+
+    def _value_function_checks(self, a_mat, z_vec, rhs):
+        error_flag = False  # start with no errors
+
+        # if we have z values negative, or near zero, parameters
         # are infeasible since log will be complex or -infty
         if z_vec.min() <= min(-1e-10, OptimiserBase.NUMERICAL_ERROR_THRESH):
             # thresh on this?
@@ -335,9 +375,9 @@ class RecursiveLogitModel(abc.ABC):
             return error_flag
 
         # Norm of residual
-            # Note: Scipy sparse norm doesn't have a 2 norm so we use this
-            # TODO note this is expensive, in practice we may want to switch to sparse frobenius
-            #  norm element wise norm which would be convenient for sparse matrices
+        # Note: Scipy sparse norm doesn't have a 2 norm so we use this
+        # TODO note this is expensive, in practice we may want to switch to sparse frobenius
+        #  norm element wise norm which would be convenient for sparse matrices
         # residual - i.e. ill conditioned solution
         # note that z_vec is dense so this should be dense without explicit cast
         elif np.any(~np.isfinite(z_vec)):
@@ -349,9 +389,9 @@ class RecursiveLogitModel(abc.ABC):
         elif linalg.norm(
                 np.array(a_mat @ z_vec - rhs)) > OptimiserBase.RESIDUAL:
             self.flag_exp_val_funcs_error = True
-            print(f"W: Value function solution is not exact, has residual. (beta={self._beta_vec})")
-            # TODO convert from soft warning to legitimate warning. Soft since it happens
-            #  relatively frequently
+            logger.warning(
+                "W: Value function solution is not exact, has residual."
+                f" (beta={self._beta_vec})")
             error_flag = True
             # raise ValueError("value function solution does not satisfy system well.")
         else:  # No errors or non terminal errors
@@ -359,16 +399,23 @@ class RecursiveLogitModel(abc.ABC):
             zeroes = z_vec[z_vec == 0]
             # Not considered error, even though degenerate case.
             if len(zeroes) > 0:
-                print("W: Z contains zeros in it, so value functions are undefined for some nodes")
+                # print("W: Z contains zeros in it, so value functions are undefined
+                #       for some nodes")
                 val_funcs_tmp = z_vec.copy()
                 val_funcs_tmp[val_funcs_tmp == 0] = np.nan
                 # with np.errstate(invalid='ignore'):
                 # At the moment I would prefer this crashes
                 self._value_functions = np.log(val_funcs_tmp)
-                # error_flag = True # TODO not from tien mai
+                print("override", self.zeros_error_override)
+                error_flag = (True if self.zeros_error_override is None else
+                              self.zeros_error_override)
+                # TODO this error is uncaught in Tien Mai. I believe it has to be caught. Whilst
+                #  if we only use a path based upon the value functions that have legal values,
+                #  we are still informing the decision for beta based upon illegal values if we
+                #  leave it.
+                #   Change was introduced in @42f564e9, results in a number of test cases having
+                #       invalid values. Should be reviewed
 
-                # in the cases where nans occur we might not actually need to deal with the numbers
-                # that are nan so we don't just end here (this is not good justification TODO)
             else:
                 self._value_functions = np.log(z_vec)
             self._exp_value_functions = z_vec  # TODO should this be saved onto OptimStruct?
@@ -439,7 +486,166 @@ class RecursiveLogitModel(abc.ABC):
         return m_tilde, i_tilde
 
 
-class RecursiveLogitModelEstimation(RecursiveLogitModel):
+class RecursiveLogitModelPrediction(RecursiveLogitModel):
+    """Subclass which generates simulated observations based upon the supplied beta vector.
+    Uses same structure as estimator in the hopes I can unify these such that one can use the
+    estimator for prediction as well (probably have estimator inherit from this)"""
+
+    def _check_index_valid(self, indices):
+        max_index_present = np.max(indices)
+        m, n = self.network_data.incidence_matrix.shape
+        max_legal_index = m - 1  # zero based
+        max_legal_index -= 1  # also subtract padding column from count
+        if max_index_present > max_legal_index:
+            if max_index_present == max_legal_index + 1:
+                raise IndexError("Received observation index "
+                                 f"{max_index_present} > {max_legal_index}. "
+                                 f"Network data does have valid indices [0, ..., {m-1}] "
+                                 f"but the final "
+                                 "index is reserved for internal dummy sink state. The "
+                                 "dimensions of the original data passed in would have been "
+                                 "augmented, or data already had an empty final row and col.")
+            raise IndexError("Received observation index "
+                             f"{max_index_present} > {max_legal_index}. Can only simulate "
+                             "observations from indexes which are in the model.")
+
+    def generate_observations(self, origin_indices, dest_indices, num_obs_per_pair, iter_cap=1000,
+                              rng_seed=None,
+                              ):
+        """
+
+        :param origin_indices: iterable of indices to start paths from
+        :type origin_indices: list or iterable
+        :param dest_indices: iterable of indices to end paths at
+        :type dest_indices: List or iterable
+        :param num_obs_per_pair: Number of observations to generate for each OD pair
+        :type num_obs_per_pair: int
+        :param iter_cap: iteration cap in the case of non convergent value functions.
+                        Hopefully should not occur but may happen if the value function solutions
+                        are negative but ill conditioned.
+        :type iter_cap: int
+        :param rng_seed: Seed for numpy generator, or instance of np.random.BitGenerator
+        :type rng_seed: int or np.random.BitGenerator  (any legal input to np.random.default_rng())
+
+        :rtype list of list of int
+        :return List of list of all observations generated
+        """
+        self._check_index_valid(dest_indices)
+        self._check_index_valid(origin_indices)
+        rng = np.random.default_rng(rng_seed)
+
+        # store output as list of lists, using AwkwardArrays might be more efficient,
+        # but the output format will not be the memory bottleneck
+        output_path_list = []
+
+        local_short_term_util = self.get_short_term_utility().copy()
+
+        local_exp_util_mat = self.get_exponential_utility_matrix()
+        local_incidence_mat = self.network_data.incidence_matrix
+        m_tilde = local_exp_util_mat.copy()
+        i_tilde = local_incidence_mat.copy()
+
+        m, n = m_tilde.shape
+        assert m == n  # paranoia
+
+        # destination dummy arc is the final column (which was zero until filled)
+        dest_dummy_arc_index = m-1
+
+        for dest in dest_indices:
+            self._apply_dest_column(dest, m_tilde, i_tilde)
+
+            z_vec = self._compute_exp_value_function(m_tilde, self.is_network_data_sparse)
+            with np.errstate(divide='ignore', invalid='ignore'):
+                value_funcs = np.log(z_vec)
+            # catch errors manually
+            if np.any(~np.isfinite(value_funcs)):  # any infinite (nan/ -inf)
+                if np.any(~np.isfinite(z_vec)):
+                    msg = "exp(V(s)) contains nan or infinity"
+                elif np.any(z_vec <= -1e-10):
+                    # print(z_vec)
+                    msg = "exp(V(s)) contains negative values (likely |beta| too small)"
+                elif np.linalg.norm(z_vec[:-1]) <= 1e-10 and np.allclose(z_vec[-1], 1.0):
+                    msg = "M is numerically zero for given beta"
+                elif np.any(np.abs(z_vec) < 1e-10):
+                    msg = ("V(s) diverges for some s, since z_s contains zeros"
+                           " (likely |beta| too large, not always true)")
+                else:
+                    msg = "Unknown cause"
+                raise ValueError("RLPrediction: Parameter Beta is incorrectly determined, "
+                                 "or poorly chosen.\n Value functions cannot be solved"
+                                 f" [{msg}].")
+
+            elif ALLOW_POSITIVE_VALUE_FUNCTIONS is False and np.any(value_funcs > 0):
+                warnings.warn("WARNING: Positive value functions:"
+                              f"{value_funcs[value_funcs > 0]}")
+
+            # loop through path starts, with same base value functions
+            for orig in origin_indices:
+                if orig == dest:  # redundant case
+                    continue
+
+                # repeat until we have specified number of obs
+                for i in range(num_obs_per_pair):
+                    # while we haven't reached the dest
+
+                    current_arc = orig
+                    # format is [dest, orig, l1, l2, ..., ln, dest]
+                    # why? so we know what the dest is without having to lookup to the
+                    # last nonzero (only really a problem for sparse, but still marginally
+                    # more efficient. Perhaps could have flags for data formats? TODO
+                    current_path = [int(dest)]
+                    count = 0
+                    while current_arc != dest_dummy_arc_index:  # index of augmented dest arc
+                        count += 1
+                        # TODO Note the int conversion here is purely for json serialisation compat
+                        #   if this is no longer used then we can keep numpy types
+                        current_path.append(int(current_arc))
+                        if count > iter_cap:
+
+                            raise ValueError(f"Max iterations reached. No path from {orig} to "
+                                             f"{dest} was found within cap.")
+                        current_incidence_col = i_tilde[current_arc, :]
+                        # all arcs current arc connects to (index converts from 2d to 1d)
+                        if self._is_incidence_sparse:
+                            # we get a matrix return type for 1 row * n cols
+                            # from .nonzero() - [0]th component is the row (always zero)
+                            # and [1]th component is col,
+                            neighbour_arcs = current_incidence_col.nonzero()[1]
+                        else:
+                            # nd-arrays are smart enough to work out they are 1d
+                            neighbour_arcs = current_incidence_col.nonzero()[0]
+
+                        # TODO it could be cheaper to block generate these in larger batches
+                        eps = rng.gumbel(loc=-np.euler_gamma, scale=1, size=len(neighbour_arcs))
+
+                        value_functions_observed = (
+                                local_short_term_util[current_arc, neighbour_arcs]
+                                + value_funcs[neighbour_arcs].T
+                                + eps)
+
+                        if np.any(np.isnan(value_functions_observed)):
+                            raise ValueError("beta vec is invalid, gives non real solution")
+
+                        next_arc_index = np.argmax(value_functions_observed)
+                        next_arc = neighbour_arcs[next_arc_index]
+                        current_arc = next_arc
+                        # offset stops arc number being recorded as zero
+
+                    if len(current_path) <= 2:
+                        continue  # this is worthless information saying we got from O to D in one
+                        # step
+                    # Note we don't append the final (dummy node) because it changes location
+                    output_path_list.append(current_path)
+
+            # Fix the columns we changed for this dest (cheaper than refreshing whole matrix)
+            self._revert_dest_column(dest, m_tilde, i_tilde,
+                                     local_exp_util_mat, local_incidence_mat,
+                                     self.is_network_data_sparse, self._is_incidence_sparse)
+
+        return output_path_list
+
+
+class RecursiveLogitModelEstimation(RecursiveLogitModelPrediction):
     """Extension of `RecursiveLogitModel` to support Estimation of network attribute parameters.
     """
 
@@ -457,7 +663,9 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             containing network attributes of desired network
         optimiser : ScipyOptimiser or LineSearchOptimiser
             The wrapper instance for the desired optimisation routine
-        observations_record : ak.highlighlevel.Array or :py:class:`scipy.sparse.spmatrix` or list of list
+        observations_record : ak.highlighlevel.Array or :py:class:`scipy.sparse.spmatrix`
+            or list of list
+
             record of observations to estimate from
         initial_beta : float or list or array like
             initial guessed values of beta to begin optimisation algorithm with. If a scalar,
@@ -470,6 +678,12 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             False if the data is large and already known to be sorted.
         """
         super().__init__(data_struct, initial_beta, mu)
+        self._init_estimation_body(data_struct, optimiser, observations_record, sort_obs)
+        self._init_post_init()
+
+    def _init_estimation_body(self, data_struct: ModelDataStruct,
+                              optimiser: OptimiserBase, observations_record, sort_obs=True):
+        """Factor component out for the sake of inheritance"""
         self.optimiser = optimiser  # optimisation alg wrapper class
 
         beta_vec = super().get_beta_vec()  # orig without optim tie in
@@ -479,14 +693,14 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
                                                        self.eval_log_like_at_new_beta,
                                                        beta_vec,
                                                        self._get_n_func_evals)
-        self.update_beta_vec(beta_vec)  # to this to refresh dependent matrix quantitites
+        self.update_beta_vec(beta_vec, from_init=True)  # to this to refresh dependent matrix
+        # quantitites
 
         # book-keeping on observations record
         if sparse.issparse(observations_record):  # TODO perhaps convert to ak format?
             self.is_obs_record_sparse = True
             self.obs_count, _ = observations_record.shape
             self.obs_min_legal_index = 1  # Zero is reserved index for sparsity
-
 
         else:
             self.is_obs_record_sparse = False
@@ -518,10 +732,12 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         else:
             self.obs_record = observations_record
 
+    def _init_post_init(self):
         # finish initialising
         self.get_log_likelihood()  # need to compute starting LL for optimiser
+        optimiser = self.optimiser
         if isinstance(optimiser, CustomOptimiserBase):
-            optimiser.set_beta_vec(beta_vec)
+            optimiser.set_beta_vec(self._beta_vec)
             optimiser.set_current_value(self.log_like_stored)
 
         self._path_start_nodes = None
@@ -602,7 +818,8 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             if verbose:
                 print(optim_res)
             if optim_res.success is False:
-                raise ValueError("Scipy alg error flag was raised. Process failed.")
+                raise ValueError("Scipy alg error flag was raised. Process failed. Details:\n"
+                                 f"{optim_res.message} ")
             return optim_res.x
         # otherwise we have Optimiser is a Custom type
         print(self.optimiser.get_iteration_log(self.optim_function_state), file=None)
@@ -629,7 +846,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
                 return self.optim_function_state.beta_vec
         raise ValueError("Optimisation algorithm failed to converge")
 
-    def update_beta_vec(self, new_beta_vec) -> bool:
+    def update_beta_vec(self, new_beta_vec, from_init=False) -> bool:
         """
         Update the interval value for the network parameters beta with the supplied value.
 
@@ -637,6 +854,8 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
         Parameters
         ----------
         new_beta_vec : :py:func:`numpy.array` of float
+        from_init : bool
+            flag used in subclasses to avoid messy dependence sequencing issues
 
 
         Returns
@@ -660,6 +879,13 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             return success_flag
         self._compute_exponential_utility_matrix()
         return True
+
+    def _return_error_log_like(self):
+        self.log_like_stored = OptimiserBase.LL_ERROR_VALUE
+        self.grad_stored = np.ones(self.n_dims)  # TODO better error gradient?
+        self.flag_log_like_stored = True
+        # print("Parameters are infeasible.")
+        return self.log_like_stored, self.grad_stored
 
     def get_log_likelihood(self):
         """Compute the log likelihood of the data  and its gradient for the current beta vec
@@ -723,21 +949,16 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             else:
 
                 # Now get exponentiated value funcs
-                error_flag = self.compute_value_function(m_tilde, self._is_network_data_sparse)
+                error_flag = self.compute_value_function(m_tilde, self.is_network_data_sparse)
                 # If we had numerical issues in computing value functions
                 if error_flag:  # terminate early with error vals
-                    self.log_like_stored = OptimiserBase.LL_ERROR_VALUE
-                    self.grad_stored = np.ones(n_dims)  # TODO better error gradient?
-                    self.flag_log_like_stored = True
-                    # print("Parameters are infeasible.")
-                    return self.log_like_stored, self.grad_stored
+                    return self._return_error_log_like()
 
                 value_funcs, exp_val_funcs = self._value_functions, self._exp_value_functions
 
             dest_index_old = dest_index
             # Gradient and log like depend on origin values
 
-            # respective sub function? probably yes
             grad_orig = self.get_value_func_grad_orig(orig_index, m_tilde, exp_val_funcs)
 
             self._compute_obs_path_indices(obs_record[n, :])  # required to compute LL & grad
@@ -760,7 +981,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             # Put our matrices back untouched:
             m_tilde, i_tilde = self._revert_dest_column(dest_index, m_tilde, i_tilde,
                                                         m_mat, local_incidence_mat,
-                                                        self._is_network_data_sparse,
+                                                        self.is_network_data_sparse,
                                                         self._is_incidence_sparse)
 
         # only apply this rescaling once rather than on all terms inside loops
@@ -775,13 +996,19 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
     def eval_log_like_at_new_beta(self, beta_vec):
         """update beta vec and compute log likelihood in one step - used for lambdas
         Effectively a bad functools.partial"""
+        if np.any(np.isnan(beta_vec)):
+            raise ValueError(f"Input beta vector {beta_vec} contains nans. Algorithm can no "
+                             f"longer converge.")
         success_flag = self.update_beta_vec(beta_vec)
         if success_flag is False:
             self.log_like_stored = OptimiserBase.LL_ERROR_VALUE
             self.grad_stored = np.ones(self.n_dims)  # TODO better error gradient?
             self.flag_log_like_stored = True
             return self.log_like_stored, self.grad_stored
-        return self.get_log_likelihood()
+        x = self.get_log_likelihood()
+        if np.isnan(x[0]):
+            raise ValueError("unexpected nan")
+        return x
 
     def _compute_obs_path_indices(self, obs_row: Union[sparse.dok_matrix,
                                                        ak.highlevel.Array]):
@@ -915,7 +1142,7 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
             # due to matrices with terrible condition numbers in the examples
             # spsolve(A,b) == inv(A)*b
             # Note: A.multiply(B) is A .* B for sparse matrices
-            if self._is_network_data_sparse:
+            if self.is_network_data_sparse:
                 identity = sparse.identity(np.shape(m_tilde)[0])
                 grad_v[q, :] = splinalg.spsolve(identity - m_tilde, m_tilde.multiply(chi) @ z)
             else:
@@ -923,156 +1150,3 @@ class RecursiveLogitModelEstimation(RecursiveLogitModel):
                 grad_v[q, :] = linalg.solve(identity - m_tilde, m_tilde * chi @ z)
 
         return grad_v
-
-
-class RecursiveLogitModelPrediction(RecursiveLogitModel):
-    """Subclass which generates simulated observations based upon the supplied beta vector.
-    Uses same structure as estimator in the hopes I can unify these such that one can use the
-    estimator for prediction as well (probably have estimator inherit from this)"""
-
-    def _check_index_valid(self, indices):
-        max_index_present = np.max(indices)
-        m, n = self.network_data.incidence_matrix.shape
-        max_legal_index = m - 1  # zero based
-        max_legal_index -= 1  # also subtract padding column from count
-        if max_index_present > max_legal_index:
-            if max_index_present == max_legal_index + 1:
-                raise IndexError("Received observation index "
-                                 f"{max_index_present} > {max_legal_index}. "
-                                 f"Network data does have valid indices [0, ..., {m-1}] "
-                                 f"but the final "
-                                 "index is reserved for internal dummy sink state. The "
-                                 "dimensions of the original data passed in would have been "
-                                 "augmented, or data already had an empty final row and col.")
-            raise IndexError("Received observation index "
-                             f"{max_index_present} > {max_legal_index}. Can only simulate "
-                             "observations from indexes which are in the model.")
-
-    def generate_observations(self, origin_indices, dest_indices, num_obs_per_pair, iter_cap=1000,
-                              rng_seed=None,
-                              ):
-        """
-
-        :param origin_indices: iterable of indices to start paths from
-        :type origin_indices: list or iterable
-        :param dest_indices: iterable of indices to end paths at
-        :type dest_indices: List or iterable
-        :param num_obs_per_pair: Number of observations to generate for each OD pair
-        :type num_obs_per_pair: int
-        :param iter_cap: iteration cap in the case of non convergent value functions.
-                        Hopefully should not occur but may happen if the value function solutions
-                        are negative but ill conditioned.
-        :type iter_cap: int
-        :param rng_seed: Seed for numpy generator, or instance of np.random.BitGenerator
-        :type rng_seed: int or np.random.BitGenerator  (any legal input to np.random.default_rng())
-
-        :rtype list of list of int
-        :return List of list of all observations generated
-        """
-        self._check_index_valid(dest_indices)
-        self._check_index_valid(origin_indices)
-        rng = np.random.default_rng(rng_seed)
-
-        # store output as list of lists, using AwkwardArrays might be more efficient,
-        # but the output format will not be the memory bottleneck
-        output_path_list = []
-
-        local_short_term_util = self.get_short_term_utility().copy()
-
-        local_exp_util_mat = self.get_exponential_utility_matrix()
-        local_incidence_mat = self.network_data.incidence_matrix
-        m_tilde = local_exp_util_mat.copy()
-        i_tilde = local_incidence_mat.copy()
-
-        m, n = m_tilde.shape
-        assert m == n  # paranoia
-
-        # destination dummy arc is the final column (which was zero until filled)
-        dest_dummy_arc_index = m-1
-
-        for dest in dest_indices:
-            self._apply_dest_column(dest, m_tilde, i_tilde)
-
-            z_vec = self._compute_exp_value_function(m_tilde, self._is_network_data_sparse)
-            with np.errstate(divide='ignore', invalid='ignore'):
-                value_funcs = np.log(z_vec)
-            # catch errors manually
-            if np.any(~np.isfinite(value_funcs)):  # any infinite (nan/ -inf)
-                if np.any(~np.isfinite(z_vec)):
-                    msg = "exp(V(s)) contains nan or infinity"
-                elif np.any(z_vec <= 0):
-                    msg = "exp(V(s)) contains negative values"
-                else:
-                    msg = "Unknown cause"
-                raise ValueError("Parameter Beta is incorrectly determined, or poorly chosen. "
-                                 "Value functions have "
-                                 f"no solution [{msg}].")
-
-            elif ALLOW_POSITIVE_VALUE_FUNCTIONS is False and np.any(value_funcs > 0):
-                warnings.warn("WARNING: Positive value functions:"
-                              f"{value_funcs[value_funcs > 0]}")
-
-            # loop through path starts, with same base value functions
-            for orig in origin_indices:
-                if orig == dest:  # redundant case
-                    continue
-
-                # repeat until we have specified number of obs
-                for i in range(num_obs_per_pair):
-                    # while we haven't reached the dest
-
-                    current_arc = orig
-                    # format is [dest, orig, l1, l2, ..., ln, dest]
-                    # why? so we know what the dest is without having to lookup to the
-                    # last nonzero (only really a problem for sparse, but still marginally
-                    # more efficient. Perhaps could have flags for data formats? TODO
-                    current_path = [int(dest)]
-                    count = 0
-                    while current_arc != dest_dummy_arc_index:  # index of augmented dest arc
-                        count += 1
-                        # TODO Note the int conversion here is purely for json serialisation compat
-                        #   if this is no longer used then we can keep numpy types
-                        current_path.append(int(current_arc))
-                        if count > iter_cap:
-
-                            raise ValueError(f"Max iterations reached. No path from {orig} to "
-                                             f"{dest} was found within cap.")
-                        current_incidence_col = i_tilde[current_arc, :]
-                        # all arcs current arc connects to (index converts from 2d to 1d)
-                        if self._is_incidence_sparse:
-                            # we get a matrix return type for 1 row * n cols
-                            # from .nonzero() - [0]th component is the row (always zero)
-                            # and [1]th component is col,
-                            neighbour_arcs = current_incidence_col.nonzero()[1]
-                        else:
-                            # nd-arrays are smart enough to work out they are 1d
-                            neighbour_arcs = current_incidence_col.nonzero()[0]
-
-                        # TODO it could be cheaper to block generate these in larger batches
-                        eps = rng.gumbel(loc=-np.euler_gamma, scale=1, size=len(neighbour_arcs))
-
-                        value_functions_observed = (
-                                local_short_term_util[current_arc, neighbour_arcs]
-                                + value_funcs[neighbour_arcs].T
-                                + eps)
-
-                        if np.any(np.isnan(value_functions_observed)):
-                            raise ValueError("beta vec is invalid, gives non real solution")
-
-                        next_arc_index = np.argmax(value_functions_observed)
-                        next_arc = neighbour_arcs[next_arc_index]
-                        current_arc = next_arc
-                        # offset stops arc number being recorded as zero
-
-                    if len(current_path) <= 2:
-                        continue  # this is worthless information saying we got from O to D in one
-                        # step
-                    # Note we don't append the final (dummy node) because it changes location
-                    output_path_list.append(current_path)
-
-            # Fix the columns we changed for this dest (cheaper than refreshing whole matrix)
-            self._revert_dest_column(dest, m_tilde, i_tilde,
-                                     local_exp_util_mat, local_incidence_mat,
-                                     self._is_network_data_sparse, self._is_incidence_sparse)
-
-        return output_path_list

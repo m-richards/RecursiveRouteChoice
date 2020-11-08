@@ -2,34 +2,63 @@ import numpy as np
 from scipy.sparse import dok_matrix
 import awkward1 as ak
 
-from data_loading import write_obs_to_json, load_obs_from_json, load_tnpm_to_sparse
-from recursive_route_choice import RecursiveLogitModelPrediction, ModelDataStruct, \
-    RecursiveLogitModelEstimation
+from data_loading import write_obs_to_json, load_obs_from_json, load_tntp_to_sparse_arc_formulation
+
+from recursive_route_choice import ModelDataStruct
+
+
 
 import optimisers as op
 
 np.set_printoptions(edgeitems=10, linewidth=300)
+from recursive_route_choice import (RecursiveLogitModelPrediction,
+    RecursiveLogitModelEstimation)
+# from recursive_logit_efficient_update import (RecursiveLogitModelEstimationSM as
+#                                               RecursiveLogitModelEstimation)
+
+
+
 # np.core.arrayprint._line_width = 500
 
 # DATA
-network_file = "SiouxFalls_net.tntp"
-arc_to_index_map, distances = load_tnpm_to_sparse(network_file, columns_to_extract=["length"],
-                                                  )
+# network_file = "SiouxFalls_net.tntp"
+network_file = "EMA_net.tntp"
+# network_file = "berlin-mitte-center_net.tntp"
+# network_file = "berlin-prenzlauerberg-center_net.tntp"
+arc_to_index_map, distances = load_tntp_to_sparse_arc_formulation(network_file, columns_to_extract=["length"],
+                                                                  )
 # print(arc_to_index_map)
 index_node_pair_map = {v: k for (k, v) in arc_to_index_map.items()}
+
+# distances = np.array(
+#     [[4, 3.5, 4.5, 3, 3, 0, 0, 0],
+#      [3.5, 3, 4, 0, 2.5, 3, 3, 0],
+#      [4.5, 4, 5, 0, 0, 0, 4, 3.5],
+#      [3, 0, 0, 2, 2, 2.5, 0, 2],
+#      [3, 2.5, 0, 2, 2, 2.5, 2.5, 0],
+#      [0, 3, 0, 2.5, 2.5, 3, 3, 2.5],
+#      [0, 3, 4, 0, 2.5, 3, 3, 2.5],
+#      [0, 0, 3.5, 2, 0, 2.5, 2.5, 2]])
+#
 
 incidence_mat = (distances > 0).astype(int)
 
 data_list = [distances]
+print("max dist = ", np.max(distances.A))
 network_struct = ModelDataStruct(data_list, incidence_mat,
                                  data_array_names_debug=("distances", "u_turn"))
 
 beta_vec = np.array([-1])
 model = RecursiveLogitModelPrediction(network_struct,
                                       initial_beta=beta_vec, mu=1)
-orig_indices = np.arange(1, 70, 8)
-dest_indices = np.arange(2, 70, 8)
-obs_per_pair = 4
+print("Linear system size", model.get_exponential_utility_matrix().shape)
+# orig_indices = np.arange(1, 240, 8)
+# dest_indices = np.arange(2, 240, 8)
+orig_indices = np.linspace(1, 240, 20).astype(int)
+dest_indices = np.linspace(2, 240, 80).astype(int)
+# orig_indices = np.arange(0, 7, 1)
+# dest_indices = np.arange(0, 7, 1)
+obs_per_pair = 2
 
 
 print(f"Generating {obs_per_pair * len(orig_indices) * len(dest_indices)} obs total per "
@@ -54,7 +83,7 @@ optimiser = op.ScipyOptimiser(method='l-bfgs-b')  # bfgs, l-bfgs-b
 
 import time
 a = time.time()
-for n, beta_gen in enumerate(np.arange(-0.1, -2, -0.1), start=1):
+for n, beta_gen in enumerate(np.array([-1.0, -5]), start=1):
     try:
         obs = get_data(beta_gen, seed=2)
     except ValueError as e:

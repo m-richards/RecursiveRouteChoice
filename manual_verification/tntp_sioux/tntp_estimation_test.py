@@ -3,7 +3,7 @@ import numpy as np
 import awkward1 as ak
 from data_loading import load_obs_from_json
 import optimisers as op
-from data_loading import load_tnpm_to_sparse
+from data_loading import load_tntp_to_sparse_arc_formulation
 
 from recursive_route_choice import ModelDataStruct, RecursiveLogitModelEstimation
 
@@ -23,7 +23,7 @@ print("len ", len(obs_ak))
 #
 # DATA
 network_file = "SiouxFalls_net.tntp"
-arc_to_index_map, distances = load_tnpm_to_sparse(network_file, columns_to_extract=["length"])
+arc_to_index_map, distances = load_tntp_to_sparse_arc_formulation(network_file, columns_to_extract=["length"])
 
 index_node_pair_map = {v: k for (k, v) in arc_to_index_map.items()}
 
@@ -41,5 +41,5 @@ model = RecursiveLogitModelEstimation(network_struct, observations_record=obs_ak
                                       initial_beta=beta_vec, mu=1,
                                       optimiser=optimiser)
 # log_like_out, grad_out = model.get_log_likelihood()
-print([i for i in obs_ak])
-# model.solve_for_optimal_beta()
+
+model.solve_for_optimal_beta()

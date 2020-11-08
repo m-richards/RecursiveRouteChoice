@@ -1,0 +1,166 @@
+Loading SiouxFalls_net.tntp for recursive route choice.
+	Network has 24 nodes present
+Adding an additional row and column to house sink state.
+Linear system size (25, 25)
+Generating 64 obs total per beta sim val
+beta = -0.1 failed, RLPrediction: Parameter Beta is incorrectly determined, or poorly chosen.
+ Value functions cannot be solved [exp(V(s)) contains negative values (likely |beta| too small)].
+beta_expected -0.4 beta actual [-0.40756048] 
+OBS:
+beta_expected -0.7000000000000001 beta actual [-0.62728334] 
+OBS:
+beta_expected -1.0000000000000002 beta actual [-0.9504405] 
+OBS:
+beta_expected -1.3000000000000003 beta actual [-1.44377789] 
+OBS:
+beta_expected -1.6000000000000003 beta actual [-1.95567622] 
+OBS:
+beta_expected -1.9000000000000004 beta actual [-2.54085335] 
+OBS:
+beta_expected -2.2000000000000006 beta actual [-2.54085335] 
+OBS:
+beta_expected -2.5000000000000004 beta actual [-2.18496132] 
+OBS:
+beta_expected -2.8000000000000003 beta actual [-3.19840031] 
+OBS:
+beta_expected -3.1000000000000005 beta actual [-2.54085335] 
+OBS:
+beta_expected -3.400000000000001 beta actual [-3.19840031] 
+OBS:
+beta_expected -3.7000000000000006 beta actual [-14.92964085] 
+OBS:
+beta_expected -4.0 beta actual [-3.19840031] 
+OBS:
+beta_expected -4.6 beta actual [-14.92964085] 
+OBS:
+beta_expected -5.199999999999999 beta actual [-14.92964085] 
+OBS:
+beta_expected -5.799999999999999 beta actual [-14.92964085] 
+OBS:
+beta_expected -6.399999999999999 beta actual [-14.92964085] 
+OBS:
+beta_expected -6.999999999999998 beta actual [-2.54085335] 
+OBS:
+beta_expected -7.599999999999998 beta actual [-14.92964085] 
+OBS:
+beta_expected -8.199999999999998 beta actual [-14.92964085] 
+OBS:
+beta_expected -8.799999999999997 beta actual [-14.92964085] 
+OBS:
+beta_expected -9.399999999999997 beta actual [-14.92964085] 
+OBS:
+elapsed = 61.07349491119385 s
+Loading SiouxFalls_net.tntp for recursive route choice.
+	Network has 24 nodes present
+Adding an additional row and column to house sink state.
+Linear system size (25, 25)
+Generating 576 obs total per beta sim val
+beta = -0.1 failed, RLPrediction: Parameter Beta is incorrectly determined, or poorly chosen.
+ Value functions cannot be solved [exp(V(s)) contains negative values (likely |beta| too small)].
+beta_expected -0.4 beta actual [-0.4018079] 
+OBS:
+beta_expected -0.7000000000000001 beta actual [-0.70753459] 
+OBS:
+beta_expected -1.0000000000000002 beta actual [-0.9921652] 
+OBS:
+beta_expected -1.3000000000000003 beta actual [-1.42541454] 
+OBS:
+beta_expected -1.6000000000000003 beta actual [-1.70048593] 
+OBS:
+beta_expected -1.9000000000000004 beta actual [-1.93341486] 
+OBS:
+beta_expected -2.2000000000000006 beta actual [-2.09571964] 
+OBS:
+beta_expected -2.5000000000000004 beta actual [-2.49522406] 
+OBS:
+beta_expected -2.8000000000000003 beta actual [-2.60082378] 
+OBS:
+beta_expected -3.1000000000000005 beta actual [-3.38414008] 
+OBS:
+beta_expected -3.400000000000001 beta actual [-3.2543771] 
+OBS:
+beta_expected -3.7000000000000006 beta actual [-3.93414839] 
+OBS:
+beta_expected -4.0 beta actual [-3.93414839] 
+OBS:
+beta_expected -4.6 beta actual [-5.31337017] 
+OBS:
+beta_expected -5.199999999999999 beta actual [-17.00897276] 
+OBS:
+beta_expected -5.799999999999999 beta actual [-5.31337017] 
+OBS:
+beta_expected -6.399999999999999 beta actual [-5.31337017] 
+OBS:
+beta_expected -6.999999999999998 beta actual [-17.00897276] 
+OBS:
+beta_expected -7.599999999999998 beta actual [-17.00897276] 
+OBS:
+beta_expected -8.199999999999998 beta actual [-17.00897276] 
+OBS:
+beta_expected -8.799999999999997 beta actual [-17.00897276] 
+OBS:
+beta_expected -9.399999999999997 beta actual [-17.00897276] 
+OBS:
+elapsed = 542.1612005233765 s
+Loading SiouxFalls_net.tntp for recursive route choice.
+	Network has 24 nodes present
+Adding an additional row and column to house sink state.
+Linear system size (25, 25)
+Generating 1104 obs total per beta sim val
+beta = -0.1 failed, RLPrediction: Parameter Beta is incorrectly determined, or poorly chosen.
+ Value functions cannot be solved [exp(V(s)) contains negative values (likely |beta| too small)].
+beta_expected -0.4 beta actual [-0.39854642] 
+OBS:
+beta_expected -0.7000000000000001 beta actual [-0.71798916] 
+OBS:
+beta_expected -1.0000000000000002 beta actual [-0.99639515] 
+OBS:
+beta_expected -1.3000000000000003 beta actual [-1.29954056] 
+OBS:
+beta_expected -1.6000000000000003 beta actual [-1.53751798] 
+OBS:
+beta_expected -1.9000000000000004 beta actual [-1.77347084] 
+OBS:
+beta_expected -2.2000000000000006 beta actual [-2.23239912] 
+OBS:
+beta_expected -2.5000000000000004 beta actual [-2.50391294] 
+OBS:
+beta_expected -2.8000000000000003 beta actual [-3.02239593] 
+OBS:
+beta_expected -3.1000000000000005 beta actual [-2.97592233] 
+OBS:
+beta_expected -3.400000000000001 beta actual [-3.36660603] 
+OBS:
+beta_expected -3.7000000000000006 beta actual [-3.51716314] 
+OBS:
+beta_expected -4.0 beta actual [-3.2995165] 
+OBS:
+beta_expected -4.6 beta actual [-4.60424738] 
+OBS:
+beta_expected -5.199999999999999 beta actual [-4.20123935] 
+OBS:
+beta_expected -5.799999999999999 beta actual [-17.70205177] 
+OBS:
+beta_expected -6.399999999999999 beta actual [-5.98737326] 
+OBS:
+beta_expected -6.999999999999998 beta actual [-17.70205177] 
+OBS:
+beta_expected -7.599999999999998 beta actual [-17.70205177] 
+OBS:
+beta_expected -8.199999999999998 beta actual [-17.70205177] 
+OBS:
+beta_expected -8.799999999999997 beta actual [-17.70205177] 
+OBS:
+beta_expected -9.399999999999997 beta actual [-17.70205177] 
+OBS:
+elapsed = 949.4324162006378 s
+yvals
+ [1.00000000e-01 7.56047827e-03 7.27166608e-02 4.95595050e-02 1.43777892e-01 3.55676218e-01 6.40853352e-01 3.40853352e-01 3.15038678e-01 3.98400313e-01 5.59146648e-01 2.01599687e-01 1.12296408e+01 8.01599687e-01 1.03296408e+01 9.72964085e+00 9.12964085e+00 8.52964085e+00 4.45914665e+00
+ 7.32964085e+00 6.72964085e+00 6.12964085e+00 5.52964085e+00] 
+ [1.00000000e-01 1.80789898e-03 7.53458733e-03 7.83480115e-03 1.25414537e-01 1.00485935e-01 3.34148619e-02 1.04280359e-01 4.77593948e-03 1.99176221e-01 2.84140080e-01 1.45622898e-01 2.34148391e-01 6.58516086e-02 7.13370167e-01 1.18089728e+01 4.86629833e-01 1.08662983e+00 1.00089728e+01
+ 9.40897276e+00 8.80897276e+00 8.20897276e+00 7.60897276e+00]
+yvals
+ [1.00000000e-01 7.56047827e-03 7.27166608e-02 4.95595050e-02 1.43777892e-01 3.55676218e-01 6.40853352e-01 3.40853352e-01 3.15038678e-01 3.98400313e-01 5.59146648e-01 2.01599687e-01 1.12296408e+01 8.01599687e-01 1.03296408e+01 9.72964085e+00 9.12964085e+00 8.52964085e+00 4.45914665e+00
+ 7.32964085e+00 6.72964085e+00 6.12964085e+00 5.52964085e+00] 
+ [1.00000000e-01 1.80789898e-03 7.53458733e-03 7.83480115e-03 1.25414537e-01 1.00485935e-01 3.34148619e-02 1.04280359e-01 4.77593948e-03 1.99176221e-01 2.84140080e-01 1.45622898e-01 2.34148391e-01 6.58516086e-02 7.13370167e-01 1.18089728e+01 4.86629833e-01 1.08662983e+00 1.00089728e+01
+ 9.40897276e+00 8.80897276e+00 8.20897276e+00 7.60897276e+00]

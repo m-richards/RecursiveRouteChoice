@@ -2,7 +2,7 @@
 import numpy as np
 
 from data_loading import write_obs_to_json
-from data_loading import load_tnpm_to_sparse
+from data_loading import load_tntp_to_sparse_arc_formulation
 
 from recursive_route_choice import ModelDataStruct, RecursiveLogitModelPrediction
 
@@ -21,8 +21,8 @@ TODO need to investigate if these conditions imply that system has redundant dim
 
 
 network_file = "SiouxFalls_net.tntp"
-arc_to_index_map, distances = load_tnpm_to_sparse(network_file, columns_to_extract=["length"],
-                                                  )
+arc_to_index_map, distances = load_tntp_to_sparse_arc_formulation(network_file, columns_to_extract=["length"],
+                                                                  )
 print(arc_to_index_map)
 index_node_pair_map = {v: k for (k, v) in arc_to_index_map.items()}
 
