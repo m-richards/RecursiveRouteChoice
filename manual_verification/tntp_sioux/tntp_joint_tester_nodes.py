@@ -3,7 +3,7 @@ from scipy.sparse import dok_matrix
 import awkward1 as ak
 
 from data_loading import write_obs_to_json, load_obs_from_json, load_tntp_to_sparse_arc_formulation, \
-    load_tntp_to_sparse_node_formulation
+    load_tntp_node_formulation
 from recursive_route_choice import RecursiveLogitModelPrediction, ModelDataStruct, \
     RecursiveLogitModelEstimation
 
@@ -15,10 +15,10 @@ np.set_printoptions(edgeitems=10, linewidth=300)
 # DATA
 network_file = "SiouxFalls_net.tntp"
 
-data_list, data_list_names = load_tntp_to_sparse_node_formulation(network_file,
-                                                                  columns_to_extract=["length",
+data_list, data_list_names = load_tntp_node_formulation(network_file,
+                                                        columns_to_extract=["length",
                                                                                      'capacity'],
-                                                                  )
+                                                        )
 # print(arc_to_index_map)
 distances, capacity = data_list
 

@@ -194,7 +194,7 @@ def load_tntp_to_sparse_arc_formulation(net_fpath, columns_to_extract=None,
     return arc_to_index_map, arc_matrix
 
 
-def load_tntp_to_sparse_node_formulation(net_fpath, columns_to_extract=None):
+def load_tntp_node_formulation(net_fpath, columns_to_extract=None, sparse_format=True):
     """
     :param net_fpath path to network file
     :param columns_to_extract list of columns to keep. init_node and term_node are always kept
@@ -236,7 +236,10 @@ def load_tntp_to_sparse_node_formulation(net_fpath, columns_to_extract=None):
     data_list_headers = []
     for i in range(len(columns_to_extract)):
         data = net2[columns_to_extract[i]].values
-        data_list.append(sparse.coo_matrix((data, (rows, cols))))
+        data_mat = sparse.coo_matrix((data, (rows, cols)))
+        if sparse_format is False:
+            data_mat = data_mat.A
+        data_list.append(data_mat)
         data_list_headers.append(columns_to_extract[i])
 
     num_nodes = len(np.unique(np.append(rows, cols)))

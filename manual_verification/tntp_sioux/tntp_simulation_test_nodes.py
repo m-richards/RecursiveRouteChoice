@@ -1,7 +1,7 @@
 
 import numpy as np
 
-from data_loading import write_obs_to_json, load_tntp_to_sparse_node_formulation
+from data_loading import write_obs_to_json, load_tntp_node_formulation
 from data_loading import load_tntp_to_sparse_arc_formulation
 
 from recursive_route_choice import ModelDataStruct, RecursiveLogitModelPrediction
@@ -13,10 +13,10 @@ np.set_printoptions(edgeitems=10, linewidth=300)
 
 
 network_file = "SiouxFalls_net.tntp"
-data_list, data_list_names = load_tntp_to_sparse_node_formulation(network_file,
-                                                                  columns_to_extract=["length",
-                                                                                     ],
-                                                                  )
+data_list, data_list_names = load_tntp_node_formulation(network_file,
+                                                        columns_to_extract=["length",
+                                                                            ],
+                                                        )
 # distances, capacity = data_list
 distances, = data_list
 for i, j in zip(data_list, data_list_names):
