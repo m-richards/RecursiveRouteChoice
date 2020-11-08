@@ -406,7 +406,6 @@ class RecursiveLogitModel(abc.ABC):
                 # with np.errstate(invalid='ignore'):
                 # At the moment I would prefer this crashes
                 self._value_functions = np.log(val_funcs_tmp)
-                print("override", self.zeros_error_override)
                 error_flag = (True if self.zeros_error_override is None else
                               self.zeros_error_override)
                 # TODO this error is uncaught in Tien Mai. I believe it has to be caught. Whilst
