@@ -1,8 +1,9 @@
-optimisers package
-==================
+Optimisers Submodules
+=====================
 
-Submodules
-----------
+..
+    Submodules
+    ----------
 
 optimisers.extra\_optim module
 ------------------------------
@@ -12,21 +13,22 @@ optimisers.extra\_optim module
    :undoc-members:
    :show-inheritance:
 
-optimisers.hessian\_approx module
----------------------------------
+..
+    optimisers.hessian\_approx module
+    ---------------------------------
 
-.. automodule:: optimisers.hessian_approx
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    .. automodule:: optimisers.hessian_approx
+       :members:
+       :undoc-members:
+       :show-inheritance:
+..
+    optimisers.line\_search module
+    ------------------------------
 
-optimisers.line\_search module
-------------------------------
-
-.. automodule:: optimisers.line_search
-   :members:
-   :undoc-members:
-   :show-inheritance:
+    .. automodule:: optimisers.line_search
+       :members:
+       :undoc-members:
+       :show-inheritance:
 
 optimisers.optimisers\_file module
 ----------------------------------
@@ -35,11 +37,12 @@ optimisers.optimisers\_file module
    :members:
    :undoc-members:
    :show-inheritance:
+..
+    Module contents
+    ---------------
 
-Module contents
----------------
-
-.. automodule:: optimisers
-   :members:
-   :undoc-members:
-   :show-inheritance:
+..
+    automodule:: optimisers
+       :members:
+       :undoc-members:
+       :show-inheritance:

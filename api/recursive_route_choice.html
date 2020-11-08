@@ -37,7 +37,7 @@
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="prev" title="optimisers package" href="optimisers.html" /> 
+    <link rel="prev" title="Optimisers Submodules" href="optimisers.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -87,13 +87,14 @@
 <li class="toctree-l1"><a class="reference internal" href="../source/introduction_install.html">1. Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../source/introduction_install.html#installation">2. Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../source/simple_example.html">3. A Simple Example</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../source/data_formats.html">4. Data Format Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/involved_example.html">4. Sioux Falls Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/data_formats.html">5. Data Format Support</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API Reference:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="data_loading.html">data_loading module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="data_processing.html">data_processing module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="optimisers.html">optimisers package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optimisers.html">Optimisers Submodules</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">recursive_route_choice module</a></li>
 </ul>
 
@@ -414,18 +415,23 @@ estimator for prediction as well (probably have estimator inherit from this)</p>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>origin_indices</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em> or </em><em>iterable</em>) – iterable of indices to start paths from</p></li>
-<li><p><strong>dest_indices</strong> (<em>List</em><em> or </em><em>iterable</em>) – iterable of indices to end paths at</p></li>
+<li><p><strong>origin_indices</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em> or </em><em>array like</em>) – iterable of indices to start paths from</p></li>
+<li><p><strong>dest_indices</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em> or </em><em>array like</em>) – iterable of indices to end paths at</p></li>
 <li><p><strong>num_obs_per_pair</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – Number of observations to generate for each OD pair</p></li>
 <li><p><strong>iter_cap</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – iteration cap in the case of non convergent value functions.
 Hopefully should not occur but may happen if the value function solutions
-are negative but ill conditioned.</p></li>
-<li><p><strong>rng_seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a><em> or </em><em>np.random.BitGenerator</em><em>  (</em><em>any legal input to np.random.default_rng</em><em>(</em><em>)</em><em>)</em>) – Seed for numpy generator, or instance of np.random.BitGenerator</p></li>
+are negative and ill conditioned.</p></li>
+<li><p><strong>rng_seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a><em> or </em><em>np.random.BitGenerator</em>) – (any legal input to np.random.default_rng() )</p></li>
 </ul>
 </dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>output_path_list</strong> (<em>list of list of int</em>)</p></li>
+<li><p><em>List of lists containing all observations generated</em></p></li>
+</ul>
+</p>
+</dd>
 </dl>
-<p>:rtype list of list of int
-:return List of list of all observations generated</p>
 </dd></dl>
 
 </dd></dl>
@@ -441,7 +447,7 @@ are negative but ill conditioned.</p></li>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
       
-        <a href="optimisers.html" class="btn btn-neutral float-left" title="optimisers package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="optimisers.html" class="btn btn-neutral float-left" title="Optimisers Submodules" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

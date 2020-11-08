@@ -38,7 +38,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="data_processing module" href="data_processing.html" />
-    <link rel="prev" title="4. Data Format Support" href="../source/data_formats.html" /> 
+    <link rel="prev" title="5. Data Format Support" href="../source/data_formats.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -88,13 +88,14 @@
 <li class="toctree-l1"><a class="reference internal" href="../source/introduction_install.html">1. Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../source/introduction_install.html#installation">2. Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../source/simple_example.html">3. A Simple Example</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../source/data_formats.html">4. Data Format Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/involved_example.html">4. Sioux Falls Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../source/data_formats.html">5. Data Format Support</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API Reference:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">data_loading module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="data_processing.html">data_processing module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="optimisers.html">optimisers package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="optimisers.html">Optimisers Submodules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="recursive_route_choice.html">recursive_route_choice module</a></li>
 </ul>
 
@@ -168,13 +169,25 @@ data matrices from input files</p>
 <dl class="py function">
 <dt id="data_loading.load_csv_to_sparse">
 <code class="sig-prename descclassname">data_loading.</code><code class="sig-name descname">load_csv_to_sparse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fname</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">delim</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">square_matrix</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">shape</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span> &#x2192; scipy.sparse.coo.coo_matrix<a class="headerlink" href="#data_loading.load_csv_to_sparse" title="Permalink to this definition">¶</a></dt>
-<dd><p>IO function to load row, col, val CSV and return a sparse scipy matrix.
-:square_matix &lt;bool&gt; means that the input should be square and we will try to square it by</p>
-<blockquote>
-<div><p>adding a row (this is commonly required in data)</p>
-</div></blockquote>
-<p>:matrix_format_cast_function is the output format of the matrix to be returned. Given as a
-function to avoid having to specify string equivalents</p>
+<dd><p>IO function to load row, col, val CSV and return a sparse scipy matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fname</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – </p></li>
+<li><p><strong>dtype</strong> – </p></li>
+<li><p><strong>delim</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>optional</em>) – </p></li>
+<li><p><strong>square_matrix</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – means that the input should be square and we will try to square it by
+adding a row (this is commonly required in data)</p></li>
+<li><p><strong>shape</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>COO matrix</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -199,35 +212,39 @@ function to avoid having to specify string equivalents</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="data_loading.load_tntp_to_sparse_arc_formulation">
-<code class="sig-prename descclassname">data_loading.</code><code class="sig-name descname">load_tntp_to_sparse_arc_formulation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">net_fpath</span></em>, <em class="sig-param"><span class="n">columns_to_extract</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">use_file_order_for_arc_numbers</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">standardise</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_loading.load_tntp_to_sparse_arc_formulation" title="Permalink to this definition">¶</a></dt>
+<dt id="data_loading.load_tntp_node_formulation">
+<code class="sig-prename descclassname">data_loading.</code><code class="sig-name descname">load_tntp_node_formulation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">net_fpath</span></em>, <em class="sig-param"><span class="n">columns_to_extract</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">sparse_format</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_loading.load_tntp_node_formulation" title="Permalink to this definition">¶</a></dt>
 <dd><p>:param net_fpath path to network file
 :param columns_to_extract list of columns to keep. init_node and term_node are always kept
 # and form the basis of the arc-arc matrix.
 Currently only length is supported since the conversion from node to arc is not clear in
 this case.
-# Legal columns to extract are:
-#  capacity, length, free_flow_time, b, power, speed, toll, link_type
+Legal columns to extract are:
+{ capacity, length, free_flow_time, b, power, speed, critical_speed, toll, link_type, lanes }
 # Note that some of these will be constant across arcs and are redundant to include.</p>
 <p>:return
-:rtype [dict, scipy.sparse.coo_matrix, …]</p>
+:rtype [ <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_matrix.html#scipy.sparse.coo_matrix" title="(in SciPy v1.5.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">scipy.sparse.coo_matrix</span></code></a>, list of str]</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="data_loading.load_tntp_to_sparse_node_formulation">
-<code class="sig-prename descclassname">data_loading.</code><code class="sig-name descname">load_tntp_to_sparse_node_formulation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">net_fpath</span></em>, <em class="sig-param"><span class="n">columns_to_extract</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_loading.load_tntp_to_sparse_node_formulation" title="Permalink to this definition">¶</a></dt>
-<dd><p>:param net_fpath path to network file
-:param columns_to_extract list of columns to keep. init_node and term_node are always kept
-# and form the basis of the arc-arc matrix.
-Currently only length is supported since the conversion from node to arc is not clear in
-this case.
-Legal columns to extract are:</p>
-<blockquote>
-<div><p>{ capacity, length, free_flow_time, b, power, speed, critical_speed, toll, link_type, lanes }</p>
-</div></blockquote>
-<p># Note that some of these will be constant across arcs and are redundant to include.</p>
-<p>:return
-:rtype [ <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.coo_matrix.html#scipy.sparse.coo_matrix" title="(in SciPy v1.5.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">scipy.sparse.coo_matrix</span></code></a>, list of str]</p>
+<dt id="data_loading.load_tntp_to_sparse_arc_formulation">
+<code class="sig-prename descclassname">data_loading.</code><code class="sig-name descname">load_tntp_to_sparse_arc_formulation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">net_fpath</span></em>, <em class="sig-param"><span class="n">columns_to_extract</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">use_file_order_for_arc_numbers</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">standardise</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_loading.load_tntp_to_sparse_arc_formulation" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>net_fpath</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – file path to read from</p></li>
+<li><p><strong>columns_to_extract</strong> (<em>list of str</em>) – name of network file attributes to extra</p></li>
+<li><p><strong>use_file_order_for_arc_numbers</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – </p></li>
+<li><p><strong>standardise</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>, </em><em>optional</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>[dict, <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.dok_matrix.html#scipy.sparse.dok_matrix" title="(in SciPy v1.5.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">scipy.sparse.dok_matrix</span></code></a>]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -240,6 +257,15 @@ scipy.
 Note also, this upcasts dimensions if too small</p>
 <p>Note we use this since it is easier to read in a too large or small matrix from file and
 correct than limit the size from IO - exceptions get thrown</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>matrix</strong> (<a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.dok_matrix.html#scipy.sparse.dok_matrix" title="(in SciPy v1.5.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">scipy.sparse.dok_matrix</span></code></a>) – </p></li>
+<li><p><strong>expected_max_shape</strong> (<em>tuple of int s of size 2</em>) – </p></li>
+<li><p><strong>matrix_name_debug</strong> – </p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -260,7 +286,7 @@ correct than limit the size from IO - exceptions get thrown</p>
         <a href="data_processing.html" class="btn btn-neutral float-right" title="data_processing module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="../source/data_formats.html" class="btn btn-neutral float-left" title="4. Data Format Support" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="../source/data_formats.html" class="btn btn-neutral float-left" title="5. Data Format Support" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

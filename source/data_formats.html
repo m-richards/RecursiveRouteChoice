@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>4. Data Format Support &mdash; RecursiveRouteChoice 0.1 documentation</title>
+  <title>5. Data Format Support &mdash; RecursiveRouteChoice 0.1 documentation</title>
   
 
   
@@ -38,7 +38,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="data_loading module" href="../api/data_loading.html" />
-    <link rel="prev" title="3. A Simple Example" href="simple_example.html" /> 
+    <link rel="prev" title="4. Sioux Falls Example" href="involved_example.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -88,13 +88,22 @@
 <li class="toctree-l1"><a class="reference internal" href="introduction_install.html">1. Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="introduction_install.html#installation">2. Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="simple_example.html">3. A Simple Example</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">4. Data Format Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="involved_example.html">4. Sioux Falls Example</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">5. Data Format Support</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#assumptions-on-observation-data-formats">5.1. Assumptions on Observation Data Formats</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#some-quirks">5.1.1. Some quirks</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#json-format-preferred">5.2. JSON format (preferred):</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#coo-format">5.3. COO format:</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption"><span class="caption-text">API Reference:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../api/data_loading.html">data_loading module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/data_processing.html">data_processing module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../api/optimisers.html">optimisers package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/optimisers.html">Optimisers Submodules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/recursive_route_choice.html">recursive_route_choice module</a></li>
 </ul>
 
@@ -142,7 +151,7 @@
     
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li><span class="section-number">4. </span>Data Format Support</li>
+      <li><span class="section-number">5. </span>Data Format Support</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -162,7 +171,73 @@
            <div itemprop="articleBody">
             
   <div class="section" id="data-format-support">
-<h1><span class="section-number">4. </span>Data Format Support<a class="headerlink" href="#data-format-support" title="Permalink to this headline">¶</a></h1>
+<h1><span class="section-number">5. </span>Data Format Support<a class="headerlink" href="#data-format-support" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="assumptions-on-observation-data-formats">
+<h2><span class="section-number">5.1. </span>Assumptions on Observation Data Formats<a class="headerlink" href="#assumptions-on-observation-data-formats" title="Permalink to this headline">¶</a></h2>
+<p>Each observation is read in the format</p>
+<div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Dest</span><span class="p">,</span> <span class="n">Orig</span><span class="p">,</span> <span class="n">Link1</span><span class="p">,</span> <span class="n">Link2</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">LinkN</span><span class="p">,</span> <span class="n">Dest</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>where there may or may not be zero padding after Dest - see below. This naturally leads to the
+collection of observations being stored as a list of lists. We prefer json formatting without zero padding, but sparse COO format is supported to allow
+Tien Mai’s repository examples to be used.</p>
+<p>As a simple example, consider the list of two observations (sequence from 3 to 1 and from 4 to 2
+). Below we discuss the encoding for this simple example.</p>
+<div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="p">[</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+  <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]]</span>
+</pre></div>
+</div>
+<div class="section" id="some-quirks">
+<h3><span class="section-number">5.1.1. </span>Some quirks<a class="headerlink" href="#some-quirks" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>The destination can appear more than once in this format. This is because the “true
+destination” in  terms of the model is an internally appended dummy sink arc. So one can visit
+the destination arc and not travel on to the destination node.</p></li>
+<li><p>Reasonably this would not be observed, but it can be predicted if the model is not well specified</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="json-format-preferred">
+<h2><span class="section-number">5.2. </span>JSON format (preferred):<a class="headerlink" href="#json-format-preferred" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>
+    <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+    <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Note entries are ragged, there is no zero padding</p></li>
+<li><p>Note the zero based indexing, that is “0” is a legal node index. This is not possible with
+native COO format as “0” is a dummy value to pad out the matrix. (one based indexing
+<em>should</em> work as well, as there is no special significance of zero</p></li>
+<li><p>Any valid json representation (with arbitrary indentation) will suffice.</p></li>
+<li><p>Internally we read the json into Awkward Arrays to allow convenient numpy like indexing and
+function applications, that one wouldn’t have from a list of lists.</p></li>
+</ul>
+</div>
+<div class="section" id="coo-format">
+<h2><span class="section-number">5.3. </span>COO format:<a class="headerlink" href="#coo-format" title="Permalink to this headline">¶</a></h2>
+<p>The observations are stored in a sparse format with a single entry per line.
+The sequence of two observations above is encoded as</p>
+<div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span>
+<span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span>
+<span class="mi">1</span> <span class="mi">3</span> <span class="mi">2</span>
+<span class="mi">1</span> <span class="mi">4</span> <span class="mi">6</span>
+<span class="mi">1</span> <span class="mi">5</span> <span class="mi">8</span>
+<span class="mi">1</span> <span class="mi">6</span> <span class="mi">9</span>
+<span class="mi">1</span> <span class="mi">7</span> <span class="mi">1</span>
+<span class="mi">2</span> <span class="mi">1</span> <span class="mi">2</span>
+<span class="mi">2</span> <span class="mi">2</span> <span class="mi">4</span>
+<span class="mi">2</span> <span class="mi">3</span> <span class="mi">5</span>
+<span class="mi">2</span> <span class="mi">4</span> <span class="mi">2</span>
+</pre></div>
+</div>
+<p>Note that this is one based indexing since the Tien Mai data was originally used for
+matlab code. This format is confusing to read, and it is not particularly efficient as the
+entries are known to have a block sparsity pattern that is left justified, so the indexing is
+somewhat excessive. Also, we have added 1 to all the node indexes, as in this format zero is fill
+value. Internally, data is immediately converted out of this format into awkward arrays.</p>
+</div>
 </div>
 
 
@@ -176,7 +251,7 @@
         <a href="../api/data_loading.html" class="btn btn-neutral float-right" title="data_loading module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="simple_example.html" class="btn btn-neutral float-left" title="3. A Simple Example" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="involved_example.html" class="btn btn-neutral float-left" title="4. Sioux Falls Example" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

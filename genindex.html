@@ -86,13 +86,14 @@
 <li class="toctree-l1"><a class="reference internal" href="source/introduction_install.html">1. Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="source/introduction_install.html#installation">2. Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="source/simple_example.html">3. A Simple Example</a></li>
-<li class="toctree-l1"><a class="reference internal" href="source/data_formats.html">4. Data Format Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source/involved_example.html">4. Sioux Falls Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source/data_formats.html">5. Data Format Support</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API Reference:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api/data_loading.html">data_loading module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/data_processing.html">data_processing module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api/optimisers.html">optimisers package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/optimisers.html">Optimisers Submodules</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/recursive_route_choice.html">recursive_route_choice module</a></li>
 </ul>
 
@@ -163,7 +164,6 @@
 <div class="genindex-jumpbox">
  <a href="#_"><strong>_</strong></a>
  | <a href="#A"><strong>A</strong></a>
- | <a href="#B"><strong>B</strong></a>
  | <a href="#C"><strong>C</strong></a>
  | <a href="#D"><strong>D</strong></a>
  | <a href="#E"><strong>E</strong></a>
@@ -213,14 +213,6 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/data_processing.html#data_processing.AngleProcessor">AngleProcessor (class in data_processing)</a>
-</li>
-  </ul></td>
-</tr></table>
-
-<h2 id="B">B</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/optimisers.html#optimisers.hessian_approx.OptimHessianType.BFGS">BFGS (optimisers.hessian_approx.OptimHessianType attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -332,27 +324,21 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/optimisers.html#optimisers.optimisers_file.OptimType.LINE_SEARCH">LINE_SEARCH (optimisers.optimisers_file.OptimType attribute)</a>
 </li>
-      <li><a href="api/optimisers.html#optimisers.line_search.line_search_asrch">line_search_asrch() (in module optimisers.line_search)</a>
-</li>
-      <li><a href="api/optimisers.html#optimisers.line_search.line_search_astep">line_search_astep() (in module optimisers.line_search)</a>
-</li>
-      <li><a href="api/optimisers.html#optimisers.line_search.LineSearchFlags">LineSearchFlags (class in optimisers.line_search)</a>
-</li>
       <li><a href="api/optimisers.html#optimisers.optimisers_file.LineSearchOptimiser">LineSearchOptimiser (class in optimisers.optimisers_file)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/optimisers.html#optimisers.optimisers_file.OptimiserBase.LL_ERROR_VALUE">LL_ERROR_VALUE (optimisers.optimisers_file.OptimiserBase attribute)</a>
 </li>
       <li><a href="api/data_loading.html#data_loading.load_csv_to_sparse">load_csv_to_sparse() (in module data_loading)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/data_loading.html#data_loading.load_obs_from_json">load_obs_from_json() (in module data_loading)</a>
 </li>
       <li><a href="api/data_loading.html#data_loading.load_standard_path_format_csv">load_standard_path_format_csv() (in module data_loading)</a>
 </li>
-      <li><a href="api/data_loading.html#data_loading.load_tntp_to_sparse_arc_formulation">load_tntp_to_sparse_arc_formulation() (in module data_loading)</a>
+      <li><a href="api/data_loading.html#data_loading.load_tntp_node_formulation">load_tntp_node_formulation() (in module data_loading)</a>
 </li>
-      <li><a href="api/data_loading.html#data_loading.load_tntp_to_sparse_node_formulation">load_tntp_to_sparse_node_formulation() (in module data_loading)</a>
+      <li><a href="api/data_loading.html#data_loading.load_tntp_to_sparse_arc_formulation">load_tntp_to_sparse_arc_formulation() (in module data_loading)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -376,10 +362,10 @@
       </ul></li>
       <li><a href="api/optimisers.html#optimisers.optimisers_file.LineSearchOptimiser.MINIMUM_STEP_LENGTH">MINIMUM_STEP_LENGTH (optimisers.optimisers_file.LineSearchOptimiser attribute)</a>
 </li>
-      <li><a href="api/recursive_route_choice.html#recursive_route_choice.ModelDataStruct">ModelDataStruct (class in recursive_route_choice)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/recursive_route_choice.html#recursive_route_choice.ModelDataStruct">ModelDataStruct (class in recursive_route_choice)</a>
+</li>
       <li>
     module
 
@@ -388,13 +374,7 @@
 </li>
         <li><a href="api/data_processing.html#module-data_processing">data_processing</a>
 </li>
-        <li><a href="api/optimisers.html#module-optimisers">optimisers</a>
-</li>
         <li><a href="api/optimisers.html#module-optimisers.extra_optim">optimisers.extra_optim</a>
-</li>
-        <li><a href="api/optimisers.html#module-optimisers.hessian_approx">optimisers.hessian_approx</a>
-</li>
-        <li><a href="api/optimisers.html#module-optimisers.line_search">optimisers.line_search</a>
 </li>
         <li><a href="api/optimisers.html#module-optimisers.optimisers_file">optimisers.optimisers_file</a>
 </li>
@@ -421,17 +401,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/optimisers.html#optimisers.extra_optim.OptimFunctionState">OptimFunctionState (class in optimisers.extra_optim)</a>
 </li>
-      <li><a href="api/optimisers.html#optimisers.hessian_approx.OptimHessianType">OptimHessianType (class in optimisers.hessian_approx)</a>
-</li>
       <li><a href="api/optimisers.html#optimisers.optimisers_file.OptimiserBase">OptimiserBase (class in optimisers.optimisers_file)</a>
 </li>
-      <li>
-    optimisers
-
-      <ul>
-        <li><a href="api/optimisers.html#module-optimisers">module</a>
-</li>
-      </ul></li>
       <li>
     optimisers.extra_optim
 
@@ -441,20 +412,6 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li>
-    optimisers.hessian_approx
-
-      <ul>
-        <li><a href="api/optimisers.html#module-optimisers.hessian_approx">module</a>
-</li>
-      </ul></li>
-      <li>
-    optimisers.line_search
-
-      <ul>
-        <li><a href="api/optimisers.html#module-optimisers.line_search">module</a>
-</li>
-      </ul></li>
       <li>
     optimisers.optimisers_file
 
@@ -515,24 +472,10 @@
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/optimisers.html#optimisers.line_search.LineSearchFlags.TERMINATION_INTERVAL_TOO_SMALL">TERMINATION_INTERVAL_TOO_SMALL (optimisers.line_search.LineSearchFlags attribute)</a>
-</li>
-      <li><a href="api/optimisers.html#optimisers.line_search.LineSearchFlags.TERMINATION_MAX_FUNC_EVALS">TERMINATION_MAX_FUNC_EVALS (optimisers.line_search.LineSearchFlags attribute)</a>
-</li>
-      <li><a href="api/optimisers.html#optimisers.line_search.LineSearchFlags.TERMINATION_ROUNDING_ERROR">TERMINATION_ROUNDING_ERROR (optimisers.line_search.LineSearchFlags attribute)</a>
-</li>
-      <li><a href="api/optimisers.html#optimisers.line_search.LineSearchFlags.TERMINATION_STPMAX">TERMINATION_STPMAX (optimisers.line_search.LineSearchFlags attribute)</a>
-</li>
-      <li><a href="api/optimisers.html#optimisers.line_search.LineSearchFlags.TERMINATION_STPMIN">TERMINATION_STPMIN (optimisers.line_search.LineSearchFlags attribute)</a>
+      <li><a href="api/data_processing.html#data_processing.AngleProcessor.to_radians">to_radians() (data_processing.AngleProcessor class method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/optimisers.html#optimisers.line_search.LineSearchFlags.TERMINATION_STRONG_WOLFE_AND_STPMAX">TERMINATION_STRONG_WOLFE_AND_STPMAX (optimisers.line_search.LineSearchFlags attribute)</a>
-</li>
-      <li><a href="api/optimisers.html#optimisers.line_search.LineSearchFlags.TERMINATION_STRONG_WOLFE_MET">TERMINATION_STRONG_WOLFE_MET (optimisers.line_search.LineSearchFlags attribute)</a>
-</li>
-      <li><a href="api/data_processing.html#data_processing.AngleProcessor.to_radians">to_radians() (data_processing.AngleProcessor class method)</a>
-</li>
       <li><a href="api/optimisers.html#optimisers.optimisers_file.OptimType.TRUST_REGION">TRUST_REGION (optimisers.optimisers_file.OptimType attribute)</a>
 </li>
       <li><a href="api/optimisers.html#optimisers.optimisers_file.TrustRegionOptimiser">TrustRegionOptimiser (class in optimisers.optimisers_file)</a>
@@ -544,10 +487,6 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/recursive_route_choice.html#recursive_route_choice.RecursiveLogitModelEstimation.update_beta_vec">update_beta_vec() (recursive_route_choice.RecursiveLogitModelEstimation method)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/optimisers.html#optimisers.hessian_approx.update_hessian_approx">update_hessian_approx() (in module optimisers.hessian_approx)</a>
 </li>
   </ul></td>
 </tr></table>
