@@ -178,14 +178,14 @@
 <span id="optimisers-extra-optim-module"></span><h2>optimisers.extra_optim module<a class="headerlink" href="#module-optimisers.extra_optim" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="optimisers.extra_optim.OptimFunctionState">
-<em class="property">class </em><code class="sig-prename descclassname">optimisers.extra_optim.</code><code class="sig-name descname">OptimFunctionState</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">grad</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">hessian</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">hessian_approx_type</span></em>, <em class="sig-param"><span class="n">val_and_grad_evaluation_function</span></em>, <em class="sig-param"><span class="n">beta_vec</span></em>, <em class="sig-param"><span class="n">function_evals_stat</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.extra_optim.OptimFunctionState" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<em class="property">class </em><code class="sig-prename descclassname">optimisers.extra_optim.</code><code class="sig-name descname">OptimFunctionState</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)">float</a></span></em>, <em class="sig-param"><span class="n">grad</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">hessian</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">hessian_approx_type</span></em>, <em class="sig-param"><span class="n">val_and_grad_evaluation_function</span></em>, <em class="sig-param"><span class="n">beta_vec</span></em>, <em class="sig-param"><span class="n">function_evals_stat</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.extra_optim.OptimFunctionState" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Data Class to store elements of log likelihood state &amp; grad which are relevant both
 in the computation of the log likelihood and also the global optimisation algorithm</p>
 <p>“Bridge” between RL and the more general optimisation code</p>
 <dl class="py method">
 <dt id="optimisers.extra_optim.OptimFunctionState.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)">float</a></span></em>, <em class="sig-param"><span class="n">grad</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">hessian</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">hessian_approx_type</span></em>, <em class="sig-param"><span class="n">val_and_grad_evaluation_function</span></em>, <em class="sig-param"><span class="n">beta_vec</span></em>, <em class="sig-param"><span class="n">function_evals_stat</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.extra_optim.OptimFunctionState.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)">float</a></span></em>, <em class="sig-param"><span class="n">grad</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">hessian</span><span class="p">:</span> <span class="n">numpy.array</span></em>, <em class="sig-param"><span class="n">hessian_approx_type</span></em>, <em class="sig-param"><span class="n">val_and_grad_evaluation_function</span></em>, <em class="sig-param"><span class="n">beta_vec</span></em>, <em class="sig-param"><span class="n">function_evals_stat</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.extra_optim.OptimFunctionState.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -213,7 +213,7 @@ value and gradient at that particular x</p></li>
 <dl class="py class">
 <dt id="optimisers.hessian_approx.OptimHessianType">
 <em class="property">class </em><code class="sig-prename descclassname">optimisers.hessian_approx.</code><code class="sig-name descname">OptimHessianType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.hessian_approx.OptimHessianType" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></a></p>
 <p>An enumeration.</p>
 <dl class="py attribute">
 <dt id="optimisers.hessian_approx.OptimHessianType.BFGS">
@@ -239,7 +239,7 @@ a modified implementation of the algorithm documented in:
 <dl class="py class">
 <dt id="optimisers.line_search.LineSearchFlags">
 <em class="property">class </em><code class="sig-prename descclassname">optimisers.line_search.</code><code class="sig-name descname">LineSearchFlags</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.line_search.LineSearchFlags" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></a></p>
 <p>An enumeration.</p>
 <dl class="py attribute">
 <dt id="optimisers.line_search.LineSearchFlags.TERMINATION_INTERVAL_TOO_SMALL">
@@ -510,7 +510,7 @@ evaluating the value function and taking a step based upon the gradient</p>
 <dl class="py class">
 <dt id="optimisers.optimisers_file.OptimType">
 <em class="property">class </em><code class="sig-prename descclassname">optimisers.optimisers_file.</code><code class="sig-name descname">OptimType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.OptimType" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></a></p>
 <p>An enumeration.</p>
 <dl class="py attribute">
 <dt id="optimisers.optimisers_file.OptimType.LINE_SEARCH">
@@ -527,7 +527,7 @@ evaluating the value function and taking a step based upon the gradient</p>
 <dl class="py class">
 <dt id="optimisers.optimisers_file.OptimiserBase">
 <em class="property">class </em><code class="sig-prename descclassname">optimisers.optimisers_file.</code><code class="sig-name descname">OptimiserBase</code><a class="headerlink" href="#optimisers.optimisers_file.OptimiserBase" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></a></p>
 <p>Base class for both custom and scipy to inherit from</p>
 <dl class="py attribute">
 <dt id="optimisers.optimisers_file.OptimiserBase.LL_ERROR_VALUE">
@@ -564,7 +564,7 @@ evaluating the value function and taking a step based upon the gradient</p>
 
 <dl class="py class">
 <dt id="optimisers.optimisers_file.ScipyOptimiser">
-<em class="property">class </em><code class="sig-prename descclassname">optimisers.optimisers_file.</code><code class="sig-name descname">ScipyOptimiser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">method</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)">str</a></span></em>, <em class="sig-param"><span class="n">options</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">fd_options</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.ScipyOptimiser" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">optimisers.optimisers_file.</code><code class="sig-name descname">ScipyOptimiser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">method</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)">str</a></span></em>, <em class="sig-param"><span class="n">options</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">fd_options</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.ScipyOptimiser" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#optimisers.optimisers_file.OptimiserBase" title="optimisers.optimisers_file.OptimiserBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">optimisers.optimisers_file.OptimiserBase</span></code></a></p>
 <p>Wrapper around scipy.optimize.minimize to conform to the format we
 require.</p>
@@ -575,7 +575,7 @@ require.</p>
 
 <dl class="py method">
 <dt id="optimisers.optimisers_file.ScipyOptimiser.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">method</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)">str</a></span></em>, <em class="sig-param"><span class="n">options</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">fd_options</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.ScipyOptimiser.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">method</span><span class="p">:</span> <span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)">str</a></span></em>, <em class="sig-param"><span class="n">options</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">fd_options</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#optimisers.optimisers_file.ScipyOptimiser.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
 </dd></dl>
 
