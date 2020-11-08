@@ -63,7 +63,7 @@ def consistency_test(network_file, orig_indices, dest_indices, obs_per_pair, bet
     for n, beta_gen in enumerate(test_range, start=1):
         expected.append(beta_gen)
         try:
-            obs = get_data(beta_gen, seed=2)
+            obs = get_data(beta_gen, seed=None)
         except ValueError as e:
             print(f"beta = {beta_gen} failed, {e}")
             actual.append(0.0)

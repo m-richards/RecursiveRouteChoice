@@ -68,7 +68,7 @@ print("yvals\n", output1, "\n", output2)
 
 plt.legend()
 # plt.show()
-plt.savefig("ch5-beta_plot_relv2.4.pdf")
+plt.savefig("ch5-beta_plot_relv2.5.pdf")
 plt.figure(figsize=(8,6))
 plt.scatter(expected1[index_failures1], output1[index_failures1], label='Simulation '
                                                                                    'Failed',
@@ -87,7 +87,7 @@ print("yvals\n", output1, "\n", output2)
 sys.stdout.close()
 plt.legend()
 # plt.show()
-plt.savefig("ch5-beta_plot_relv2.4a.pdf")
+plt.savefig("ch5-beta_plot_relv2.5a.pdf")
 
 
 
@@ -111,6 +111,6 @@ bax.set_ylabel(r"Value of $\beta$ obtained from Estimation")
 bax.legend(loc='upper left')
 # plt.show()
 
-plt.savefig("ch5-beta_plot_linv2.4.pdf")
+plt.savefig("ch5-beta_plot_linv2.5.pdf")
 
 
