@@ -158,6 +158,11 @@ class RecursiveLogitModel(abc.ABC):
     should not be directly instantiated
     """
 
+    zeros_error_override = None  # Hack attribute to make a test case relevant, should be removed
+    # not a global class attribute, but presented here to indicate it is different from other
+    # fields
+    # TODO this is probably an okay way to implement the non positive value function toggle
+
     def __init__(self, data_struct: ModelDataStruct, initial_beta=-1.5, mu=1.0, safety_checks=True):
         """
         Initialises a RecursiveLogitModel instance.
@@ -172,6 +177,7 @@ class RecursiveLogitModel(abc.ABC):
             The scale parameter of the Gumbel random variables being modelled. Generally set
             equal to 1 as it is non-identifiable due to the uncertainty in the parameter weights.
         """
+
         self.network_data = data_struct  # all network attributes
         self.data_array = data_struct.data_array
         # flags for sparsity, save us rechecking. Realistically, there should only be one
@@ -400,11 +406,15 @@ class RecursiveLogitModel(abc.ABC):
                 # with np.errstate(invalid='ignore'):
                 # At the moment I would prefer this crashes
                 self._value_functions = np.log(val_funcs_tmp)
-                error_flag = True
+                print("override", self.zeros_error_override)
+                error_flag = (True if self.zeros_error_override is None else
+                              self.zeros_error_override)
                 # TODO this error is uncaught in Tien Mai. I believe it has to be caught. Whilst
                 #  if we only use a path based upon the value functions that have legal values,
                 #  we are still informing the decision for beta based upon illegal values if we
                 #  leave it.
+                #   Change was introduced in @42f564e9, results in a number of test cases having
+                #       invalid values. Should be reviewed
 
             else:
                 self._value_functions = np.log(z_vec)
