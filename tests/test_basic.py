@@ -9,7 +9,7 @@ from recursive_route_choice import ALLOW_POSITIVE_VALUE_FUNCTIONS
 
 import numpy as np
 from scipy import linalg
-from scipy.sparse import csr_matrix, dok_matrix
+from scipy.sparse import csr_matrix, dok_matrix, issparse
 
 from data_loading import load_csv_to_sparse, load_standard_path_format_csv
 from data_processing import AngleProcessor
@@ -290,7 +290,11 @@ class TestSimulation(object):
     @staticmethod
     def _basic_consistencey_checks(distances):
         data_list = [distances]
-        network_struct = ModelDataStruct(data_list, hand_net_incidence,
+        if issparse(distances):
+            hand_net_incidence_local = dok_matrix(hand_net_incidence)
+        else:
+            hand_net_incidence_local = hand_net_incidence
+        network_struct = ModelDataStruct(data_list, hand_net_incidence_local,
                                          data_array_names_debug=("distances", "u_turn"))
         beta_vec = np.array([-1])
         model = RecursiveLogitModelPrediction(network_struct,
