@@ -5,10 +5,10 @@ Do the network from the fosgerau paper?
 
 
 .. note::
-   The example is in the reverse order to a typical use case. Here we simulate observations,
+   The example presented demonstrates the reverse order to a typical use case. Here we
+simulate observations,
    picking arbitrary parameters and then estimate parameters from those observations. This is nice
-   for a simple example since then we don't need an external data source. For a more typical use
-   case, see the Sioux Falls example.
+   for a simple example since then we don't need an external data source.
 
 Prediction
 ----------

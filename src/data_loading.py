@@ -60,11 +60,26 @@ def load_standard_path_format_csv(directory_path, delim=None, match_tt_shape=Fal
 
 def load_csv_to_sparse(fname, dtype=None, delim=None, square_matrix=True, shape=None) -> \
         sparse.coo_matrix:
-    """IO function to load row, col, val CSV and return a sparse scipy matrix.
-    :square_matix <bool> means that the input should be square and we will try to square it by
+    """
+    IO function to load row, col, val CSV and return a sparse scipy matrix.
+
+    Parameters
+    ----------
+    fname : str
+    dtype :
+    delim : str, optional
+    square_matrix : bool
+        means that the input should be square and we will try to square it by
         adding a row (this is commonly required in data)
-    :matrix_format_cast_function is the output format of the matrix to be returned. Given as a
-    function to avoid having to specify string equivalents"""
+
+    shape :
+
+    Returns
+    -------
+    COO matrix
+
+    """
+
     row, col, data = np.loadtxt(fname, delimiter=delim, unpack=True, dtype=dtype)
     # convert row and col to integers for coo_matrix
     # note we need this for float inputs since row cols still need to be ints to index
@@ -89,7 +104,8 @@ def load_csv_to_sparse(fname, dtype=None, delim=None, square_matrix=True, shape=
 
 def resize_to_dims(matrix: sparse.dok_matrix, expected_max_shape,
                    matrix_name_debug="(Name not provided)"):
-    """Resizes matrix to specified dims, issues warning if this is losing data from the matrix.
+    """
+    Resizes matrix to specified dims, issues warning if this is losing data from the matrix.
     Application is more general than the current error message suggests.
     Note the fact that the matrix is sparse is essential, numpy resize behaves differently to
     scipy.
@@ -97,6 +113,12 @@ def resize_to_dims(matrix: sparse.dok_matrix, expected_max_shape,
 
     Note we use this since it is easier to read in a too large or small matrix from file and
     correct than limit the size from IO - exceptions get thrown
+
+    Parameters
+    ----------
+    matrix : :py:class:`scipy.sparse.dok_matrix`
+    expected_max_shape : tuple of int s of size 2
+    matrix_name_debug :
     """
     if (matrix.shape[0] > expected_max_shape[0]) or (matrix.shape[1] > expected_max_shape[1]):
         # warnings.warn( note note using warnings since I'm trying to catch all warnings
@@ -114,18 +136,20 @@ def load_tntp_to_sparse_arc_formulation(net_fpath, columns_to_extract=None,
                                         use_file_order_for_arc_numbers=True,
                                         standardise=None):
     """
-    :param net_fpath path to network file
-    :param columns_to_extract list of columns to keep. init_node and term_node are always kept
-    # and form the basis of the arc-arc matrix.
-    Currently only length is supported since the conversion from node to arc is not clear in
-    this case.
-    # Legal columns to extract are:
-    #  capacity, length, free_flow_time, b, power, speed, toll, link_type
-    # Note that some of these will be constant across arcs and are redundant to include.
 
-    :return
-    :rtype [dict, scipy.sparse.coo_matrix, ...]
+    Parameters
+    ----------
+    net_fpath : str
+        file path to read from
+    columns_to_extract : list of str
+        name of network file attributes to extra
+    use_file_order_for_arc_numbers : bool
+    standardise : str, optional
 
+    Returns
+    -------
+
+    [dict, :py:class:`scipy.sparse.dok_matrix`]
 
     """
     if columns_to_extract is None:
@@ -202,12 +226,11 @@ def load_tntp_node_formulation(net_fpath, columns_to_extract=None, sparse_format
     Currently only length is supported since the conversion from node to arc is not clear in
     this case.
     Legal columns to extract are:
-     { capacity, length, free_flow_time, b, power, speed, critical_speed, toll, link_type, lanes }
+    { capacity, length, free_flow_time, b, power, speed, critical_speed, toll, link_type, lanes }
     # Note that some of these will be constant across arcs and are redundant to include.
 
     :return
     :rtype [ :py:class:`scipy.sparse.coo_matrix`, list of str]
-
 
     """
     print(f"Loading {net_fpath} for recursive route choice.")

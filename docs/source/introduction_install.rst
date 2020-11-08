@@ -14,18 +14,21 @@ with further developments in papers Tien Mai. There are two key components:
 for the recursive logit and
 more advanced variants which are not (currently) implemented here. Unfortunately, this code is
 in various states of ill-repair (for instance running the :code:`RecursiveLogit.Classical.V2` repo
-using the estimation script, :code:`RLoptimizer` immediately crashes due to hard coded minimum
+using the main estimation script, :code:`RLoptimizer` immediately crashes due to hard coded minimum
 dimensions,
 and the simulation code :code:`createSimulatedObs` crashes due some some change in
 version where "Value" has become "value").
 
 This package intends to address some of the shortcomings of this implementation, to list a few key
 points
+
 * Simple examples work out of the box, with a clearly specified data format
 * Code is documented consistently, with explanatory introductory material
-* Code is designed in a modular, clear main to aid in understanding and extensibility
+* Code is designed in a modular, clear manner to aid in understanding and extensibility
+* Some mathematical correction to the algorithm implementation
 
-The package has been developed as part of my honours thesis and subsequently, significant emphasis
+The package has been developed as part of my (maths) honours thesis and subsequently, significant
+emphasis
 has been placed on ensuring the mathematical correctness of the components.
 
 Whilst the shortcomings of Tien Mai's code have been noted, it has still been an important reference
@@ -46,9 +49,8 @@ Currently one can install from the repository directly using pip::
 
 It is recommended to use some kind of virtual environment to avoid conflicting package versions.
 There is also a :code:`requirements_strict.txt` which explicitly specifies package versions. This
-will likely contain less up to date package versions, but should always work regardless of future
+will likely contain less up to date versions, but should always work regardless of future
 api changes of the dependencies.
 
-Hopefully this will also appear on PyPi at some point.
 
 

@@ -513,21 +513,26 @@ class RecursiveLogitModelPrediction(RecursiveLogitModel):
                               ):
         """
 
-        :param origin_indices: iterable of indices to start paths from
-        :type origin_indices: list or iterable
-        :param dest_indices: iterable of indices to end paths at
-        :type dest_indices: List or iterable
-        :param num_obs_per_pair: Number of observations to generate for each OD pair
-        :type num_obs_per_pair: int
-        :param iter_cap: iteration cap in the case of non convergent value functions.
-                        Hopefully should not occur but may happen if the value function solutions
-                        are negative but ill conditioned.
-        :type iter_cap: int
-        :param rng_seed: Seed for numpy generator, or instance of np.random.BitGenerator
-        :type rng_seed: int or np.random.BitGenerator  (any legal input to np.random.default_rng())
+        Parameters
+        ----------
+        origin_indices : list or array like
+            iterable of indices to start paths from
+        dest_indices : list or array like
+            iterable of indices to end paths at
+        num_obs_per_pair : int
+            Number of observations to generate for each OD pair
+        iter_cap : int
+            iteration cap in the case of non convergent value functions.
+            Hopefully should not occur but may happen if the value function solutions
+            are negative and ill conditioned.
+        rng_seed : int or np.random.BitGenerator
+             (any legal input to np.random.default_rng() )
 
-        :rtype list of list of int
-        :return List of list of all observations generated
+        Returns
+        -------
+        output_path_list : list of list of int
+        List of lists containing all observations generated
+
         """
         self._check_index_valid(dest_indices)
         self._check_index_valid(origin_indices)

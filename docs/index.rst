@@ -3,9 +3,11 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. Note to me, use conda windows to build Sphinx
+
 Documentation for RecursiveRouteChoice
 ======================================
-RecursiveRouteChoice is an efficient  python implementation of the recursive logit model for
+RecursiveRouteChoice is an efficient  Python implementation of the recursive logit model for
 route choice. It supports both both prediction and estimation. See Overview and Installation for
 some more details.
 
@@ -18,6 +20,7 @@ some more details.
 
     source/introduction_install
     source/simple_example
+    source/involved_example
     source/data_formats
 
 

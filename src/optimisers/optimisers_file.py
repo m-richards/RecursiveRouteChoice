@@ -75,7 +75,16 @@ class ScipyOptimiser(OptimiserBase):
     METHOD_FLAG = "scipy-master"
 
     def __init__(self, method: str, options=None, fd_options=None):
+        """
 
+        Parameters
+        ----------
+        method : {'cg', 'bfgs', 'newton-cg', 'l-bfgs-b', 'tnc', 'newton-cg', 'dogleg',
+        'trust-ncg', 'trust-krylov' }
+            or other scipy optimize valid flags
+        options :
+        fd_options :
+        """
         super().__init__()
         method = method.lower()
         if method not in SCIPY_METHODS:
