@@ -11,8 +11,9 @@ from scipy.sparse import linalg as splinalg
 import awkward1 as ak
 
 # from debug_helpers import print_sparse, print_data_struct
-from optimisers.extra_optim import OptimFunctionState
-from optimisers.optimisers_file import CustomOptimiserBase, OptimType, ScipyOptimiser, OptimiserBase
+from .optimisers.extra_optim import OptimFunctionState
+from .optimisers.optimisers_file import CustomOptimiserBase, OptimType, ScipyOptimiser, \
+    OptimiserBase
 
 logger = logging.getLogger()
 handler = logging.StreamHandler()

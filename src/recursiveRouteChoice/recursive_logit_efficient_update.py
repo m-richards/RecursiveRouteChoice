@@ -13,10 +13,10 @@ from scipy.linalg import lu_factor, lu_solve
 
 from scipy.sparse.linalg import splu  # noqa: F401  - this is a lie, it is used
 
-from optimisers.optimisers_file import OptimiserBase
-from recursive_route_choice import (ModelDataStruct,
-                                    RecursiveLogitModelEstimation, RecursiveLogitModelPrediction,
-                                    RecursiveLogitModel, _to_dense_if_sparse)
+from .optimisers import OptimiserBase
+from .recursive_route_choice import (ModelDataStruct,
+                                     RecursiveLogitModelEstimation, RecursiveLogitModelPrediction,
+                                     RecursiveLogitModel, _to_dense_if_sparse)
 
 logger = logging.getLogger()
 handler = logging.StreamHandler()
