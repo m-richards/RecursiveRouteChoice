@@ -5,7 +5,7 @@ existing code.
 
 """
 from recursiveRouteChoice.recursive_route_choice import ALLOW_POSITIVE_VALUE_FUNCTIONS
-# import pytest
+# import pytest -- run with pytest although it's not actually imported
 
 import numpy as np
 from scipy import linalg
