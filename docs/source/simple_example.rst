@@ -19,7 +19,7 @@ parameter weight for the single network attribute; distance being :math:`\beta=-
 ::
 
     import numpy as np
-    from recursive_route_choice import RecursiveLogitModelPrediction, ModelDataStruct
+    from recursiveRouteChoice import RecursiveLogitModelPrediction, ModelDataStruct
 
     # DATA
     # A trivial network

@@ -12,7 +12,6 @@ from numpy.random import default_rng
 rng =default_rng()
 import time
 
-from recursive_logit_efficient_update import DenseLUObj
 xticks = np.logspace(6, 12, base=2, num=7)
 print(xticks)
 yticks = np.logspace(-7, 8, base=2, num=16)

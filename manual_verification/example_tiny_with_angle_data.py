@@ -1,13 +1,12 @@
 # TODO check np.dot usage since numpy is not aware of sparse properly, should use A.dot(v)
-import os
 
 import numpy as np
 import time
 
-from data_loading import load_standard_path_format_csv
-from data_processing import AngleProcessor
-from recursive_route_choice import RecursiveLogitModelEstimation, ModelDataStruct
-from optimisers import LineSearchOptimiser, OptimHessianType
+from recursiveRouteChoice.data_loading import load_standard_path_format_csv
+from recursiveRouteChoice.data_processing import AngleProcessor
+from recursiveRouteChoice import RecursiveLogitModelEstimation, ModelDataStruct
+from recursiveRouteChoice.optimisers import LineSearchOptimiser, OptimHessianType
 import os
 # np.seterr(all='raise')  # all='print')
 np.set_printoptions(precision=12, suppress=True)

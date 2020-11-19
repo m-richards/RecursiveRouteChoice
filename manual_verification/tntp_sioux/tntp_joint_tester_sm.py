@@ -1,20 +1,14 @@
 import numpy as np
-from scipy.sparse import dok_matrix
-import awkward1 as ak
 
-from data_loading import write_obs_to_json, load_obs_from_json, load_tntp_to_sparse_arc_formulation
-
-from recursive_route_choice import ModelDataStruct
-
-
-
-import optimisers as op
+from recursiveRouteChoice.data_loading import load_tntp_to_sparse_arc_formulation
 
 np.set_printoptions(edgeitems=10, linewidth=300)
-from recursive_route_choice import (RecursiveLogitModelPrediction,
-    RecursiveLogitModelEstimation)
-# from recursive_logit_efficient_update import (RecursiveLogitModelEstimationSM as
-#                                               RecursiveLogitModelEstimation)
+from recursiveRouteChoice import (ModelDataStruct, RecursiveLogitModelPrediction,
+                                  RecursiveLogitModelEstimation, optimisers)
+# testing replacements
+# from recursiveRouteChoice import (ModelDataStruct, RecursiveLogitModelPredictionSM as
+# RecursiveLogitModelPrediction, RecursiveLogitModelEstimationSM as RecursiveLogitModelEstimation,
+#                                   optimisers)
 
 
 
@@ -78,7 +72,7 @@ def get_data(beta, seed=None):
 
 # =======================================================
 print(120 * "=", 'redo with scipy')
-optimiser = op.ScipyOptimiser(method='l-bfgs-b')  # bfgs, l-bfgs-b
+optimiser = optimisers.ScipyOptimiser(method='l-bfgs-b')  # bfgs, l-bfgs-b
 
 
 import time
