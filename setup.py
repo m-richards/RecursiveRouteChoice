@@ -2,8 +2,8 @@ from setuptools import setup, find_packages
 import os
 
 setup(name="recursiveRouteChoice",
-      package_dir={'': os.path.join('src', 'recursiveRouteChoice')},
-      packages=find_packages(where=os.path.join('src', 'recursiveRouteChoice')),
+      package_dir={'': os.path.join('src', )},
+      packages=find_packages(where=os.path.join('src', )),
       version="0.1",
       description="Recursive logit model implementation in python",
       author="Matthew Richards",

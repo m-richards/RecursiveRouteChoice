@@ -13,7 +13,9 @@ from recursiveRouteChoice import RecursiveLogitModelPrediction, ModelDataStruct,
 from recursiveRouteChoice import optimisers
 
 # DATA
-network_file = "SiouxFalls_net.tntp"
+import os
+print("sys path is", os.getcwd(), os.listdir(os.getcwd()))
+network_file = os.path.join("tests", "docs", "SiouxFalls_net.tntp")
 node_max = 24  # from network file
 
 data_list, data_list_names = load_tntp_node_formulation(
