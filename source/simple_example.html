@@ -97,10 +97,7 @@
 </ul>
 <p class="caption"><span class="caption-text">API Reference:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../api/data_loading.html">data_loading module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../api/data_processing.html">data_processing module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../api/optimisers.html">Optimisers Submodules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../api/recursive_route_choice.html">recursive_route_choice module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apisource/recursiveRouteChoice.html">recursiveRouteChoice package</a></li>
 </ul>
 
             
@@ -171,19 +168,16 @@
 <p>Do the network from the fosgerau paper?</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The example presented demonstrates the reverse order to a typical use case. Here we</p>
+<p>The example presented demonstrates the reverse order to a typical use case. Here we
+simulate observations, picking arbitrary parameters and then estimate parameters from those
+observations. This is nice for a simple example since then we don’t need an external data source.</p>
 </div>
-<dl class="simple">
-<dt>simulate observations,</dt><dd><p>picking arbitrary parameters and then estimate parameters from those observations. This is nice
-for a simple example since then we don’t need an external data source.</p>
-</dd>
-</dl>
 <div class="section" id="prediction">
 <h2><span class="section-number">3.1. </span>Prediction<a class="headerlink" href="#prediction" title="Permalink to this headline">¶</a></h2>
 <p>First we illustrate how to simulate observations on a trivial network, with the arbitrary
 parameter weight for the single network attribute; distance being <span class="math notranslate nohighlight">\(\beta=-0.4\)</span>.</p>
 <div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">recursive_route_choice</span> <span class="kn">import</span> <span class="n">RecursiveLogitModelPrediction</span><span class="p">,</span> <span class="n">ModelDataStruct</span>
+<span class="kn">from</span> <span class="nn">recursiveRouteChoice</span> <span class="kn">import</span> <span class="n">RecursiveLogitModelPrediction</span><span class="p">,</span> <span class="n">ModelDataStruct</span>
 
 <span class="c1"># DATA</span>
 <span class="c1"># A trivial network</span>
@@ -219,8 +213,7 @@ Finally, we simulate trips between the provided arcs on the network, with repeti
 <h2><span class="section-number">3.2. </span>Estimation<a class="headerlink" href="#estimation" title="Permalink to this headline">¶</a></h2>
 <p>Now we follow on from the above example, reusing the same network, and assume that we are trying to
 estimate the parameter <span class="math notranslate nohighlight">\(\beta\)</span> from <code class="code docutils literal notranslate"><span class="pre">obs</span></code> as generated above.</p>
-<div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">optimisers</span>
-<span class="kn">from</span> <span class="nn">recursive_route_choice</span> <span class="kn">import</span> <span class="n">RecursiveLogitModelEstimation</span>
+<div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">recursiveRouteChoice</span> <span class="kn">import</span> <span class="n">RecursiveLogitModelEstimation</span><span class="p">,</span> <span class="n">optimisers</span>  <span class="c1"># noqa #402</span>
 
 <span class="n">optimiser</span> <span class="o">=</span> <span class="n">optimisers</span><span class="o">.</span><span class="n">ScipyOptimiser</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;bfgs&#39;</span><span class="p">)</span>
 
@@ -228,6 +221,7 @@ estimate the parameter <span class="math notranslate nohighlight">\(\beta\)</spa
                                       <span class="n">initial_beta</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">],</span> <span class="n">mu</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                                       <span class="n">optimiser</span><span class="o">=</span><span class="n">optimiser</span><span class="p">)</span>
 <span class="n">beta</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">solve_for_optimal_beta</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Optimal beta determined was&quot;</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>
 </pre></div>
 </div>

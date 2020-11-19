@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>recursive_route_choice module &mdash; RecursiveRouteChoice 0.1 documentation</title>
+  <title>Model: Main Recursive Logit Implementation (recursiveRouteChoice.recursive_route_choice) &mdash; RecursiveRouteChoice 0.1 documentation</title>
   
 
   
@@ -37,7 +37,8 @@
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="prev" title="Optimisers Submodules" href="optimisers.html" /> 
+    <link rel="next" title="Model: Sherman Morrison Variant (recursiveRouteChoice.recursive_logit_efficient_update)" href="recursiveRouteChoice.recursive_logit_efficient_update.html" />
+    <link rel="prev" title="Data Preprocessing: (recursiveRouteChoice.data_processing)" href="recursiveRouteChoice.data_processing.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -92,10 +93,18 @@
 </ul>
 <p class="caption"><span class="caption-text">API Reference:</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="data_loading.html">data_loading module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="data_processing.html">data_processing module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="optimisers.html">Optimisers Submodules</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">recursive_route_choice module</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="recursiveRouteChoice.html">recursiveRouteChoice package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="recursiveRouteChoice.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="recursiveRouteChoice.optimisers.html">Optimisers Submodule: Main use case</a></li>
+<li class="toctree-l3"><a class="reference internal" href="recursiveRouteChoice.optimisers.html#optimisers-submodule-other-files-with-minimal-public-api">Optimisers Submodule: Other files with minimal public API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="recursiveRouteChoice.data_loading.html">Data Loading: (recursiveRouteChoice.data_loading)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="recursiveRouteChoice.data_processing.html">Data Preprocessing: (recursiveRouteChoice.data_processing)</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Model: Main Recursive Logit Implementation (recursiveRouteChoice.recursive_route_choice)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="recursiveRouteChoice.recursive_logit_efficient_update.html">Model: Sherman Morrison Variant (recursiveRouteChoice.recursive_logit_efficient_update)</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 
             
@@ -142,13 +151,15 @@
     
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>recursive_route_choice module</li>
+          <li><a href="recursiveRouteChoice.html">recursiveRouteChoice package</a> &raquo;</li>
+        
+      <li>Model: Main Recursive Logit Implementation (recursiveRouteChoice.recursive_route_choice)</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="../_sources/api/recursive_route_choice.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/apisource/recursiveRouteChoice.recursive_route_choice.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -161,11 +172,12 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="module-recursive_route_choice">
-<span id="recursive-route-choice-module"></span><h1>recursive_route_choice module<a class="headerlink" href="#module-recursive_route_choice" title="Permalink to this headline">¶</a></h1>
-<dl class="py class">
-<dt id="recursive_route_choice.ModelDataStruct">
-<em class="property">class </em><code class="sig-prename descclassname">recursive_route_choice.</code><code class="sig-name descname">ModelDataStruct</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data_attribute_list</span><span class="p">:</span> <span class="n">List<span class="p">[</span>scipy.sparse.dok.dok_matrix<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">incidence_matrix</span><span class="p">:</span> <span class="n">scipy.sparse.dok.dok_matrix</span></em>, <em class="sig-param"><span class="n">data_array_names_debug</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">resize</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursive_route_choice.ModelDataStruct" title="Permalink to this definition">¶</a></dt>
+  <div class="section" id="model-main-recursive-logit-implementation-recursiveroutechoice-recursive-route-choice">
+<h1>Model: Main Recursive Logit Implementation (recursiveRouteChoice.recursive_route_choice)<a class="headerlink" href="#model-main-recursive-logit-implementation-recursiveroutechoice-recursive-route-choice" title="Permalink to this headline">¶</a></h1>
+<p>Includes data structure classes, classes for prediction and parameter estimation</p>
+<span class="target" id="module-recursiveRouteChoice.recursive_route_choice"></span><dl class="py class">
+<dt id="recursiveRouteChoice.recursive_route_choice.ModelDataStruct">
+<em class="property">class </em><code class="sig-prename descclassname">recursiveRouteChoice.recursive_route_choice.</code><code class="sig-name descname">ModelDataStruct</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data_attribute_list</span><span class="p">:</span> <span class="n">List<span class="p">[</span>Union<span class="p">[</span>scipy.sparse.dok.dok_matrix<span class="p">, </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)">numpy.ndarray</a><span class="p">]</span><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">incidence_matrix</span><span class="p">:</span> <span class="n">scipy.sparse.dok.dok_matrix</span></em>, <em class="sig-param"><span class="n">data_array_names_debug</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">resize</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.recursive_route_choice.ModelDataStruct" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Generic struct which stores all the arc attributes together in a convenient manner.
 Additionally, if it hasn’t already been done, the input data is padded with an additional
@@ -173,8 +185,8 @@ row/ col to bottom right which will have the destination dummy arc mapped to.
 This is perhaps not particularly, clear but it is done here to avoid having to
 resize all the dependent quantities later</p>
 <dl class="py method">
-<dt id="recursive_route_choice.ModelDataStruct.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data_attribute_list</span><span class="p">:</span> <span class="n">List<span class="p">[</span>scipy.sparse.dok.dok_matrix<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">incidence_matrix</span><span class="p">:</span> <span class="n">scipy.sparse.dok.dok_matrix</span></em>, <em class="sig-param"><span class="n">data_array_names_debug</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">resize</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursive_route_choice.ModelDataStruct.__init__" title="Permalink to this definition">¶</a></dt>
+<dt id="recursiveRouteChoice.recursive_route_choice.ModelDataStruct.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data_attribute_list</span><span class="p">:</span> <span class="n">List<span class="p">[</span>Union<span class="p">[</span>scipy.sparse.dok.dok_matrix<span class="p">, </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.19)">numpy.ndarray</a><span class="p">]</span><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">incidence_matrix</span><span class="p">:</span> <span class="n">scipy.sparse.dok.dok_matrix</span></em>, <em class="sig-param"><span class="n">data_array_names_debug</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">resize</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.recursive_route_choice.ModelDataStruct.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Instantiate a ModelDataStruct instance.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -192,21 +204,21 @@ know what you are doing.</p></li>
 </dd></dl>
 
 <dl class="py class">
-<dt id="recursive_route_choice.RecursiveLogitModel">
-<em class="property">class </em><code class="sig-prename descclassname">recursive_route_choice.</code><code class="sig-name descname">RecursiveLogitModel</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data_struct</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#recursive_route_choice.ModelDataStruct" title="recursive_route_choice.ModelDataStruct">recursive_route_choice.ModelDataStruct</a></span></em>, <em class="sig-param"><span class="n">initial_beta</span><span class="o">=</span><span class="default_value">- 1.5</span></em>, <em class="sig-param"><span class="n">mu</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">safety_checks</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursive_route_choice.RecursiveLogitModel" title="Permalink to this definition">¶</a></dt>
+<dt id="recursiveRouteChoice.recursive_route_choice.RecursiveLogitModel">
+<em class="property">class </em><code class="sig-prename descclassname">recursiveRouteChoice.recursive_route_choice.</code><code class="sig-name descname">RecursiveLogitModel</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data_struct</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#recursiveRouteChoice.recursive_route_choice.ModelDataStruct" title="recursiveRouteChoice.recursive_route_choice.ModelDataStruct">recursiveRouteChoice.recursive_route_choice.ModelDataStruct</a></span></em>, <em class="sig-param"><span class="n">initial_beta</span><span class="o">=</span><span class="default_value">- 1.5</span></em>, <em class="sig-param"><span class="n">mu</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">safety_checks</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.recursive_route_choice.RecursiveLogitModel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></a></p>
 <p>Abstraction of the linear algebra operations for the recursive logit
 model to solve the matrix system for the value functions.</p>
 <p>Is subclassed to provide functionality for prediction and estimation and
 should not be directly instantiated</p>
 <dl class="py method">
-<dt id="recursive_route_choice.RecursiveLogitModel.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data_struct</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#recursive_route_choice.ModelDataStruct" title="recursive_route_choice.ModelDataStruct">recursive_route_choice.ModelDataStruct</a></span></em>, <em class="sig-param"><span class="n">initial_beta</span><span class="o">=</span><span class="default_value">- 1.5</span></em>, <em class="sig-param"><span class="n">mu</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">safety_checks</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursive_route_choice.RecursiveLogitModel.__init__" title="Permalink to this definition">¶</a></dt>
+<dt id="recursiveRouteChoice.recursive_route_choice.RecursiveLogitModel.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data_struct</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#recursiveRouteChoice.recursive_route_choice.ModelDataStruct" title="recursiveRouteChoice.recursive_route_choice.ModelDataStruct">recursiveRouteChoice.recursive_route_choice.ModelDataStruct</a></span></em>, <em class="sig-param"><span class="n">initial_beta</span><span class="o">=</span><span class="default_value">- 1.5</span></em>, <em class="sig-param"><span class="n">mu</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">safety_checks</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.recursive_route_choice.RecursiveLogitModel.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialises a RecursiveLogitModel instance.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data_struct</strong> (<a class="reference internal" href="#recursive_route_choice.ModelDataStruct" title="recursive_route_choice.ModelDataStruct"><em>ModelDataStruct</em></a>) – The ModelDataStruct corresponding to the network being estimated on</p></li>
+<li><p><strong>data_struct</strong> (<a class="reference internal" href="#recursiveRouteChoice.recursive_route_choice.ModelDataStruct" title="recursiveRouteChoice.recursive_route_choice.ModelDataStruct"><em>ModelDataStruct</em></a>) – The ModelDataStruct corresponding to the network being estimated on</p></li>
 <li><p><strong>initial_beta</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a><em>] or </em><em>array_like</em>) – The initial value for the parameter weights of the network attributes</p></li>
 <li><p><strong>mu</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – The scale parameter of the Gumbel random variables being modelled. Generally set
 equal to 1 as it is non-identifiable due to the uncertainty in the parameter weights.</p></li>
@@ -216,8 +228,8 @@ equal to 1 as it is non-identifiable due to the uncertainty in the parameter wei
 </dd></dl>
 
 <dl class="py method">
-<dt id="recursive_route_choice.RecursiveLogitModel.compute_value_function">
-<code class="sig-name descname">compute_value_function</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">m_tilde</span></em>, <em class="sig-param"><span class="n">data_is_sparse</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a><a class="headerlink" href="#recursive_route_choice.RecursiveLogitModel.compute_value_function" title="Permalink to this definition">¶</a></dt>
+<dt id="recursiveRouteChoice.recursive_route_choice.RecursiveLogitModel.compute_value_function">
+<code class="sig-name descname">compute_value_function</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">m_tilde</span></em>, <em class="sig-param"><span class="n">data_is_sparse</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a><a class="headerlink" href="#recursiveRouteChoice.recursive_route_choice.RecursiveLogitModel.compute_value_function" title="Permalink to this definition">¶</a></dt>
 <dd><p>Solves the linear system <span class="math notranslate nohighlight">\(z = Mz+b\)</span> and stores the output for future use.
 Returns a boolean indicating if solving the linear system was successful or not.</p>
 <dl class="field-list simple">
@@ -240,8 +252,8 @@ or having negative solution, such that the value functions have no real solution
 </dd></dl>
 
 <dl class="py method">
-<dt id="recursive_route_choice.RecursiveLogitModel.get_beta_vec">
-<code class="sig-name descname">get_beta_vec</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#recursive_route_choice.RecursiveLogitModel.get_beta_vec" title="Permalink to this definition">¶</a></dt>
+<dt id="recursiveRouteChoice.recursive_route_choice.RecursiveLogitModel.get_beta_vec">
+<code class="sig-name descname">get_beta_vec</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.recursive_route_choice.RecursiveLogitModel.get_beta_vec" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the current value of the network attribute parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -254,8 +266,8 @@ or having negative solution, such that the value functions have no real solution
 </dd></dl>
 
 <dl class="py method">
-<dt id="recursive_route_choice.RecursiveLogitModel.get_exponential_utility_matrix">
-<code class="sig-name descname">get_exponential_utility_matrix</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#recursive_route_choice.RecursiveLogitModel.get_exponential_utility_matrix" title="Permalink to this definition">¶</a></dt>
+<dt id="recursiveRouteChoice.recursive_route_choice.RecursiveLogitModel.get_exponential_utility_matrix">
+<code class="sig-name descname">get_exponential_utility_matrix</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.recursive_route_choice.RecursiveLogitModel.get_exponential_utility_matrix" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the matrix of exponentiated short term utilities between all states for the current
 value of beta.</p>
 <p>In the mathematical notation this is <span class="math notranslate nohighlight">\([M_{s,a}]\)</span>.</p>
@@ -270,8 +282,8 @@ value of beta.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="recursive_route_choice.RecursiveLogitModel.get_short_term_utility">
-<code class="sig-name descname">get_short_term_utility</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#recursive_route_choice.RecursiveLogitModel.get_short_term_utility" title="Permalink to this definition">¶</a></dt>
+<dt id="recursiveRouteChoice.recursive_route_choice.RecursiveLogitModel.get_short_term_utility">
+<code class="sig-name descname">get_short_term_utility</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.recursive_route_choice.RecursiveLogitModel.get_short_term_utility" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the matrix of short term utilities between all states for the current value of beta.</p>
 <p>In the mathematical notation this is <span class="math notranslate nohighlight">\([r(s,a)]\)</span> or <span class="math notranslate nohighlight">\([v(a|k)]\)</span> in the
 notation of Fosgerau.</p>
@@ -286,26 +298,26 @@ notation of Fosgerau.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="recursive_route_choice.RecursiveLogitModel.zeros_error_override">
-<code class="sig-name descname">zeros_error_override</code><em class="property"> = None</em><a class="headerlink" href="#recursive_route_choice.RecursiveLogitModel.zeros_error_override" title="Permalink to this definition">¶</a></dt>
+<dt id="recursiveRouteChoice.recursive_route_choice.RecursiveLogitModel.zeros_error_override">
+<code class="sig-name descname">zeros_error_override</code><em class="property"> = None</em><a class="headerlink" href="#recursiveRouteChoice.recursive_route_choice.RecursiveLogitModel.zeros_error_override" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
-<dt id="recursive_route_choice.RecursiveLogitModelEstimation">
-<em class="property">class </em><code class="sig-prename descclassname">recursive_route_choice.</code><code class="sig-name descname">RecursiveLogitModelEstimation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data_struct</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#recursive_route_choice.ModelDataStruct" title="recursive_route_choice.ModelDataStruct">recursive_route_choice.ModelDataStruct</a></span></em>, <em class="sig-param"><span class="n">optimiser</span><span class="p">:</span> <span class="n"><a class="reference internal" href="optimisers.html#optimisers.optimisers_file.OptimiserBase" title="optimisers.optimisers_file.OptimiserBase">optimisers.optimisers_file.OptimiserBase</a></span></em>, <em class="sig-param"><span class="n">observations_record</span></em>, <em class="sig-param"><span class="n">initial_beta</span><span class="o">=</span><span class="default_value">- 1.5</span></em>, <em class="sig-param"><span class="n">mu</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">sort_obs</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursive_route_choice.RecursiveLogitModelEstimation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#recursive_route_choice.RecursiveLogitModelPrediction" title="recursive_route_choice.RecursiveLogitModelPrediction"><code class="xref py py-class docutils literal notranslate"><span class="pre">recursive_route_choice.RecursiveLogitModelPrediction</span></code></a></p>
+<dt id="recursiveRouteChoice.recursive_route_choice.RecursiveLogitModelEstimation">
+<em class="property">class </em><code class="sig-prename descclassname">recursiveRouteChoice.recursive_route_choice.</code><code class="sig-name descname">RecursiveLogitModelEstimation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data_struct</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#recursiveRouteChoice.recursive_route_choice.ModelDataStruct" title="recursiveRouteChoice.recursive_route_choice.ModelDataStruct">recursiveRouteChoice.recursive_route_choice.ModelDataStruct</a></span></em>, <em class="sig-param"><span class="n">optimiser</span><span class="p">:</span> <span class="n"><a class="reference internal" href="recursiveRouteChoice.optimisers.html#recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase" title="recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase">recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase</a></span></em>, <em class="sig-param"><span class="n">observations_record</span></em>, <em class="sig-param"><span class="n">initial_beta</span><span class="o">=</span><span class="default_value">- 1.5</span></em>, <em class="sig-param"><span class="n">mu</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">sort_obs</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.recursive_route_choice.RecursiveLogitModelEstimation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#recursiveRouteChoice.recursive_route_choice.RecursiveLogitModelPrediction" title="recursiveRouteChoice.recursive_route_choice.RecursiveLogitModelPrediction"><code class="xref py py-class docutils literal notranslate"><span class="pre">recursiveRouteChoice.recursive_route_choice.RecursiveLogitModelPrediction</span></code></a></p>
 <p>Extension of <cite>RecursiveLogitModel</cite> to support Estimation of network attribute parameters.</p>
 <dl class="py method">
-<dt id="recursive_route_choice.RecursiveLogitModelEstimation.__init__">
-<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data_struct</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#recursive_route_choice.ModelDataStruct" title="recursive_route_choice.ModelDataStruct">recursive_route_choice.ModelDataStruct</a></span></em>, <em class="sig-param"><span class="n">optimiser</span><span class="p">:</span> <span class="n"><a class="reference internal" href="optimisers.html#optimisers.optimisers_file.OptimiserBase" title="optimisers.optimisers_file.OptimiserBase">optimisers.optimisers_file.OptimiserBase</a></span></em>, <em class="sig-param"><span class="n">observations_record</span></em>, <em class="sig-param"><span class="n">initial_beta</span><span class="o">=</span><span class="default_value">- 1.5</span></em>, <em class="sig-param"><span class="n">mu</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">sort_obs</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursive_route_choice.RecursiveLogitModelEstimation.__init__" title="Permalink to this definition">¶</a></dt>
+<dt id="recursiveRouteChoice.recursive_route_choice.RecursiveLogitModelEstimation.__init__">
+<code class="sig-name descname">__init__</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data_struct</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#recursiveRouteChoice.recursive_route_choice.ModelDataStruct" title="recursiveRouteChoice.recursive_route_choice.ModelDataStruct">recursiveRouteChoice.recursive_route_choice.ModelDataStruct</a></span></em>, <em class="sig-param"><span class="n">optimiser</span><span class="p">:</span> <span class="n"><a class="reference internal" href="recursiveRouteChoice.optimisers.html#recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase" title="recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase">recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase</a></span></em>, <em class="sig-param"><span class="n">observations_record</span></em>, <em class="sig-param"><span class="n">initial_beta</span><span class="o">=</span><span class="default_value">- 1.5</span></em>, <em class="sig-param"><span class="n">mu</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">sort_obs</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.recursive_route_choice.RecursiveLogitModelEstimation.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialise recursive logit model for estimation</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data_struct</strong> (<a class="reference internal" href="#recursive_route_choice.ModelDataStruct" title="recursive_route_choice.ModelDataStruct"><em>ModelDataStruct</em></a>) – containing network attributes of desired network</p></li>
-<li><p><strong>optimiser</strong> (<a class="reference internal" href="optimisers.html#optimisers.optimisers_file.ScipyOptimiser" title="optimisers.optimisers_file.ScipyOptimiser"><em>ScipyOptimiser</em></a><em> or </em><a class="reference internal" href="optimisers.html#optimisers.optimisers_file.LineSearchOptimiser" title="optimisers.optimisers_file.LineSearchOptimiser"><em>LineSearchOptimiser</em></a>) – The wrapper instance for the desired optimisation routine</p></li>
+<li><p><strong>data_struct</strong> (<a class="reference internal" href="#recursiveRouteChoice.recursive_route_choice.ModelDataStruct" title="recursiveRouteChoice.recursive_route_choice.ModelDataStruct"><em>ModelDataStruct</em></a>) – containing network attributes of desired network</p></li>
+<li><p><strong>optimiser</strong> (<a class="reference internal" href="recursiveRouteChoice.optimisers.html#recursiveRouteChoice.optimisers.optimisers_file.ScipyOptimiser" title="recursiveRouteChoice.optimisers.optimisers_file.ScipyOptimiser"><em>ScipyOptimiser</em></a><em> or </em><a class="reference internal" href="recursiveRouteChoice.optimisers.html#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser" title="recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser"><em>LineSearchOptimiser</em></a>) – The wrapper instance for the desired optimisation routine</p></li>
 <li><p><strong>observations_record</strong> (ak.highlighlevel.Array or <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.spmatrix.html#scipy.sparse.spmatrix" title="(in SciPy v1.5.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">scipy.sparse.spmatrix</span></code></a>) – <p>or list of list</p>
 <p>record of observations to estimate from</p>
 </p></li>
@@ -321,15 +333,15 @@ False if the data is large and already known to be sorted.</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="recursive_route_choice.RecursiveLogitModelEstimation.eval_log_like_at_new_beta">
-<code class="sig-name descname">eval_log_like_at_new_beta</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">beta_vec</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursive_route_choice.RecursiveLogitModelEstimation.eval_log_like_at_new_beta" title="Permalink to this definition">¶</a></dt>
+<dt id="recursiveRouteChoice.recursive_route_choice.RecursiveLogitModelEstimation.eval_log_like_at_new_beta">
+<code class="sig-name descname">eval_log_like_at_new_beta</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">beta_vec</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.recursive_route_choice.RecursiveLogitModelEstimation.eval_log_like_at_new_beta" title="Permalink to this definition">¶</a></dt>
 <dd><p>update beta vec and compute log likelihood in one step - used for lambdas
 Effectively a bad functools.partial</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="recursive_route_choice.RecursiveLogitModelEstimation.get_log_likelihood">
-<code class="sig-name descname">get_log_likelihood</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#recursive_route_choice.RecursiveLogitModelEstimation.get_log_likelihood" title="Permalink to this definition">¶</a></dt>
+<dt id="recursiveRouteChoice.recursive_route_choice.RecursiveLogitModelEstimation.get_log_likelihood">
+<code class="sig-name descname">get_log_likelihood</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.recursive_route_choice.RecursiveLogitModelEstimation.get_log_likelihood" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the log likelihood of the data  and its gradient for the current beta vec</p>
 <p>Main purpose is to update internal state however also returns the negative of these two
 quantities</p>
@@ -347,8 +359,8 @@ consistent with a minimisation problem</p></li>
 </dd></dl>
 
 <dl class="py method">
-<dt id="recursive_route_choice.RecursiveLogitModelEstimation.get_value_func_grad_orig">
-<code class="sig-name descname">get_value_func_grad_orig</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">orig_index</span></em>, <em class="sig-param"><span class="n">m_tilde</span></em>, <em class="sig-param"><span class="n">exp_val_funcs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursive_route_choice.RecursiveLogitModelEstimation.get_value_func_grad_orig" title="Permalink to this definition">¶</a></dt>
+<dt id="recursiveRouteChoice.recursive_route_choice.RecursiveLogitModelEstimation.get_value_func_grad_orig">
+<code class="sig-name descname">get_value_func_grad_orig</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">orig_index</span></em>, <em class="sig-param"><span class="n">m_tilde</span></em>, <em class="sig-param"><span class="n">exp_val_funcs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.recursive_route_choice.RecursiveLogitModelEstimation.get_value_func_grad_orig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Note relies on ‘self’ for the attribute data.
 Computes the gradient of the value function evaluated at the origin
 Named GradValFnOrig in companion notes, see also GradValFn2 for component part
@@ -356,8 +368,8 @@ Named GradValFnOrig in companion notes, see also GradValFn2 for component part
 </dd></dl>
 
 <dl class="py method">
-<dt id="recursive_route_choice.RecursiveLogitModelEstimation.solve_for_optimal_beta">
-<code class="sig-name descname">solve_for_optimal_beta</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">output_file</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursive_route_choice.RecursiveLogitModelEstimation.solve_for_optimal_beta" title="Permalink to this definition">¶</a></dt>
+<dt id="recursiveRouteChoice.recursive_route_choice.RecursiveLogitModelEstimation.solve_for_optimal_beta">
+<code class="sig-name descname">solve_for_optimal_beta</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">output_file</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.recursive_route_choice.RecursiveLogitModelEstimation.solve_for_optimal_beta" title="Permalink to this definition">¶</a></dt>
 <dd><p>Executes the optimisation algorithm specified in the init to determine the most likely
 parameter values based upon the input observations</p>
 <dl class="field-list simple">
@@ -377,8 +389,8 @@ parameter values based upon the input observations</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="recursive_route_choice.RecursiveLogitModelEstimation.update_beta_vec">
-<code class="sig-name descname">update_beta_vec</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">new_beta_vec</span></em>, <em class="sig-param"><span class="n">from_init</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a><a class="headerlink" href="#recursive_route_choice.RecursiveLogitModelEstimation.update_beta_vec" title="Permalink to this definition">¶</a></dt>
+<dt id="recursiveRouteChoice.recursive_route_choice.RecursiveLogitModelEstimation.update_beta_vec">
+<code class="sig-name descname">update_beta_vec</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">new_beta_vec</span></em>, <em class="sig-param"><span class="n">from_init</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a><a class="headerlink" href="#recursiveRouteChoice.recursive_route_choice.RecursiveLogitModelEstimation.update_beta_vec" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update the interval value for the network parameters beta with the supplied value.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -403,15 +415,15 @@ that the short term utility calculation overflows.</p>
 </dd></dl>
 
 <dl class="py class">
-<dt id="recursive_route_choice.RecursiveLogitModelPrediction">
-<em class="property">class </em><code class="sig-prename descclassname">recursive_route_choice.</code><code class="sig-name descname">RecursiveLogitModelPrediction</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data_struct</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#recursive_route_choice.ModelDataStruct" title="recursive_route_choice.ModelDataStruct">recursive_route_choice.ModelDataStruct</a></span></em>, <em class="sig-param"><span class="n">initial_beta</span><span class="o">=</span><span class="default_value">- 1.5</span></em>, <em class="sig-param"><span class="n">mu</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">safety_checks</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursive_route_choice.RecursiveLogitModelPrediction" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#recursive_route_choice.RecursiveLogitModel" title="recursive_route_choice.RecursiveLogitModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">recursive_route_choice.RecursiveLogitModel</span></code></a></p>
+<dt id="recursiveRouteChoice.recursive_route_choice.RecursiveLogitModelPrediction">
+<em class="property">class </em><code class="sig-prename descclassname">recursiveRouteChoice.recursive_route_choice.</code><code class="sig-name descname">RecursiveLogitModelPrediction</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data_struct</span><span class="p">:</span> <span class="n"><a class="reference internal" href="#recursiveRouteChoice.recursive_route_choice.ModelDataStruct" title="recursiveRouteChoice.recursive_route_choice.ModelDataStruct">recursiveRouteChoice.recursive_route_choice.ModelDataStruct</a></span></em>, <em class="sig-param"><span class="n">initial_beta</span><span class="o">=</span><span class="default_value">- 1.5</span></em>, <em class="sig-param"><span class="n">mu</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">safety_checks</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.recursive_route_choice.RecursiveLogitModelPrediction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#recursiveRouteChoice.recursive_route_choice.RecursiveLogitModel" title="recursiveRouteChoice.recursive_route_choice.RecursiveLogitModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">recursiveRouteChoice.recursive_route_choice.RecursiveLogitModel</span></code></a></p>
 <p>Subclass which generates simulated observations based upon the supplied beta vector.
 Uses same structure as estimator in the hopes I can unify these such that one can use the
 estimator for prediction as well (probably have estimator inherit from this)</p>
 <dl class="py method">
-<dt id="recursive_route_choice.RecursiveLogitModelPrediction.generate_observations">
-<code class="sig-name descname">generate_observations</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">origin_indices</span></em>, <em class="sig-param"><span class="n">dest_indices</span></em>, <em class="sig-param"><span class="n">num_obs_per_pair</span></em>, <em class="sig-param"><span class="n">iter_cap</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">rng_seed</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursive_route_choice.RecursiveLogitModelPrediction.generate_observations" title="Permalink to this definition">¶</a></dt>
+<dt id="recursiveRouteChoice.recursive_route_choice.RecursiveLogitModelPrediction.generate_observations">
+<code class="sig-name descname">generate_observations</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">origin_indices</span></em>, <em class="sig-param"><span class="n">dest_indices</span></em>, <em class="sig-param"><span class="n">num_obs_per_pair</span></em>, <em class="sig-param"><span class="n">iter_cap</span><span class="o">=</span><span class="default_value">1000</span></em>, <em class="sig-param"><span class="n">rng_seed</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.recursive_route_choice.RecursiveLogitModelPrediction.generate_observations" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -446,8 +458,10 @@ are negative and ill conditioned.</p></li>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
+        <a href="recursiveRouteChoice.recursive_logit_efficient_update.html" class="btn btn-neutral float-right" title="Model: Sherman Morrison Variant (recursiveRouteChoice.recursive_logit_efficient_update)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
-        <a href="optimisers.html" class="btn btn-neutral float-left" title="Optimisers Submodules" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+        <a href="recursiveRouteChoice.data_processing.html" class="btn btn-neutral float-left" title="Data Preprocessing: (recursiveRouteChoice.data_processing)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

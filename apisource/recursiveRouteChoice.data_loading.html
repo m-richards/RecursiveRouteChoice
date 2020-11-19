@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>data_loading module &mdash; RecursiveRouteChoice 0.1 documentation</title>
+  <title>Data Loading: (recursiveRouteChoice.data_loading) &mdash; RecursiveRouteChoice 0.1 documentation</title>
   
 
   
@@ -37,8 +37,8 @@
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="data_processing module" href="data_processing.html" />
-    <link rel="prev" title="5. Data Format Support" href="../source/data_formats.html" /> 
+    <link rel="next" title="Data Preprocessing: (recursiveRouteChoice.data_processing)" href="recursiveRouteChoice.data_processing.html" />
+    <link rel="prev" title="Optimisers Submodule: Main use case" href="recursiveRouteChoice.optimisers.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -93,10 +93,18 @@
 </ul>
 <p class="caption"><span class="caption-text">API Reference:</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">data_loading module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="data_processing.html">data_processing module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="optimisers.html">Optimisers Submodules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="recursive_route_choice.html">recursive_route_choice module</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="recursiveRouteChoice.html">recursiveRouteChoice package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="recursiveRouteChoice.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="recursiveRouteChoice.optimisers.html">Optimisers Submodule: Main use case</a></li>
+<li class="toctree-l3"><a class="reference internal" href="recursiveRouteChoice.optimisers.html#optimisers-submodule-other-files-with-minimal-public-api">Optimisers Submodule: Other files with minimal public API</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Data Loading: (recursiveRouteChoice.data_loading)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="recursiveRouteChoice.data_processing.html">Data Preprocessing: (recursiveRouteChoice.data_processing)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="recursiveRouteChoice.recursive_route_choice.html">Model: Main Recursive Logit Implementation (recursiveRouteChoice.recursive_route_choice)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="recursiveRouteChoice.recursive_logit_efficient_update.html">Model: Sherman Morrison Variant (recursiveRouteChoice.recursive_logit_efficient_update)</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 
             
@@ -143,13 +151,15 @@
     
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>data_loading module</li>
+          <li><a href="recursiveRouteChoice.html">recursiveRouteChoice package</a> &raquo;</li>
+        
+      <li>Data Loading: (recursiveRouteChoice.data_loading)</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="../_sources/api/data_loading.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/apisource/recursiveRouteChoice.data_loading.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -162,13 +172,13 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="module-data_loading">
-<span id="data-loading-module"></span><h1>data_loading module<a class="headerlink" href="#module-data_loading" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-recursiveRouteChoice.data_loading">
+<span id="data-loading-recursiveroutechoice-data-loading"></span><h1>Data Loading: (recursiveRouteChoice.data_loading)<a class="headerlink" href="#module-recursiveRouteChoice.data_loading" title="Permalink to this headline">¶</a></h1>
 <p>File containing IO data loading and standard preprocessing steps to construct
 data matrices from input files</p>
 <dl class="py function">
-<dt id="data_loading.load_csv_to_sparse">
-<code class="sig-prename descclassname">data_loading.</code><code class="sig-name descname">load_csv_to_sparse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fname</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">delim</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">square_matrix</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">shape</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span> &#x2192; scipy.sparse.coo.coo_matrix<a class="headerlink" href="#data_loading.load_csv_to_sparse" title="Permalink to this definition">¶</a></dt>
+<dt id="recursiveRouteChoice.data_loading.load_csv_to_sparse">
+<code class="sig-prename descclassname">recursiveRouteChoice.data_loading.</code><code class="sig-name descname">load_csv_to_sparse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fname</span></em>, <em class="sig-param"><span class="n">dtype</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">delim</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">square_matrix</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">shape</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span> &#x2192; scipy.sparse.coo.coo_matrix<a class="headerlink" href="#recursiveRouteChoice.data_loading.load_csv_to_sparse" title="Permalink to this definition">¶</a></dt>
 <dd><p>IO function to load row, col, val CSV and return a sparse scipy matrix.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -191,13 +201,13 @@ adding a row (this is commonly required in data)</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="data_loading.load_obs_from_json">
-<code class="sig-prename descclassname">data_loading.</code><code class="sig-name descname">load_obs_from_json</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_loading.load_obs_from_json" title="Permalink to this definition">¶</a></dt>
+<dt id="recursiveRouteChoice.data_loading.load_obs_from_json">
+<code class="sig-prename descclassname">recursiveRouteChoice.data_loading.</code><code class="sig-name descname">load_obs_from_json</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.data_loading.load_obs_from_json" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt id="data_loading.load_standard_path_format_csv">
-<code class="sig-prename descclassname">data_loading.</code><code class="sig-name descname">load_standard_path_format_csv</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">directory_path</span></em>, <em class="sig-param"><span class="n">delim</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">match_tt_shape</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">angles_included</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_loading.load_standard_path_format_csv" title="Permalink to this definition">¶</a></dt>
+<dt id="recursiveRouteChoice.data_loading.load_standard_path_format_csv">
+<code class="sig-prename descclassname">recursiveRouteChoice.data_loading.</code><code class="sig-name descname">load_standard_path_format_csv</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">directory_path</span></em>, <em class="sig-param"><span class="n">delim</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">match_tt_shape</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">angles_included</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.data_loading.load_standard_path_format_csv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the observations and list of matrices loaded from specified file directory
 :param directory_path: folder which contains files
 :type directory_path: str or os.PathLike[Any]
@@ -212,8 +222,8 @@ adding a row (this is commonly required in data)</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="data_loading.load_tntp_node_formulation">
-<code class="sig-prename descclassname">data_loading.</code><code class="sig-name descname">load_tntp_node_formulation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">net_fpath</span></em>, <em class="sig-param"><span class="n">columns_to_extract</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">sparse_format</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_loading.load_tntp_node_formulation" title="Permalink to this definition">¶</a></dt>
+<dt id="recursiveRouteChoice.data_loading.load_tntp_node_formulation">
+<code class="sig-prename descclassname">recursiveRouteChoice.data_loading.</code><code class="sig-name descname">load_tntp_node_formulation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">net_fpath</span></em>, <em class="sig-param"><span class="n">columns_to_extract</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">sparse_format</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.data_loading.load_tntp_node_formulation" title="Permalink to this definition">¶</a></dt>
 <dd><p>:param net_fpath path to network file
 :param columns_to_extract list of columns to keep. init_node and term_node are always kept
 # and form the basis of the arc-arc matrix.
@@ -227,8 +237,8 @@ Legal columns to extract are:
 </dd></dl>
 
 <dl class="py function">
-<dt id="data_loading.load_tntp_to_sparse_arc_formulation">
-<code class="sig-prename descclassname">data_loading.</code><code class="sig-name descname">load_tntp_to_sparse_arc_formulation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">net_fpath</span></em>, <em class="sig-param"><span class="n">columns_to_extract</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">use_file_order_for_arc_numbers</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">standardise</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_loading.load_tntp_to_sparse_arc_formulation" title="Permalink to this definition">¶</a></dt>
+<dt id="recursiveRouteChoice.data_loading.load_tntp_to_sparse_arc_formulation">
+<code class="sig-prename descclassname">recursiveRouteChoice.data_loading.</code><code class="sig-name descname">load_tntp_to_sparse_arc_formulation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">net_fpath</span></em>, <em class="sig-param"><span class="n">columns_to_extract</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">use_file_order_for_arc_numbers</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">standardise</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.data_loading.load_tntp_to_sparse_arc_formulation" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -248,8 +258,8 @@ Legal columns to extract are:
 </dd></dl>
 
 <dl class="py function">
-<dt id="data_loading.resize_to_dims">
-<code class="sig-prename descclassname">data_loading.</code><code class="sig-name descname">resize_to_dims</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">matrix</span><span class="p">:</span> <span class="n">scipy.sparse.dok.dok_matrix</span></em>, <em class="sig-param"><span class="n">expected_max_shape</span></em>, <em class="sig-param"><span class="n">matrix_name_debug</span><span class="o">=</span><span class="default_value">'(Name not provided)'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_loading.resize_to_dims" title="Permalink to this definition">¶</a></dt>
+<dt id="recursiveRouteChoice.data_loading.resize_to_dims">
+<code class="sig-prename descclassname">recursiveRouteChoice.data_loading.</code><code class="sig-name descname">resize_to_dims</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">matrix</span><span class="p">:</span> <span class="n">scipy.sparse.dok.dok_matrix</span></em>, <em class="sig-param"><span class="n">expected_max_shape</span></em>, <em class="sig-param"><span class="n">matrix_name_debug</span><span class="o">=</span><span class="default_value">'(Name not provided)'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.data_loading.resize_to_dims" title="Permalink to this definition">¶</a></dt>
 <dd><p>Resizes matrix to specified dims, issues warning if this is losing data from the matrix.
 Application is more general than the current error message suggests.
 Note the fact that the matrix is sparse is essential, numpy resize behaves differently to
@@ -269,8 +279,8 @@ correct than limit the size from IO - exceptions get thrown</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="data_loading.write_obs_to_json">
-<code class="sig-prename descclassname">data_loading.</code><code class="sig-name descname">write_obs_to_json</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">obs</span></em>, <em class="sig-param"><span class="n">allow_rewrite</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_loading.write_obs_to_json" title="Permalink to this definition">¶</a></dt>
+<dt id="recursiveRouteChoice.data_loading.write_obs_to_json">
+<code class="sig-prename descclassname">recursiveRouteChoice.data_loading.</code><code class="sig-name descname">write_obs_to_json</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">obs</span></em>, <em class="sig-param"><span class="n">allow_rewrite</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.data_loading.write_obs_to_json" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
@@ -283,10 +293,10 @@ correct than limit the size from IO - exceptions get thrown</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="data_processing.html" class="btn btn-neutral float-right" title="data_processing module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="recursiveRouteChoice.data_processing.html" class="btn btn-neutral float-right" title="Data Preprocessing: (recursiveRouteChoice.data_processing)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="../source/data_formats.html" class="btn btn-neutral float-left" title="5. Data Format Support" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="recursiveRouteChoice.optimisers.html" class="btn btn-neutral float-left" title="Optimisers Submodule: Main use case" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

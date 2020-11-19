@@ -88,15 +88,15 @@
 <li class="toctree-l1"><a class="reference internal" href="introduction_install.html">1. Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="introduction_install.html#installation">2. Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="simple_example.html">3. A Simple Example</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">4. Sioux Falls Example</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">4. Sioux Falls Example</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#efficiency">4.1. Efficiency</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="data_formats.html">5. Data Format Support</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API Reference:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../api/data_loading.html">data_loading module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../api/data_processing.html">data_processing module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../api/optimisers.html">Optimisers Submodules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../api/recursive_route_choice.html">recursive_route_choice module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../apisource/recursiveRouteChoice.html">recursiveRouteChoice package</a></li>
 </ul>
 
             
@@ -168,24 +168,25 @@
 from simulated data. This is the same example appearing in the README, but we give a little more
 detail.</p>
 <div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">data_loading</span> <span class="kn">import</span> <span class="n">load_tntp_node_formulation</span>
-<span class="kn">from</span> <span class="nn">recursive_route_choice</span> <span class="kn">import</span> <span class="n">RecursiveLogitModelPrediction</span><span class="p">,</span> <span class="n">ModelDataStruct</span><span class="p">,</span> \
+
+<span class="kn">from</span> <span class="nn">recursiveRouteChoice.data_loading</span> <span class="kn">import</span> <span class="n">load_tntp_node_formulation</span>
+<span class="kn">from</span> <span class="nn">recursiveRouteChoice</span> <span class="kn">import</span> <span class="n">RecursiveLogitModelPrediction</span><span class="p">,</span> <span class="n">ModelDataStruct</span><span class="p">,</span> \
     <span class="n">RecursiveLogitModelEstimation</span>
-<span class="kn">import</span> <span class="nn">optimisers</span> <span class="k">as</span> <span class="nn">op</span>
+<span class="kn">from</span> <span class="nn">recursiveRouteChoice</span> <span class="kn">import</span> <span class="n">optimisers</span>
 
 <span class="c1"># DATA</span>
-<span class="n">network_file</span> <span class="o">=</span> <span class="s2">&quot;SiouxFalls_net.tntp&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;sys path is&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">(),</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()))</span>
+<span class="n">network_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;tests&quot;</span><span class="p">,</span> <span class="s2">&quot;docs&quot;</span><span class="p">,</span> <span class="s2">&quot;SiouxFalls_net.tntp&quot;</span><span class="p">)</span>
 <span class="n">node_max</span> <span class="o">=</span> <span class="mi">24</span>  <span class="c1"># from network file</span>
 
-<span class="n">data_list</span><span class="p">,</span> <span class="n">data_list_names</span> <span class="o">=</span> <span class="n">load_tntp_node_formulationn</span><span class="p">(</span>
-    <span class="n">network_file</span><span class="p">,</span> <span class="n">columns_to_extract</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;length&quot;</span><span class="p">,</span> <span class="s2">&quot;capacity&quot;</span><span class="p">],</span> <span class="n">sparse_format</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Here we see usage of one of the convenience loader methods provided for the tntp format. Since
 the network is very small and easily fits in memory, we store it in a dense representation.</p>
-<div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="n">distances</span> <span class="o">=</span> <span class="n">data_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="n">incidence_mat</span> <span class="o">=</span> <span class="p">(</span><span class="n">distances</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-<span class="n">network_struct</span> <span class="o">=</span> <span class="n">ModelDataStruct</span><span class="p">(</span><span class="n">data_list</span><span class="p">,</span> <span class="n">incidence_mat</span><span class="p">)</span>
+<div class="highlight-py notranslate"><div class="highlight"><pre><span></span>
+<span class="n">distances</span> <span class="o">=</span> <span class="n">data_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
 </pre></div>
 </div>
 <p>This is the standardised way of passing data to the model, the network attributes are collected
@@ -193,20 +194,20 @@ into a <code class="code docutils literal notranslate"><span class="pre">ModelDa
 simulate a series of observations between every origin destination pair, note that whilst this
 will print there are 576 observations, there will actually be less as observations starting and
 ending at the same node are omitted.</p>
-<div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="n">beta_sim</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">0.8</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.00015</span><span class="p">])</span>
+<div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="n">network_struct</span> <span class="o">=</span> <span class="n">ModelDataStruct</span><span class="p">(</span><span class="n">data_list</span><span class="p">,</span> <span class="n">incidence_mat</span><span class="p">)</span>
+
+<span class="n">beta_sim</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">0.8</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.00015</span><span class="p">])</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">RecursiveLogitModelPrediction</span><span class="p">(</span><span class="n">network_struct</span><span class="p">,</span>
                                       <span class="n">initial_beta</span><span class="o">=</span><span class="n">beta_sim</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Linear system size&quot;</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">get_exponential_utility_matrix</span><span class="p">()</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 
-<span class="n">orig_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">node_max</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="c1"># dest_indices = (orig_indices + 5) % node_max</span>
-<span class="n">dest_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">node_max</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># sample every OD pair</span>
+<span class="c1"># sparse sample for quick running example</span>
+<span class="n">orig_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">node_max</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">dest_indices</span> <span class="o">=</span> <span class="p">(</span><span class="n">orig_indices</span> <span class="o">+</span> <span class="mi">5</span><span class="p">)</span> <span class="o">%</span> <span class="n">node_max</span>
+<span class="c1"># sample every OD pair once</span>
+<span class="c1"># orig_indices = np.arange(0, node_max, 1)</span>
+<span class="c1"># dest_indices = np.arange(0, node_max, 1)</span>
 <span class="n">obs_per_pair</span> <span class="o">=</span> <span class="mi">1</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Generating </span><span class="si">{</span><span class="n">obs_per_pair</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">orig_indices</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">dest_indices</span><span class="p">)</span><span class="si">}</span><span class="s2"> obs total per &quot;</span>
-      <span class="sa">f</span><span class="s2">&quot;configuration&quot;</span><span class="p">)</span>
-<span class="n">seed</span> <span class="o">=</span> <span class="mi">42</span>
-<span class="n">obs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">generate_observations</span><span class="p">(</span><span class="n">origin_indices</span><span class="o">=</span><span class="n">orig_indices</span><span class="p">,</span> <span class="n">dest_indices</span><span class="o">=</span><span class="n">dest_indices</span><span class="p">,</span>
-                                  <span class="n">num_obs_per_pair</span><span class="o">=</span><span class="n">obs_per_pair</span><span class="p">,</span> <span class="n">iter_cap</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">rng_seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>We now construct the estimation model to attempt to recover the parameters the data was simulated
@@ -215,24 +216,37 @@ for the optimisation algorithm. Note that these are of differing orders of magni
 capacity being measured on the scale of tens of thousands for Sioux Falls. Attempting to use
 <code class="code docutils literal notranslate"><span class="pre">beta_est_init</span> <span class="pre">=</span> <span class="pre">[-5,</span> <span class="pre">-5]</span></code> will fail as the matrix <span class="math notranslate nohighlight">\(M\)</span> will be numerically zero,
 giving rise to a degenerate solution. This case is explicitly caught as an error by the code.</p>
-<div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="n">optimiser</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">ScipyOptimiser</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;l-bfgs-b&#39;</span><span class="p">)</span>
+<div class="highlight-py notranslate"><div class="highlight"><pre><span></span>                                  <span class="n">num_obs_per_pair</span><span class="o">=</span><span class="n">obs_per_pair</span><span class="p">,</span> <span class="n">iter_cap</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">rng_seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+
+<span class="n">optimiser</span> <span class="o">=</span> <span class="n">optimisers</span><span class="o">.</span><span class="n">ScipyOptimiser</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;l-bfgs-b&#39;</span><span class="p">)</span>
 <span class="n">beta_est_init</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.00001</span><span class="p">]</span>
 <span class="n">model_est</span> <span class="o">=</span> <span class="n">RecursiveLogitModelEstimation</span><span class="p">(</span><span class="n">network_struct</span><span class="p">,</span> <span class="n">observations_record</span><span class="o">=</span><span class="n">obs</span><span class="p">,</span>
                                           <span class="n">initial_beta</span><span class="o">=</span><span class="n">beta_est_init</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                                           <span class="n">optimiser</span><span class="o">=</span><span class="n">optimiser</span><span class="p">)</span>
 
-<span class="n">beta</span> <span class="o">=</span> <span class="n">model_est</span><span class="o">.</span><span class="n">solve_for_optimal_beta</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">beta_est</span> <span class="o">=</span> <span class="n">model_est</span><span class="o">.</span><span class="n">solve_for_optimal_beta</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;beta expected: [</span><span class="si">{</span><span class="n">beta_sim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">6.4f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">beta_sim</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">6.4f</span><span class="si">}</span><span class="s2">],&quot;</span>
-              <span class="sa">f</span><span class="s2">&quot; beta_actual: [</span><span class="si">{</span><span class="n">beta</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">6.4f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">beta</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">6.4f</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Running the code, we get that on the specified seed, so the original parameters have been
-recovered reasonably well. Note that changing the number of observations available to estimate from
-will
-have a non-trivial impact on the output results if there are not enough.</p>
-<div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="n">beta</span> <span class="n">expected</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mf">0.8000</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0001</span><span class="p">],</span> <span class="n">beta_actual</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mf">0.7963</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0002</span><span class="p">]</span>
+recovered somewhat well. If we increase to simulating a trip between every origin and
+destination, we see more accurate recovery of the parameters.</p>
+<div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="c1"># Every second OD pair:</span>
+<span class="n">beta</span> <span class="n">expected</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mf">0.8000</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0001</span><span class="p">],</span> <span class="n">beta_actual</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mf">1.021</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.000175</span><span class="p">]</span>
+
+<span class="c1"># One simulation per OD pair:</span>
+<span class="n">beta</span> <span class="n">expected</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mf">0.8000</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0001</span><span class="p">],</span> <span class="n">beta_actual</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mf">0.7963</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0002</span><span class="p">]</span>
 </pre></div>
+</div>
+<div class="section" id="efficiency">
+<h2><span class="section-number">4.1. </span>Efficiency<a class="headerlink" href="#efficiency" title="Permalink to this headline">¶</a></h2>
+<p>Note that there are also drop in replacement classes <code class="code docutils literal notranslate"><span class="pre">recursiveRouteChoice</span>
+<span class="pre">.RecursiveLogitModelEstimationSM</span></code> and <code class="code docutils literal notranslate"><span class="pre">recursiveRouteChoice</span>
+<span class="pre">.RecursiveLogitModelPredictionSM</span></code> which provide identical functionality to the variants without
+suffixes. These however use the Sherman-Morrison formula to solve component linear systems in a
+more efficient way. This leverages the structure of the problem by noting that the change in
+sub-problems for different destinations can be described in terms of a rank one update of a
+destination independent matrix.</p>
 </div>
 </div>
 
