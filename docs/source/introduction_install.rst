@@ -39,18 +39,17 @@ considered completely independent. The only exception is the inclusion of a dire
 search code (but this is slow since python loops are slow), but this is deprecated in favour of
 the interface to SciPy solvers.
 
+It also should be acknowledged that the results of our numerical experiments are notably less
+optimistic about the applicability of the recursive logit than prior literature. From our
+investigation there are still fundamental nontrivial issues, which would need to be resolved to
+allow any kind of reasonable adoption of these models. We hope that this disparity can be explained
+by either the arc based formulation with prohibition of u-turns employed in prior research, or some
+of the mathematical technicalities which have been altered in this implementation. If this is not
+the case however it would suggest there is an inconsistency between been our results and those which
+have been published prior.
 
 Installation
 ============
-Currently one can install from the repository directly using pip::
-
-   pip install git+https://github.com/m-richards/RecursiveLogit.git
-   pip install -r requirements.txt
-
-It is recommended to use some kind of virtual environment to avoid conflicting package versions.
-There is also a :code:`requirements_strict.txt` which explicitly specifies package versions. This
-will likely contain less up to date versions, but should always work regardless of future
-api changes of the dependencies.
-
+See the Github readme for now.
 
 
