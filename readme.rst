@@ -43,9 +43,8 @@ Note the tntp file here is not included in the repository data, download separat
 
     import numpy as np
     from load_tntp_node_formulation
-    from recursive_route_choice import RecursiveLogitModelPrediction, ModelDataStruct, \
-        RecursiveLogitModelEstimation
-    import optimisers as op
+    from recursiveRouteChoice import RecursiveLogitModelPrediction, ModelDataStruct, \
+    RecursiveLogitModelEstimation, optimisers
 
     # DATA
     network_file = "SiouxFalls_net.tntp"
@@ -74,7 +73,7 @@ Note the tntp file here is not included in the repository data, download separat
     obs = model.generate_observations(origin_indices=orig_indices, dest_indices=dest_indices,
                                       num_obs_per_pair=obs_per_pair, iter_cap=2000, rng_seed=seed)
 
-    optimiser = op.ScipyOptimiser(method='l-bfgs-b')
+    optimiser = optimisers.ScipyOptimiser(method='l-bfgs-b')
     beta_est_init = [-5, -0.00001]
     model_est = RecursiveLogitModelEstimation(network_struct, observations_record=obs,
                                               initial_beta=beta_est_init, mu=1,

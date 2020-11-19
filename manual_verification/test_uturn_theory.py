@@ -1,12 +1,13 @@
-# TODO check np.dot usage since numpy is not aware of sparse properly, should use A.dot(v)
+# NOTE DEPRECATED FILE NOT UP TO DATE, MAY NOT WORK
 from scipy import linalg
 import numpy as np
 
 import scipy
 from scipy.sparse import linalg as splinalg
-import optimisers as op
-from data_processing import AngleProcessor
-from recursive_route_choice import ModelDataStruct, RecursiveLogitModel
+
+from recursiveRouteChoice.data_processing import AngleProcessor
+from recursiveRouteChoice import ModelDataStruct, optimisers
+from recursiveRouteChoice.recursive_route_choice import RecursiveLogitModel
 from scipy.sparse import dok_matrix, identity
 
 # np.seterr(all='raise')  # all='print')
@@ -100,8 +101,8 @@ m = -1
 # beta_vec = np.array([-1, -1])
 beta_vec = np.array([-1])
 
-optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
-model = RecursiveLogitModel(network_struct, user_obs_mat=None,
+optimiser = optimisers.LineSearchOptimiser(optimisers.OptimHessianType.BFGS, max_iter=4)
+model = RecursiveLogitModel(network_struct,
                             initial_beta=beta_vec, mu=1)
 
 # To generate obs we want to actually simulate and draw errors

@@ -3,11 +3,10 @@ from scipy.optimize._numdiff import approx_derivative
 from scipy.sparse import dok_matrix
 import awkward1 as ak
 
-from data_loading import write_obs_to_json, load_obs_from_json
-import optimisers as op
+from recursiveRouteChoice import ModelDataStruct, RecursiveLogitModelPrediction, \
+    RecursiveLogitModelEstimation, optimisers
+from recursiveRouteChoice.data_loading import write_obs_to_json, load_obs_from_json
 
-from recursive_route_choice import ModelDataStruct, RecursiveLogitModelPrediction, \
-    RecursiveLogitModelEstimation
 from scipy import optimize as scopt
 
 np.set_printoptions(edgeitems=10, linewidth=300)
@@ -85,7 +84,7 @@ network_struct = ModelDataStruct(data_list, incidence_mat,
 
 beta = -2
 beta_vec = np.array([beta])  # 4.96 diverges
-optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=40)
+optimiser = optimisers.LineSearchOptimiser(optimisers.OptimHessianType.BFGS, max_iter=40)
 
 model = RecursiveLogitModelEstimation(network_struct, observations_record=obs_ak,
                                       initial_beta=beta_vec, mu=1,

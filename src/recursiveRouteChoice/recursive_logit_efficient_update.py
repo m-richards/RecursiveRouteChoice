@@ -3,6 +3,10 @@ Very similar to the recursive logit in recursive_route_choice.py
 Instead using the sherman morrison update formula to save a substantial number of
 matrix inverse calculations.
 
+Note that empirical tests suggest forming the matrix inverse explicitly is much faster,
+but may be less numericall stable (relative to LU). In either case these are likely dense if
+A is sparse, so Krylov subspace methods may have to be used for large instances
+
 """
 
 import logging
@@ -13,10 +17,10 @@ from scipy.linalg import lu_factor, lu_solve
 
 from scipy.sparse.linalg import splu  # noqa: F401  - this is a lie, it is used
 
-from optimisers.optimisers_file import OptimiserBase
-from recursive_route_choice import (ModelDataStruct,
-                                    RecursiveLogitModelEstimation, RecursiveLogitModelPrediction,
-                                    RecursiveLogitModel, _to_dense_if_sparse)
+from .optimisers import OptimiserBase
+from .recursive_route_choice import (ModelDataStruct,
+                                     RecursiveLogitModelEstimation, RecursiveLogitModelPrediction,
+                                     RecursiveLogitModel, _to_dense_if_sparse)
 
 logger = logging.getLogger()
 handler = logging.StreamHandler()

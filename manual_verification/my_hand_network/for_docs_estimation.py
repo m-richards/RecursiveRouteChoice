@@ -1,5 +1,4 @@
-import optimisers
-from recursive_route_choice import RecursiveLogitModelEstimation
+from recursiveRouteChoice import RecursiveLogitModelEstimation, optimisers
 
 obs = []  # from other file
 network_struct = []  # from other file

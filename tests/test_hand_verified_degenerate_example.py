@@ -27,10 +27,9 @@ import pytest
 from scipy.sparse import dok_matrix
 import awkward1 as ak
 
-from recursive_route_choice import ModelDataStruct, RecursiveLogitModelEstimation, \
+from recursiveRouteChoice import ModelDataStruct, RecursiveLogitModelEstimation, \
     RecursiveLogitModelPrediction
-
-import optimisers as op
+from recursiveRouteChoice import optimisers
 
 np.set_printoptions(edgeitems=10, linewidth=300)
 # np.core.arrayprint._line_width = 500
@@ -47,7 +46,7 @@ distances = dok_matrix(distances)
 incidence_mat = (distances > 0).astype(int)
 network_struct = ModelDataStruct([distances], incidence_mat,
                                  data_array_names_debug=("distances",))
-optimiser = op.ScipyOptimiser(method='bfgs')
+optimiser = optimisers.ScipyOptimiser(method='bfgs')
 
 # this did come from generate obs with beta = -0.4, but that code might change with fixes
 # obs = model.generate_observations(origin_indices=[0],

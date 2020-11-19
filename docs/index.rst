@@ -13,6 +13,7 @@ some more details.
 
 ..
     Put a readme in
+
 .. toctree::
     :numbered:
     :maxdepth: 2
@@ -28,6 +29,11 @@ some more details.
     :maxdepth: 2
     :caption: API Reference:
 
+    apisource/recursiveRouteChoice
+..
+    apisource/modules
+
+..
     api/data_loading
     api/data_processing
     api/optimisers

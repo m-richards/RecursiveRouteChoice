@@ -1,17 +1,15 @@
 import time
+import warnings
+from os.path import join
+
 import numpy as np
 
-from data_loading import load_standard_path_format_csv
-from recursive_route_choice import RecursiveLogitModelEstimation, ModelDataStruct
-
-from os.path import join
-import optimisers as op
-from optimisers import OptimType
+from recursiveRouteChoice.data_loading import load_standard_path_format_csv
+from recursiveRouteChoice import RecursiveLogitModelEstimation, ModelDataStruct, optimisers
 
 np.set_printoptions(precision=4, suppress=True)
 np.set_printoptions(edgeitems=3)
 np.seterr(all='raise')  # all='print')
-import warnings
 
 warnings.simplefilter("error")
 
@@ -29,7 +27,7 @@ data_list =[travel_times_mat, travel_times_mat]
 network_data_struct = ModelDataStruct(data_list, incidence_mat)
 
 
-optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
+optimiser = optimisers.LineSearchOptimiser(optimisers.OptimHessianType.BFGS, max_iter=4)
 
 model = RecursiveLogitModelEstimation(network_data_struct, optimiser, observations_record=obs_mat)
 

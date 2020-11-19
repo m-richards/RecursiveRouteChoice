@@ -1,10 +1,10 @@
 
 import numpy as np
 
-from data_loading import write_obs_to_json
-from data_loading import load_tntp_to_sparse_arc_formulation
+from recursiveRouteChoice.data_loading import write_obs_to_json
+from recursiveRouteChoice.data_loading import load_tntp_to_sparse_arc_formulation
 
-from recursive_route_choice import ModelDataStruct, RecursiveLogitModelPrediction
+from recursiveRouteChoice import ModelDataStruct, RecursiveLogitModelPrediction
 
 np.set_printoptions(edgeitems=10, linewidth=300)
 # np.core.arrayprint._line_width = 500

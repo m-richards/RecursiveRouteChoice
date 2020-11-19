@@ -11,8 +11,9 @@ from scipy.sparse import linalg as splinalg
 import awkward1 as ak
 
 # from debug_helpers import print_sparse, print_data_struct
-from optimisers.extra_optim import OptimFunctionState
-from optimisers.optimisers_file import CustomOptimiserBase, OptimType, ScipyOptimiser, OptimiserBase
+from .optimisers.extra_optim import OptimFunctionState
+from .optimisers.optimisers_file import CustomOptimiserBase, OptimType, ScipyOptimiser, \
+    OptimiserBase
 
 logger = logging.getLogger()
 handler = logging.StreamHandler()
@@ -82,7 +83,7 @@ class ModelDataStruct(object):
 
     """
 
-    def __init__(self, data_attribute_list: List[sparse.dok_matrix],
+    def __init__(self, data_attribute_list: List[Union[sparse.dok_matrix, np.ndarray]],
                  incidence_matrix: sparse.dok_matrix, data_array_names_debug=None,
                  resize=True):
         r"""

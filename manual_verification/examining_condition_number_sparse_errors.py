@@ -1,9 +1,8 @@
 import numpy as np
 from scipy import linalg
-from scipy.sparse import csr_matrix, dok_matrix, lil_matrix, coo_matrix, load_npz
+from scipy.sparse import csr_matrix
 from scipy.sparse import linalg as splinalg
 
-from debug_helpers import print_sparse
 np.set_printoptions(precision=12, linewidth=220)
 import os
 print(os.getcwd())

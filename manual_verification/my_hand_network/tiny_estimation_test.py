@@ -2,10 +2,9 @@ import numpy as np
 import awkward1 as ak
 from scipy.sparse import dok_matrix
 
-from data_loading import load_obs_from_json
-import optimisers as op
+from recursiveRouteChoice.data_loading import load_obs_from_json
 
-from recursive_route_choice import ModelDataStruct, RecursiveLogitModelEstimation
+from recursiveRouteChoice import ModelDataStruct, RecursiveLogitModelEstimation, optimisers
 
 np.set_printoptions(edgeitems=10, linewidth=300)
 # np.core.arrayprint._line_width = 500
@@ -43,7 +42,7 @@ network_struct = ModelDataStruct(data_list, incidence_mat,
 beta_vec = np.array([-114])  # 4.96 diverges
 import time
 
-optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=40)
+optimiser = optimisers.LineSearchOptimiser(optimisers.OptimHessianType.BFGS, max_iter=40)
 # optimiser = op.ScipyOptimiser(method='bfgs')
 
 model = RecursiveLogitModelEstimation(network_struct, observations_record=obs_ak,

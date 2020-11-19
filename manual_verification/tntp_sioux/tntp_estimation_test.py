@@ -1,11 +1,9 @@
 
 import numpy as np
 import awkward1 as ak
-from data_loading import load_obs_from_json
-import optimisers as op
-from data_loading import load_tntp_to_sparse_arc_formulation
-
-from recursive_route_choice import ModelDataStruct, RecursiveLogitModelEstimation
+from recursiveRouteChoice.data_loading import load_tntp_to_sparse_arc_formulation, \
+    load_obs_from_json
+from recursiveRouteChoice import ModelDataStruct, RecursiveLogitModelEstimation, optimisers
 
 np.set_printoptions(edgeitems=10, linewidth=300)
 # np.core.arrayprint._line_width = 500
@@ -15,15 +13,10 @@ obs_ak = ak.from_json(obs_fname)
 print("len ", len(obs_ak))
 
 
-# silly levels of inefficiency but will fix later
-
-# obs = np.array(obs_lil)
-# obs = scipy.sparse.dok_matrix(obs_lil)
-
-#
 # DATA
 network_file = "SiouxFalls_net.tntp"
-arc_to_index_map, distances = load_tntp_to_sparse_arc_formulation(network_file, columns_to_extract=["length"])
+arc_to_index_map, distances = load_tntp_to_sparse_arc_formulation(network_file,
+                                                                  columns_to_extract=["length"])
 
 index_node_pair_map = {v: k for (k, v) in arc_to_index_map.items()}
 
@@ -35,7 +28,7 @@ network_struct = ModelDataStruct(data_list, incidence_mat,
                                           data_array_names_debug=("distances",))
 
 beta_vec = np.array([-1])
-optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
+optimiser = optimisers.LineSearchOptimiser(optimisers.OptimHessianType.BFGS, max_iter=4)
 
 model = RecursiveLogitModelEstimation(network_struct, observations_record=obs_ak,
                                       initial_beta=beta_vec, mu=1,

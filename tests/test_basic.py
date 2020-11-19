@@ -4,21 +4,20 @@ Also tests are not directed as to whether code is "correct" for now, they check 
 existing code.
 
 """
-from recursive_route_choice import ALLOW_POSITIVE_VALUE_FUNCTIONS
-# import pytest
+from recursiveRouteChoice.recursive_route_choice import ALLOW_POSITIVE_VALUE_FUNCTIONS
+# import pytest -- run with pytest although it's not actually imported
 
 import numpy as np
 from scipy import linalg
 from scipy.sparse import csr_matrix, dok_matrix, issparse
 
-from data_loading import load_csv_to_sparse, load_standard_path_format_csv
-from data_processing import AngleProcessor
-from recursive_route_choice import RecursiveLogitModelEstimation, ModelDataStruct, \
+from recursiveRouteChoice.data_loading import load_csv_to_sparse, load_standard_path_format_csv
+from recursiveRouteChoice.data_processing import AngleProcessor
+from recursiveRouteChoice import RecursiveLogitModelEstimation, ModelDataStruct, \
     RecursiveLogitModelPrediction
-
+from recursiveRouteChoice import optimisers
 import os
 from os.path import join
-import optimisers as op
 
 hand_net_dists = np.array(
     [[4, 3.5, 4.5, 3, 3, 0, 0, 0],
@@ -50,7 +49,7 @@ class TestSimpleCases(object):
         data_list = [travel_times_mat, travel_times_mat]
         network_data_struct = ModelDataStruct(data_list, incidence_mat)
 
-        optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
+        optimiser = optimisers.LineSearchOptimiser(optimisers.OptimHessianType.BFGS, max_iter=4)
 
         model = RecursiveLogitModelEstimation(network_data_struct, optimiser,
                                               observations_record=obs_mat)
@@ -122,7 +121,7 @@ class TestSimpleCases(object):
         network_data_struct = ModelDataStruct(data_list, incidence_mat)
 
         # network_data_struct.add_second_travel_time_for_testing()
-        optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
+        optimiser = optimisers.LineSearchOptimiser(optimisers.OptimHessianType.BFGS, max_iter=4)
         RecursiveLogitModelEstimation.zeros_error_override = False
         # hack
         model = RecursiveLogitModelEstimation(network_data_struct, optimiser,
@@ -359,7 +358,7 @@ class TestOptimAlgs(object):
         network_data_struct = ModelDataStruct(data_list, incidence_mat)
 
         # network_data_struct.add_second_travel_time_for_testing()
-        optimiser = op.LineSearchOptimiser(op.OptimHessianType.BFGS, max_iter=4)
+        optimiser = optimisers.LineSearchOptimiser(optimisers.OptimHessianType.BFGS, max_iter=4)
         RecursiveLogitModelEstimation.zeros_error_override = False
         model = RecursiveLogitModelEstimation(network_data_struct, optimiser,
                                               observations_record=obs_record,
@@ -367,7 +366,7 @@ class TestOptimAlgs(object):
 
         m1_ll_out, m1_grad_out = model.get_log_likelihood()
 
-        optimiser2 = op.ScipyOptimiser(method='newton-cg')
+        optimiser2 = optimisers.ScipyOptimiser(method='newton-cg')
 
         model2 = RecursiveLogitModelEstimation(network_data_struct, optimiser2,
                                                observations_record=obs_record,
