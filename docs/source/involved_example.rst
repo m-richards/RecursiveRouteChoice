@@ -44,3 +44,13 @@ destination, we see more accurate recovery of the parameters.
 
     # One simulation per OD pair:
     beta expected: [-0.8000, -0.0001], beta_actual: [-0.7963, -0.0002]
+
+Efficiency
+----------
+Note that there are also drop in replacement classes :code:`recursiveRouteChoice
+.RecursiveLogitModelEstimationSM` and :code:`recursiveRouteChoice
+.RecursiveLogitModelPredictionSM` which provide identical functionality to the variants without
+suffixes. These however use the Sherman-Morrison formula to solve component linear systems in a
+more efficient way. This leverages the structure of the problem by noting that the change in
+sub-problems for different destinations can be described in terms of a rank one update of a
+destination independent matrix.
