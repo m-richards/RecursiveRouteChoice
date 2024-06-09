@@ -42,7 +42,7 @@ Note the tntp file here is not included in the repository data, download separat
 ::
 
     import numpy as np
-    from load_tntp_node_formulation
+    from recursiveRouteChoice.data_loading import load_tntp_node_formulation
     from recursiveRouteChoice import RecursiveLogitModelPrediction, ModelDataStruct, \
     RecursiveLogitModelEstimation, optimisers
 
