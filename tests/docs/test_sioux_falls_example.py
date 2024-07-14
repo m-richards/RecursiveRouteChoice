@@ -4,6 +4,7 @@ need to be updated too.
 
 
 """
+from pathlib import Path
 
 import numpy as np
 
@@ -15,7 +16,7 @@ from recursiveRouteChoice import optimisers
 # DATA
 import os
 print("sys path is", os.getcwd(), os.listdir(os.getcwd()))
-network_file = os.path.join("tests", "docs", "SiouxFalls_net.tntp")
+network_file = Path(__file__).parent.parent.joinpath("docs", "SiouxFalls_net.tntp")
 node_max = 24  # from network file
 
 data_list, data_list_names = load_tntp_node_formulation(

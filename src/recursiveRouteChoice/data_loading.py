@@ -65,7 +65,7 @@ def load_csv_to_sparse(fname, dtype=None, delim=None, square_matrix=True, shape=
 
     Parameters
     ----------
-    fname : str
+    fname : str | Path
     dtype :
     delim : str, optional
     square_matrix : bool
@@ -261,7 +261,7 @@ def load_tntp_node_formulation(net_fpath, columns_to_extract=None, sparse_format
         data = net2[columns_to_extract[i]].values
         data_mat = sparse.coo_matrix((data, (rows, cols)))
         if sparse_format is False:
-            data_mat = data_mat.A
+            data_mat = data_mat.toarray()
         data_list.append(data_mat)
         data_list_headers.append(columns_to_extract[i])
 
