@@ -47,7 +47,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install uv
-          uv pip install -r requirements_strict_2024.txt flake8 pytest -e .
+          uv pip install --system -r requirements_strict_2024.txt flake8 pytest -e .
 
       - name: Test with pytest
         run: |
