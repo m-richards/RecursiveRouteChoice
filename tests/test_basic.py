@@ -4,6 +4,8 @@ Also tests are not directed as to whether code is "correct" for now, they check 
 existing code.
 
 """
+from pathlib import Path
+
 from recursiveRouteChoice.recursive_route_choice import ALLOW_POSITIVE_VALUE_FUNCTIONS
 # import pytest -- run with pytest although it's not actually imported
 
@@ -18,6 +20,8 @@ from recursiveRouteChoice import RecursiveLogitModelEstimation, ModelDataStruct,
 from recursiveRouteChoice import optimisers
 import os
 from os.path import join
+
+DATA_DIR = Path(__file__).parent.parent / "Datasets"
 
 hand_net_dists = np.array(
     [[4, 3.5, 4.5, 3, 3, 0, 0, 0],
@@ -68,15 +72,15 @@ class TestSimpleCases(object):
     @staticmethod
     def load_example_tiny_manually():
         subfolder = "ExampleTiny"  # big data from classical v2
-        folder = join("Datasets", subfolder)
+        folder = DATA_DIR / subfolder
         INCIDENCE = "incidence.txt"
         TRAVEL_TIME = 'travelTime.txt'
         OBSERVATIONS = "observations.txt"
         # TURN_ANGLE = "turnAngle.txt"
-        file_incidence = os.path.join(folder, INCIDENCE)
-        file_travel_time = os.path.join(folder, TRAVEL_TIME)
+        file_incidence = folder / INCIDENCE
+        file_travel_time = folder / TRAVEL_TIME
         # file_turn_angle = os.path.join(folder, TURN_ANGLE)
-        file_obs = os.path.join(folder, OBSERVATIONS)
+        file_obs = folder / OBSERVATIONS
 
         travel_times_mat = load_csv_to_sparse(file_travel_time).todok()
         incidence_mat = load_csv_to_sparse(file_incidence, dtype='int').todok()
@@ -107,7 +111,7 @@ class TestSimpleCases(object):
 
     def test_example_tiny_smart_loading(self):
         subfolder = "ExampleTiny"  # big data from classical v2
-        folder = join("Datasets", subfolder)
+        folder = join(DATA_DIR, subfolder)
         obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=False)
         incidence_mat, travel_times_mat = attrs
         # left, right, _, u_turn = AngleProcessor.get_turn_categorical_matrices()
@@ -172,7 +176,7 @@ class TestSimpleCases(object):
         #  wrong
         # Now is a bad example as  @42f564e9 results in this test case being illegal valued
         subfolder = "ExampleTinyModifiedObs"  # big data from classical v2
-        folder = join("Datasets", subfolder)
+        folder = join(DATA_DIR, subfolder)
 
         obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=True)
         incidence_mat, travel_times_mat, angle_cts_mat = attrs
@@ -187,7 +191,7 @@ class TestSimpleCases(object):
 
     def test_example_tiny_modified_awkward_array(self):
         subfolder = "ExampleTinyModifiedObs"  # big data from classical v2
-        folder = join("Datasets", subfolder)
+        folder = join(DATA_DIR, subfolder)
 
         obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=True)
         import awkward1 as ak
@@ -207,7 +211,7 @@ class TestSimpleCases(object):
         """Test's awkward array input obs format when it is actually zero indexed and ragged
         data, not square. See that output is consistent in this case"""
         subfolder = "ExampleTinyModifiedObs"  # big data from classical v2
-        folder = join("Datasets", subfolder)
+        folder = join(DATA_DIR, subfolder)
 
         obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=True)
         import awkward1 as ak
@@ -228,7 +232,7 @@ class TestSimpleCases(object):
 
     def test_example_tiny_modified_dense(self):
         subfolder = "ExampleTinyModifiedObs"  # big data from classical v2
-        folder = join("Datasets", subfolder)
+        folder = join(DATA_DIR, subfolder)
 
         obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=True)
         import awkward1 as ak
@@ -345,7 +349,7 @@ class TestOptimAlgs(object):
 
     def test_compare_optim_methods(self):
         subfolder = "ExampleTinyModifiedObs"  # big data from classical v2
-        folder = join("Datasets", subfolder)
+        folder = join(DATA_DIR, subfolder)
 
         obs_mat, attrs = load_standard_path_format_csv(folder, delim=" ", angles_included=True)
         import awkward1 as ak

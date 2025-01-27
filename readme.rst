@@ -10,30 +10,16 @@ quick start overview.
 
 Installation
 ------------
+
+(This was all written back in 2020, and python packaging workflow tools have come a long way since then,
+more modern workflow tools like pixi, rye, pdm etc could be considered. )
+
 The current most direct method of installation is to clone the repository and install using pip::
 
-       pip install -r requirements.txt
-
-Note that (currently) on windows the 2004 update has broken some interactions with OpenBLAS. To
-avoid any problems it is recommended to use conda, which will use MKL BLAS and avoid any issues::
-
-    conda install --file (cat requirements.txt)
-
-Note that there are no direct problems related to this in the code but
-pip will install numpy 1.19.4 by default, which will
-immediately crash to warn about this. Reverting to numpy 1.19.3 "fixes" this in that the warning
-isn't triggered, but other code which does require on the broken functionality may silently fail.
-
-..
-    Currently one can install from the repository directly using pip::
-
-       pip install git+https://github.com/m-richards/RecursiveLogit.git
+       python -m virtualenv venv
+       python -m pip install -r requirements_strict_2024.txt
 
 
-It is recommended to use some kind of virtual environment to avoid conflicting package versions.
-There is also a :code:`requirements_strict.txt` which explicitly specifies package versions. This
-will likely contain less up to date versions, but should always work regardless of future
-api changes of the dependencies.
 
 Example Usage
 -------------
