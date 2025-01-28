@@ -1,24 +1,21 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Optimisers Submodule: Main use case &mdash; RecursiveRouteChoice 0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
 
   
-  <!--[if lt IE 9]>
-    <script src="../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../_static/doctools.js"></script>
-        <script src="../_static/sphinx_highlight.js"></script>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=2709fde1"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -103,15 +100,15 @@
            <div itemprop="articleBody">
              
   <section id="optimisers-submodule-main-use-case">
-<h1>Optimisers Submodule: Main use case<a class="headerlink" href="#optimisers-submodule-main-use-case" title="Permalink to this heading"></a></h1>
+<h1>Optimisers Submodule: Main use case<a class="headerlink" href="#optimisers-submodule-main-use-case" title="Link to this heading"></a></h1>
 <section id="recursiveroutechoice-optimisers-optimisers-file">
-<h2>recursiveRouteChoice.optimisers.optimisers_file<a class="headerlink" href="#recursiveroutechoice-optimisers-optimisers-file" title="Permalink to this heading"></a></h2>
+<h2>recursiveRouteChoice.optimisers.optimisers_file<a class="headerlink" href="#recursiveroutechoice-optimisers-optimisers-file" title="Link to this heading"></a></h2>
 <p>Main user access point to optimisers module, note that important pieces are already directly
 imported into the optimisers module namespace. The main class of interest is <code class="code docutils literal notranslate"><span class="pre">ScipyOptimiser</span></code>
 which provides an interface to the SciPy optimisation algorithms for the recursive logit.</p>
-<span class="target" id="module-recursiveRouteChoice.optimisers.optimisers_file"></span><dl class="py class">
+<dl class="py class" id="module-recursiveRouteChoice.optimisers.optimisers_file">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.optimisers.optimisers_file.</span></span><span class="sig-name descname"><span class="pre">CustomOptimiserBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hessian_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">OptimHessianType.BFGS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.optimisers.optimisers_file.</span></span><span class="sig-name descname"><span class="pre">CustomOptimiserBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hessian_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">OptimHessianType.BFGS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase" title="recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">OptimiserBase</span></code></a></p>
 <p>Global wrapper object around all optim algs, delegate to sub classes for individual.
 Need to be clear about which properties are effectively read only and which store state.</p>
@@ -119,17 +116,17 @@ Need to be clear about which properties are effectively read only and which stor
 details of recursive logit - and it itself may wrap a generic algorithm.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hessian_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">OptimHessianType.BFGS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hessian_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">OptimHessianType.BFGS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase.__init__" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase.check_stopping_criteria">
-<span class="sig-name descname"><span class="pre">check_stopping_criteria</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase.check_stopping_criteria" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">check_stopping_criteria</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase.check_stopping_criteria" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase.compute_relative_gradient_non_static">
-<span class="sig-name descname"><span class="pre">compute_relative_gradient_non_static</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">typf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase.compute_relative_gradient_non_static" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">compute_relative_gradient_non_static</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">typf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase.compute_relative_gradient_non_static" title="Link to this definition"></a></dt>
 <dd><p>% Compute norm of relative gradient.
 Note this exists as we need this information in the stopping criteria,
 where getting the fields with explicit references would be messy</p>
@@ -137,78 +134,78 @@ where getting the fields with explicit references would be messy</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase.iterate_step">
-<span class="sig-name descname"><span class="pre">iterate_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug_counter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase.iterate_step" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">iterate_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug_counter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase.iterate_step" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase.set_beta_vec">
-<span class="sig-name descname"><span class="pre">set_beta_vec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beta_vec</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase.set_beta_vec" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">set_beta_vec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beta_vec</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase.set_beta_vec" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase.set_current_value">
-<span class="sig-name descname"><span class="pre">set_current_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase.set_current_value" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">set_current_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase.set_current_value" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.optimisers.optimisers_file.</span></span><span class="sig-name descname"><span class="pre">LineSearchOptimiser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hessian_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">OptimHessianType.BFGS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.optimisers.optimisers_file.</span></span><span class="sig-name descname"><span class="pre">LineSearchOptimiser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hessian_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">OptimHessianType.BFGS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase" title="recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">CustomOptimiserBase</span></code></a></p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.CURVATURE_CONDITION_PARAMETER">
-<span class="sig-name descname"><span class="pre">CURVATURE_CONDITION_PARAMETER</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.9</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.CURVATURE_CONDITION_PARAMETER" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">CURVATURE_CONDITION_PARAMETER</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.9</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.CURVATURE_CONDITION_PARAMETER" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.INITIAL_STEP_LENGTH">
-<span class="sig-name descname"><span class="pre">INITIAL_STEP_LENGTH</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.INITIAL_STEP_LENGTH" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">INITIAL_STEP_LENGTH</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.INITIAL_STEP_LENGTH" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.MAXIMUM_STEP_LENGTH">
-<span class="sig-name descname"><span class="pre">MAXIMUM_STEP_LENGTH</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1000</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.MAXIMUM_STEP_LENGTH" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">MAXIMUM_STEP_LENGTH</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1000</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.MAXIMUM_STEP_LENGTH" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.METHOD_FLAG">
-<span class="sig-name descname"><span class="pre">METHOD_FLAG</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.METHOD_FLAG" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">METHOD_FLAG</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.METHOD_FLAG" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.MINIMUM_STEP_LENGTH">
-<span class="sig-name descname"><span class="pre">MINIMUM_STEP_LENGTH</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.MINIMUM_STEP_LENGTH" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">MINIMUM_STEP_LENGTH</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.MINIMUM_STEP_LENGTH" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.NEGATIVE_CURVATURE_PARAMETER">
-<span class="sig-name descname"><span class="pre">NEGATIVE_CURVATURE_PARAMETER</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.NEGATIVE_CURVATURE_PARAMETER" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">NEGATIVE_CURVATURE_PARAMETER</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.NEGATIVE_CURVATURE_PARAMETER" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.SUFFICIENT_DECREASE_PARAMETER">
-<span class="sig-name descname"><span class="pre">SUFFICIENT_DECREASE_PARAMETER</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0001</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.SUFFICIENT_DECREASE_PARAMETER" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">SUFFICIENT_DECREASE_PARAMETER</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0001</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.SUFFICIENT_DECREASE_PARAMETER" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.X_TOLERANCE">
-<span class="sig-name descname"><span class="pre">X_TOLERANCE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2.2e-16</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.X_TOLERANCE" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">X_TOLERANCE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2.2e-16</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.X_TOLERANCE" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hessian_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">OptimHessianType.BFGS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hessian_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">OptimHessianType.BFGS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.__init__" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.get_iteration_log">
-<span class="sig-name descname"><span class="pre">get_iteration_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optim_vals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState" title="recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState"><span class="pre">OptimFunctionState</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.get_iteration_log" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_iteration_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optim_vals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState" title="recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState"><span class="pre">OptimFunctionState</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.get_iteration_log" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.iterate_step">
-<span class="sig-name descname"><span class="pre">iterate_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optim_vals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState" title="recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState"><span class="pre">OptimFunctionState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug_counter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.iterate_step" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">iterate_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optim_vals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState" title="recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState"><span class="pre">OptimFunctionState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug_counter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.LineSearchOptimiser.iterate_step" title="Link to this definition"></a></dt>
 <dd><p>Performs a single step of the line search iteration,
 evaluating the value function and taking a step based upon the gradient</p>
 </dd></dl>
@@ -217,80 +214,80 @@ evaluating the value function and taking a step based upon the gradient</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.OptimType">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.optimisers.optimisers_file.</span></span><span class="sig-name descname"><span class="pre">OptimType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.OptimType" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.optimisers.optimisers_file.</span></span><span class="sig-name descname"><span class="pre">OptimType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.OptimType" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></a></p>
 <p>An enumeration.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.OptimType.LINE_SEARCH">
-<span class="sig-name descname"><span class="pre">LINE_SEARCH</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.OptimType.LINE_SEARCH" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">LINE_SEARCH</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.OptimType.LINE_SEARCH" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.OptimType.TRUST_REGION">
-<span class="sig-name descname"><span class="pre">TRUST_REGION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.OptimType.TRUST_REGION" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">TRUST_REGION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.OptimType.TRUST_REGION" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.optimisers.optimisers_file.</span></span><span class="sig-name descname"><span class="pre">OptimiserBase</span></span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.optimisers.optimisers_file.</span></span><span class="sig-name descname"><span class="pre">OptimiserBase</span></span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/abc.html#abc.ABC" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a></p>
 <p>Base class for both custom and scipy to inherit from</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase.LL_ERROR_VALUE">
-<span class="sig-name descname"><span class="pre">LL_ERROR_VALUE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">99999</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase.LL_ERROR_VALUE" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">LL_ERROR_VALUE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">99999</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase.LL_ERROR_VALUE" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase.METHOD_FLAG">
-<span class="sig-name descname"><span class="pre">METHOD_FLAG</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase.METHOD_FLAG" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">METHOD_FLAG</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase.METHOD_FLAG" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase.NUMERICAL_ERROR_THRESH">
-<span class="sig-name descname"><span class="pre">NUMERICAL_ERROR_THRESH</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-0.001</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase.NUMERICAL_ERROR_THRESH" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">NUMERICAL_ERROR_THRESH</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-0.001</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase.NUMERICAL_ERROR_THRESH" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase.RESIDUAL">
-<span class="sig-name descname"><span class="pre">RESIDUAL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.001</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase.RESIDUAL" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">RESIDUAL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.001</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase.RESIDUAL" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase.__init__" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase.get_iteration_log">
-<span class="sig-name descname"><span class="pre">get_iteration_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optim_vals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState" title="recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState"><span class="pre">OptimFunctionState</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase.get_iteration_log" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">get_iteration_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optim_vals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState" title="recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState"><span class="pre">OptimFunctionState</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase.get_iteration_log" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.ScipyOptimiser">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.optimisers.optimisers_file.</span></span><span class="sig-name descname"><span class="pre">ScipyOptimiser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fd_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.ScipyOptimiser" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.optimisers.optimisers_file.</span></span><span class="sig-name descname"><span class="pre">ScipyOptimiser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fd_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.ScipyOptimiser" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase" title="recursiveRouteChoice.optimisers.optimisers_file.OptimiserBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">OptimiserBase</span></code></a></p>
 <p>Wrapper around scipy.optimize.minimize to conform to the format we
 require.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.ScipyOptimiser.METHOD_FLAG">
-<span class="sig-name descname"><span class="pre">METHOD_FLAG</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'scipy-master'</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.ScipyOptimiser.METHOD_FLAG" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">METHOD_FLAG</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'scipy-master'</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.ScipyOptimiser.METHOD_FLAG" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.ScipyOptimiser.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fd_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.ScipyOptimiser.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fd_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.ScipyOptimiser.__init__" title="Link to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>method</strong> (<em>{'cg'</em><em>, </em><em>'bfgs'</em><em>, </em><em>'newton-cg'</em><em>, </em><em>'l-bfgs-b'</em><em>, </em><em>'tnc'</em><em>, </em><em>'newton-cg'</em><em>, </em><em>'dogleg'</em><em>,</em>) – </p></li>
+<li><p><strong>method</strong> (<em>{'cg'</em><em>, </em><em>'bfgs'</em><em>, </em><em>'newton-cg'</em><em>, </em><em>'l-bfgs-b'</em><em>, </em><em>'tnc'</em><em>, </em><em>'newton-cg'</em><em>, </em><em>'dogleg'</em><em>,</em>)</p></li>
 <li><p><strong>'trust-ncg'</strong> – or other scipy optimize valid flags</p></li>
 <li><p><strong>}</strong> (<em>'trust-krylov'</em>) – or other scipy optimize valid flags</p></li>
-<li><p><strong>options</strong> – </p></li>
-<li><p><strong>fd_options</strong> – </p></li>
+<li><p><strong>options</strong></p></li>
+<li><p><strong>fd_options</strong></p></li>
 </ul>
 </dd>
 </dl>
@@ -298,7 +295,7 @@ require.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.ScipyOptimiser.solve">
-<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optim_function_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState" title="recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState"><span class="pre">OptimFunctionState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.ScipyOptimiser.solve" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optim_function_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState" title="recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState"><span class="pre">OptimFunctionState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.ScipyOptimiser.solve" title="Link to this definition"></a></dt>
 <dd><p>Solve for optimal beta which minimises the negative log likelihood.
 Analogous to iterate step method on custom alg, except that these methods don’t
 require step by step intervention.</p>
@@ -308,21 +305,21 @@ require step by step intervention.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.TrustRegionOptimiser">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.optimisers.optimisers_file.</span></span><span class="sig-name descname"><span class="pre">TrustRegionOptimiser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hessian_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">OptimHessianType.BFGS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.TrustRegionOptimiser" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.optimisers.optimisers_file.</span></span><span class="sig-name descname"><span class="pre">TrustRegionOptimiser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hessian_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">OptimHessianType.BFGS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.TrustRegionOptimiser" title="Link to this definition"></a></dt>
 <dd><p>Bases: <a class="reference internal" href="#recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase" title="recursiveRouteChoice.optimisers.optimisers_file.CustomOptimiserBase"><code class="xref py py-class docutils literal notranslate"><span class="pre">CustomOptimiserBase</span></code></a></p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.TrustRegionOptimiser.METHOD_FLAG">
-<span class="sig-name descname"><span class="pre">METHOD_FLAG</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.TrustRegionOptimiser.METHOD_FLAG" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">METHOD_FLAG</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.TrustRegionOptimiser.METHOD_FLAG" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.TrustRegionOptimiser.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hessian_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">OptimHessianType.BFGS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.TrustRegionOptimiser.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hessian_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">OptimHessianType.BFGS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.TrustRegionOptimiser.__init__" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.optimisers_file.TrustRegionOptimiser.method">
-<span class="sig-name descname"><span class="pre">method</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.TrustRegionOptimiser.method" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">method</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.optimisers_file.TrustRegionOptimiser.method" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -330,28 +327,28 @@ require step by step intervention.</p>
 </section>
 </section>
 <section id="optimisers-submodule-other-files-with-minimal-public-api">
-<h1>Optimisers Submodule: Other files with minimal public API<a class="headerlink" href="#optimisers-submodule-other-files-with-minimal-public-api" title="Permalink to this heading"></a></h1>
+<h1>Optimisers Submodule: Other files with minimal public API<a class="headerlink" href="#optimisers-submodule-other-files-with-minimal-public-api" title="Link to this heading"></a></h1>
 <section id="module-recursiveRouteChoice.optimisers.extra_optim">
-<span id="recursiveroutechoice-optimisers-extra-optim-module"></span><h2>recursiveRouteChoice.optimisers.extra_optim module<a class="headerlink" href="#module-recursiveRouteChoice.optimisers.extra_optim" title="Permalink to this heading"></a></h2>
+<span id="recursiveroutechoice-optimisers-extra-optim-module"></span><h2>recursiveRouteChoice.optimisers.extra_optim module<a class="headerlink" href="#module-recursiveRouteChoice.optimisers.extra_optim" title="Link to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.optimisers.extra_optim.</span></span><span class="sig-name descname"><span class="pre">OptimFunctionState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hessian</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hessian_approx_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_and_grad_evaluation_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta_vec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_evals_stat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.optimisers.extra_optim.</span></span><span class="sig-name descname"><span class="pre">OptimFunctionState</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hessian</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hessian_approx_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_and_grad_evaluation_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta_vec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_evals_stat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Data Class to store elements of log likelihood state &amp; grad which are relevant both
 in the computation of the log likelihood and also the global optimisation algorithm</p>
 <p>“Bridge” between RL and the more general optimisation code</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hessian</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hessian_approx_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_and_grad_evaluation_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta_vec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_evals_stat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hessian</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hessian_approx_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_and_grad_evaluation_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta_vec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_evals_stat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState.__init__" title="Link to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>value</strong> – </p></li>
-<li><p><strong>grad</strong> – </p></li>
-<li><p><strong>hessian</strong> – </p></li>
+<li><p><strong>value</strong></p></li>
+<li><p><strong>grad</strong></p></li>
+<li><p><strong>hessian</strong></p></li>
 <li><p><strong>val_and_grad_evaluation_function</strong> – function which takes in x_vec and returns the
 value and gradient at that particular x</p></li>
-<li><p><strong>beta_vec</strong> – </p></li>
+<li><p><strong>beta_vec</strong></p></li>
 </ul>
 </dd>
 </dl>
@@ -359,34 +356,34 @@ value and gradient at that particular x</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState.val_grad_function">
-<span class="sig-name descname"><span class="pre">val_grad_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beta_vec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState.val_grad_function" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">val_grad_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beta_vec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.extra_optim.OptimFunctionState.val_grad_function" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 </section>
 <section id="module-recursiveRouteChoice.optimisers.hessian_approx">
-<span id="recursiveroutechoice-optimisers-hessian-approx-module"></span><h2>recursiveRouteChoice.optimisers.hessian_approx module<a class="headerlink" href="#module-recursiveRouteChoice.optimisers.hessian_approx" title="Permalink to this heading"></a></h2>
+<span id="recursiveroutechoice-optimisers-hessian-approx-module"></span><h2>recursiveRouteChoice.optimisers.hessian_approx module<a class="headerlink" href="#module-recursiveRouteChoice.optimisers.hessian_approx" title="Link to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.hessian_approx.OptimHessianType">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.optimisers.hessian_approx.</span></span><span class="sig-name descname"><span class="pre">OptimHessianType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.hessian_approx.OptimHessianType" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.optimisers.hessian_approx.</span></span><span class="sig-name descname"><span class="pre">OptimHessianType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.hessian_approx.OptimHessianType" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></a></p>
 <p>An enumeration.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.hessian_approx.OptimHessianType.BFGS">
-<span class="sig-name descname"><span class="pre">BFGS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.hessian_approx.OptimHessianType.BFGS" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">BFGS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.hessian_approx.OptimHessianType.BFGS" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.hessian_approx.update_hessian_approx">
-<span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.optimisers.hessian_approx.</span></span><span class="sig-name descname"><span class="pre">update_hessian_approx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">approx_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_grad</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hessian</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.hessian_approx.update_hessian_approx" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.optimisers.hessian_approx.</span></span><span class="sig-name descname"><span class="pre">update_hessian_approx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">approx_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_grad</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hessian</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.hessian_approx.update_hessian_approx" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </section>
 <section id="module-recursiveRouteChoice.optimisers.line_search">
-<span id="recursiveroutechoice-optimisers-line-search-module"></span><h2>recursiveRouteChoice.optimisers.line_search module<a class="headerlink" href="#module-recursiveRouteChoice.optimisers.line_search" title="Permalink to this heading"></a></h2>
+<span id="recursiveroutechoice-optimisers-line-search-module"></span><h2>recursiveRouteChoice.optimisers.line_search module<a class="headerlink" href="#module-recursiveRouteChoice.optimisers.line_search" title="Link to this heading"></a></h2>
 <p>% More and Thuente Arc Search
 % This is a port of Tien Mai’s  matlab code which is
 a modified implementation of the algorithm documented in:
@@ -395,49 +392,49 @@ a modified implementation of the algorithm documented in:
 % Sufficient Decrease. TOMS 20-3. September 1994. pg 286-307.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.line_search.LineSearchFlags">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.optimisers.line_search.</span></span><span class="sig-name descname"><span class="pre">LineSearchFlags</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.line_search.LineSearchFlags" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.optimisers.line_search.</span></span><span class="sig-name descname"><span class="pre">LineSearchFlags</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.line_search.LineSearchFlags" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/enum.html#enum.Enum" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></a></p>
 <p>An enumeration.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.line_search.LineSearchFlags.TERMINATION_INTERVAL_TOO_SMALL">
-<span class="sig-name descname"><span class="pre">TERMINATION_INTERVAL_TOO_SMALL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.line_search.LineSearchFlags.TERMINATION_INTERVAL_TOO_SMALL" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">TERMINATION_INTERVAL_TOO_SMALL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.line_search.LineSearchFlags.TERMINATION_INTERVAL_TOO_SMALL" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.line_search.LineSearchFlags.TERMINATION_MAX_FUNC_EVALS">
-<span class="sig-name descname"><span class="pre">TERMINATION_MAX_FUNC_EVALS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">5</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.line_search.LineSearchFlags.TERMINATION_MAX_FUNC_EVALS" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">TERMINATION_MAX_FUNC_EVALS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">5</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.line_search.LineSearchFlags.TERMINATION_MAX_FUNC_EVALS" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.line_search.LineSearchFlags.TERMINATION_ROUNDING_ERROR">
-<span class="sig-name descname"><span class="pre">TERMINATION_ROUNDING_ERROR</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.line_search.LineSearchFlags.TERMINATION_ROUNDING_ERROR" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">TERMINATION_ROUNDING_ERROR</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.line_search.LineSearchFlags.TERMINATION_ROUNDING_ERROR" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.line_search.LineSearchFlags.TERMINATION_STPMAX">
-<span class="sig-name descname"><span class="pre">TERMINATION_STPMAX</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.line_search.LineSearchFlags.TERMINATION_STPMAX" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">TERMINATION_STPMAX</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.line_search.LineSearchFlags.TERMINATION_STPMAX" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.line_search.LineSearchFlags.TERMINATION_STPMIN">
-<span class="sig-name descname"><span class="pre">TERMINATION_STPMIN</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.line_search.LineSearchFlags.TERMINATION_STPMIN" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">TERMINATION_STPMIN</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.line_search.LineSearchFlags.TERMINATION_STPMIN" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.line_search.LineSearchFlags.TERMINATION_STRONG_WOLFE_AND_STPMAX">
-<span class="sig-name descname"><span class="pre">TERMINATION_STRONG_WOLFE_AND_STPMAX</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">7</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.line_search.LineSearchFlags.TERMINATION_STRONG_WOLFE_AND_STPMAX" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">TERMINATION_STRONG_WOLFE_AND_STPMAX</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">7</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.line_search.LineSearchFlags.TERMINATION_STRONG_WOLFE_AND_STPMAX" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.line_search.LineSearchFlags.TERMINATION_STRONG_WOLFE_MET">
-<span class="sig-name descname"><span class="pre">TERMINATION_STRONG_WOLFE_MET</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">6</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.line_search.LineSearchFlags.TERMINATION_STRONG_WOLFE_MET" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">TERMINATION_STRONG_WOLFE_MET</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">6</span></em><a class="headerlink" href="#recursiveRouteChoice.optimisers.line_search.LineSearchFlags.TERMINATION_STRONG_WOLFE_MET" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.line_search.line_search_asrch">
-<span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.optimisers.line_search.</span></span><span class="sig-name descname"><span class="pre">line_search_asrch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fcn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">g</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxfev</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncur</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ftol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.2e-16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stpmin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stpmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_flag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bisect</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.line_search.line_search_asrch" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.optimisers.line_search.</span></span><span class="sig-name descname"><span class="pre">line_search_asrch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fcn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">g</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxfev</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncur</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ftol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.2e-16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stpmin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stpmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_flag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bisect</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.line_search.line_search_asrch" title="Link to this definition"></a></dt>
 <dd><p>outputs [x f g stp info_out_flag nfev] =
 % list of variables and parameters
 % extrap = parameter for extrapolations
@@ -477,7 +474,7 @@ a modified implementation of the algorithm documented in:
 
 <dl class="py function">
 <dt class="sig sig-object py" id="recursiveRouteChoice.optimisers.line_search.line_search_astep">
-<span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.optimisers.line_search.</span></span><span class="sig-name descname"><span class="pre">line_search_astep</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sty</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">brackt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stpmin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stpmax</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.line_search.line_search_astep" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.optimisers.line_search.</span></span><span class="sig-name descname"><span class="pre">line_search_astep</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sty</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">brackt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stpmin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stpmax</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.optimisers.line_search.line_search_astep" title="Link to this definition"></a></dt>
 <dd><p>% This function computes a safeguarded step for a search
 % procedure and updates an interval that contains a step that
 % satisfies a sufficient decrease and a curvature condition.

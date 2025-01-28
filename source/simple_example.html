@@ -1,25 +1,22 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>3. A Simple Example &mdash; RecursiveRouteChoice 0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
 
   
-  <!--[if lt IE 9]>
-    <script src="../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../_static/doctools.js"></script>
-        <script src="../_static/sphinx_highlight.js"></script>
-        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=2709fde1"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -88,7 +85,7 @@
            <div itemprop="articleBody">
              
   <section id="a-simple-example">
-<h1><span class="section-number">3. </span>A Simple Example<a class="headerlink" href="#a-simple-example" title="Permalink to this heading"></a></h1>
+<h1><span class="section-number">3. </span>A Simple Example<a class="headerlink" href="#a-simple-example" title="Link to this heading"></a></h1>
 <p>Do the network from the fosgerau paper?</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -97,11 +94,11 @@ simulate observations, picking arbitrary parameters and then estimate parameters
 observations. This is nice for a simple example since then we don’t need an external data source.</p>
 </div>
 <section id="prediction">
-<h2><span class="section-number">3.1. </span>Prediction<a class="headerlink" href="#prediction" title="Permalink to this heading"></a></h2>
+<h2><span class="section-number">3.1. </span>Prediction<a class="headerlink" href="#prediction" title="Link to this heading"></a></h2>
 <p>First we illustrate how to simulate observations on a trivial network, with the arbitrary
 parameter weight for the single network attribute; distance being <span class="math notranslate nohighlight">\(\beta=-0.4\)</span>.</p>
-<div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">recursiveRouteChoice</span> <span class="kn">import</span> <span class="n">RecursiveLogitModelPrediction</span><span class="p">,</span> <span class="n">ModelDataStruct</span>
+<div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">recursiveRouteChoice</span><span class="w"> </span><span class="kn">import</span> <span class="n">RecursiveLogitModelPrediction</span><span class="p">,</span> <span class="n">ModelDataStruct</span>
 
 <span class="c1"># DATA</span>
 <span class="c1"># A trivial network</span>
@@ -134,10 +131,10 @@ attributes through. To predict, we initialise the model, supplying the value for
 Finally, we simulate trips between the provided arcs on the network, with repetition.</p>
 </section>
 <section id="estimation">
-<h2><span class="section-number">3.2. </span>Estimation<a class="headerlink" href="#estimation" title="Permalink to this heading"></a></h2>
+<h2><span class="section-number">3.2. </span>Estimation<a class="headerlink" href="#estimation" title="Link to this heading"></a></h2>
 <p>Now we follow on from the above example, reusing the same network, and assume that we are trying to
 estimate the parameter <span class="math notranslate nohighlight">\(\beta\)</span> from <code class="code docutils literal notranslate"><span class="pre">obs</span></code> as generated above.</p>
-<div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">recursiveRouteChoice</span> <span class="kn">import</span> <span class="n">RecursiveLogitModelEstimation</span><span class="p">,</span> <span class="n">optimisers</span>  <span class="c1"># noqa #402</span>
+<div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">recursiveRouteChoice</span><span class="w"> </span><span class="kn">import</span> <span class="n">RecursiveLogitModelEstimation</span><span class="p">,</span> <span class="n">optimisers</span>  <span class="c1"># noqa #402</span>
 
 <span class="n">optimiser</span> <span class="o">=</span> <span class="n">optimisers</span><span class="o">.</span><span class="n">ScipyOptimiser</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;bfgs&#39;</span><span class="p">)</span>
 

@@ -1,24 +1,21 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>5. Data Format Support &mdash; RecursiveRouteChoice 0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
 
   
-  <!--[if lt IE 9]>
-    <script src="../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../_static/doctools.js"></script>
-        <script src="../_static/sphinx_highlight.js"></script>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=2709fde1"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -91,9 +88,9 @@
            <div itemprop="articleBody">
              
   <section id="data-format-support">
-<h1><span class="section-number">5. </span>Data Format Support<a class="headerlink" href="#data-format-support" title="Permalink to this heading"></a></h1>
+<h1><span class="section-number">5. </span>Data Format Support<a class="headerlink" href="#data-format-support" title="Link to this heading"></a></h1>
 <section id="assumptions-on-observation-data-formats">
-<h2><span class="section-number">5.1. </span>Assumptions on Observation Data Formats<a class="headerlink" href="#assumptions-on-observation-data-formats" title="Permalink to this heading"></a></h2>
+<h2><span class="section-number">5.1. </span>Assumptions on Observation Data Formats<a class="headerlink" href="#assumptions-on-observation-data-formats" title="Link to this heading"></a></h2>
 <p>Each observation is read in the format</p>
 <div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Dest</span><span class="p">,</span> <span class="n">Orig</span><span class="p">,</span> <span class="n">Link1</span><span class="p">,</span> <span class="n">Link2</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">LinkN</span><span class="p">,</span> <span class="n">Dest</span><span class="p">]</span>
 </pre></div>
@@ -108,7 +105,7 @@ Tien Mai’s repository examples to be used.</p>
 </pre></div>
 </div>
 <section id="some-quirks">
-<h3><span class="section-number">5.1.1. </span>Some quirks<a class="headerlink" href="#some-quirks" title="Permalink to this heading"></a></h3>
+<h3><span class="section-number">5.1.1. </span>Some quirks<a class="headerlink" href="#some-quirks" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p>The destination can appear more than once in this format. This is because the “true
 destination” in  terms of the model is an internally appended dummy sink arc. So one can visit
@@ -118,7 +115,7 @@ the destination arc and not travel on to the destination node.</p></li>
 </section>
 </section>
 <section id="json-format-preferred">
-<h2><span class="section-number">5.2. </span>JSON format (preferred):<a class="headerlink" href="#json-format-preferred" title="Permalink to this heading"></a></h2>
+<h2><span class="section-number">5.2. </span>JSON format (preferred):<a class="headerlink" href="#json-format-preferred" title="Link to this heading"></a></h2>
 <div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>
     <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
     <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
@@ -136,7 +133,7 @@ function applications, that one wouldn’t have from a list of lists.</p></li>
 </ul>
 </section>
 <section id="coo-format">
-<h2><span class="section-number">5.3. </span>COO format:<a class="headerlink" href="#coo-format" title="Permalink to this heading"></a></h2>
+<h2><span class="section-number">5.3. </span>COO format:<a class="headerlink" href="#coo-format" title="Link to this heading"></a></h2>
 <p>The observations are stored in a sparse format with a single entry per line.
 The sequence of two observations above is encoded as</p>
 <div class="highlight-py notranslate"><div class="highlight"><pre><span></span><span class="mi">1</span> <span class="mi">1</span> <span class="mi">1</span>

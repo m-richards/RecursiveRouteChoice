@@ -1,24 +1,21 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Data Preprocessing: (recursiveRouteChoice.data_processing) &mdash; RecursiveRouteChoice 0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
 
   
-  <!--[if lt IE 9]>
-    <script src="../_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../_static/doctools.js"></script>
-        <script src="../_static/sphinx_highlight.js"></script>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=2709fde1"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -99,30 +96,30 @@
            <div itemprop="articleBody">
              
   <section id="module-recursiveRouteChoice.data_processing">
-<span id="data-preprocessing-recursiveroutechoice-data-processing"></span><h1>Data Preprocessing: (recursiveRouteChoice.data_processing)<a class="headerlink" href="#module-recursiveRouteChoice.data_processing" title="Permalink to this heading"></a></h1>
+<span id="data-preprocessing-recursiveroutechoice-data-processing"></span><h1>Data Preprocessing: (recursiveRouteChoice.data_processing)<a class="headerlink" href="#module-recursiveRouteChoice.data_processing" title="Link to this heading"></a></h1>
 <p>file for processing matrices after they have been loaded from file,
 or generate by hand/ other means.</p>
 <p>Currently just for processing angles</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="recursiveRouteChoice.data_processing.AngleProcessor">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.data_processing.</span></span><span class="sig-name descname"><span class="pre">AngleProcessor</span></span><a class="headerlink" href="#recursiveRouteChoice.data_processing.AngleProcessor" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.data_processing.</span></span><span class="sig-name descname"><span class="pre">AngleProcessor</span></span><a class="headerlink" href="#recursiveRouteChoice.data_processing.AngleProcessor" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="recursiveRouteChoice.data_processing.AngleProcessor.get_left_turn_categorical_matrix">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_left_turn_categorical_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">turn_angle_mat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">left_turn_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_turn_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.data_processing.AngleProcessor.get_left_turn_categorical_matrix" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_left_turn_categorical_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">turn_angle_mat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">left_turn_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_turn_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.data_processing.AngleProcessor.get_left_turn_categorical_matrix" title="Link to this definition"></a></dt>
 <dd><p>Assumes that angles are between -pi and pi</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="recursiveRouteChoice.data_processing.AngleProcessor.get_neutral_turn_categorical_matrix">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_neutral_turn_categorical_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">turn_angle_mat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">side_turn_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.data_processing.AngleProcessor.get_neutral_turn_categorical_matrix" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_neutral_turn_categorical_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">turn_angle_mat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">side_turn_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.data_processing.AngleProcessor.get_neutral_turn_categorical_matrix" title="Link to this definition"></a></dt>
 <dd><p>We assume that all zero angles are absent arcs, genuine zero angles should be encoded
 as near zero nonzero - i.e. 0.01 or as 2* Pi =  6.28 = 0
 # IF this is not the case it should be handled otherwise first</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>turn_angle_mat</strong> – </p></li>
+<li><p><strong>turn_angle_mat</strong></p></li>
 <li><p><strong>side_turn_thresh</strong> – left or right turn threshold, assumed to be symmetric</p></li>
 <li><p><strong>u_turn_thresh</strong> – u turn threshold angle in radians</p></li>
 </ul>
@@ -132,31 +129,31 @@ as near zero nonzero - i.e. 0.01 or as 2* Pi =  6.28 = 0
 
 <dl class="py method">
 <dt class="sig sig-object py" id="recursiveRouteChoice.data_processing.AngleProcessor.get_right_turn_categorical_matrix">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_right_turn_categorical_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">turn_angle_mat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_turn_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_turn_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.data_processing.AngleProcessor.get_right_turn_categorical_matrix" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_right_turn_categorical_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">turn_angle_mat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_turn_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_turn_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.data_processing.AngleProcessor.get_right_turn_categorical_matrix" title="Link to this definition"></a></dt>
 <dd><p>Assumes that angles are between -pi and pi</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="recursiveRouteChoice.data_processing.AngleProcessor.get_turn_categorical_matrices">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_turn_categorical_matrices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">turn_angles_cts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">incidence_mat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_turn_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">left_turn_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.data_processing.AngleProcessor.get_turn_categorical_matrices" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_turn_categorical_matrices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">turn_angles_cts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">incidence_mat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_turn_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">left_turn_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.data_processing.AngleProcessor.get_turn_categorical_matrices" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="recursiveRouteChoice.data_processing.AngleProcessor.get_u_turn_categorical_matrix">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_u_turn_categorical_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">turn_angle_mat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_turn_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.data_processing.AngleProcessor.get_u_turn_categorical_matrix" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_u_turn_categorical_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">turn_angle_mat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_turn_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.data_processing.AngleProcessor.get_u_turn_categorical_matrix" title="Link to this definition"></a></dt>
 <dd><p>Assumes that angles are between -pi and pi</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="recursiveRouteChoice.data_processing.AngleProcessor.to_radians">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">to_radians</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">angle_turn_mat</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.data_processing.AngleProcessor.to_radians" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">to_radians</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">angle_turn_mat</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.data_processing.AngleProcessor.to_radians" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="recursiveRouteChoice.data_processing.get_incorrect_tien_turn_matrices">
-<span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.data_processing.</span></span><span class="sig-name descname"><span class="pre">get_incorrect_tien_turn_matrices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">turn_angle_mat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">left_turn_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-0.5235987755833333</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_turn_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3.089232775941667</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.data_processing.get_incorrect_tien_turn_matrices" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">recursiveRouteChoice.data_processing.</span></span><span class="sig-name descname"><span class="pre">get_incorrect_tien_turn_matrices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">turn_angle_mat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">left_turn_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-0.5235987755833333</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_turn_thresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3.089232775941667</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#recursiveRouteChoice.data_processing.get_incorrect_tien_turn_matrices" title="Link to this definition"></a></dt>
 <dd><p>A function to generate the turn matrices equivalently tien mai code for comparison
 purposes, note that this is logically incorrect though.
 Deliberately copies confusing logic since it is trying to be consistent.
